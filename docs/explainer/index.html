@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pantheon Explainer</title>
+<meta name="viewport" content="width=1920">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=block" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a12;
+    --ink: #f4f3ff;
+    --muted: #9b99b8;
+    --accent: #7c6cff;
+    --accent2: #3fd6c6;
+    --warm: #ffb65c;
+    --pink: #ff6fa8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #000; overflow: hidden; }
+  body { font-family: Inter, system-ui, sans-serif; color: var(--ink); }
+
+  #stage {
+    position: relative; width: 1920px; height: 1080px; overflow: hidden;
+    background: var(--bg); transform-origin: 0 0;
+  }
+  .bg { position: absolute; inset: -20%; will-change: transform; }
+  .grid {
+    position: absolute; inset: 0; opacity: .07;
+    background-image: linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px);
+    background-size: 80px 80px;
+    mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
+  }
+  .grain { position: absolute; inset: 0; opacity: .06; mix-blend-mode: overlay; pointer-events: none; }
+
+  .scene { position: absolute; inset: 0; opacity: 0; will-change: transform, opacity, filter; }
+
+  .h {
+    font-weight: 900; letter-spacing: -0.045em; line-height: .98;
+    font-size: 132px;
+  }
+  .h.md { font-size: 96px; }
+  .h.sm { font-size: 76px; }
+  .w { display: inline-block; will-change: transform, opacity, filter; white-space: pre; }
+  .grad {
+    background: linear-gradient(100deg, var(--accent) 0%, var(--pink) 55%, var(--warm) 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .grad2 {
+    background: linear-gradient(100deg, var(--accent2) 0%, var(--accent) 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .kicker {
+    font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 26px;
+    letter-spacing: .18em; text-transform: uppercase; color: var(--accent2);
+  }
+  .sub { font-size: 40px; font-weight: 500; color: var(--muted); letter-spacing: -0.01em; }
+
+  .center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 28px; }
+  .left { position: absolute; left: 110px; top: 0; bottom: 0; width: 640px; display: flex; flex-direction: column; justify-content: center; gap: 30px; }
+
+  /* app window */
+  .win {
+    position: absolute; right: 90px; top: 150px; width: 1060px; height: 700px;
+    border-radius: 22px; overflow: hidden; background: #111118;
+    box-shadow: 0 60px 140px rgba(0,0,0,.65), 0 0 0 1px rgba(255,255,255,.09), 0 0 120px rgba(124,108,255,.18);
+    transform-style: preserve-3d; will-change: transform, opacity;
+  }
+  .win .bar { height: 40px; background: #17171f; display: flex; align-items: center; gap: 9px; padding: 0 18px; border-bottom: 1px solid rgba(255,255,255,.06); }
+  .win .bar i { width: 13px; height: 13px; border-radius: 50%; display: block; }
+  .win .bar .url { margin-left: 18px; font: 500 15px "JetBrains Mono", monospace; color: #6d6b86; }
+  .win .view { position: absolute; top: 40px; left: 0; right: 0; bottom: 0; overflow: hidden; }
+  .win .view img { position: absolute; left: 0; top: 0; width: 100%; will-change: transform; }
+  .win.wide { width: 1300px; height: 800px; right: 70px; top: 140px; }
+
+  .pill {
+    position: absolute; display: flex; align-items: center; gap: 12px;
+    padding: 14px 22px; border-radius: 999px; font-weight: 700; font-size: 26px;
+    background: rgba(18,18,28,.88); backdrop-filter: blur(8px);
+    box-shadow: 0 16px 40px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.12);
+    will-change: transform, opacity;
+  }
+  .pill b { width: 14px; height: 14px; border-radius: 50%; display: block; }
+
+  /* hook: floating agent network */
+  .node {
+    position: absolute; width: 92px; height: 92px; margin: -46px 0 0 -46px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 34px; color: #0a0a12;
+    box-shadow: 0 0 0 6px rgba(255,255,255,.06), 0 20px 50px rgba(0,0,0,.5);
+  }
+  svg.links { position: absolute; inset: 0; }
+
+  /* zeus */
+  .prompt {
+    position: absolute; left: 50%; top: 360px; width: 1180px; margin-left: -590px;
+    padding: 30px 36px; border-radius: 22px; background: #15151f;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.1), 0 40px 90px rgba(0,0,0,.5);
+    font-size: 38px; font-weight: 500; display: flex; gap: 22px; align-items: center;
+  }
+  .prompt .z { width: 58px; height: 58px; flex: none; border-radius: 50%; background: linear-gradient(135deg, #ffd36b, #ff9c3b); color: #2a1600; font-weight: 900; font-size: 30px; display: flex; align-items: center; justify-content: center; }
+  .caret { display: inline-block; width: 3px; height: 1.05em; background: var(--accent); vertical-align: -0.15em; margin-left: 2px; }
+  .card {
+    position: absolute; width: 260px; padding: 26px 24px; border-radius: 20px; background: #15151f;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.1), 0 30px 70px rgba(0,0,0,.5);
+    display: flex; flex-direction: column; align-items: center; gap: 12px; will-change: transform, opacity;
+  }
+  .card .av { width: 84px; height: 84px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 36px; color: #0a0a12; }
+  .card .n { font-size: 30px; font-weight: 800; }
+  .card .r { font-size: 21px; color: var(--muted); font-weight: 600; }
+
+  /* stage voice */
+  .wave { position: relative; display: flex; margin-left: 6px; gap: 7px; align-items: center; height: 70px; }
+  .wave span { width: 8px; border-radius: 4px; background: linear-gradient(var(--accent2), var(--accent)); display: block; }
+
+  /* models */
+  .chips { position: absolute; left: 210px; right: 210px; top: 540px; display: flex; flex-wrap: wrap; justify-content: center; gap: 30px 30px; }
+  .chip {
+    position: relative; padding: 22px 36px; border-radius: 18px; font-size: 40px; font-weight: 800;
+    background: #15151f; box-shadow: 0 0 0 1px rgba(255,255,255,.12), 0 24px 60px rgba(0,0,0,.45);
+    will-change: transform, opacity; letter-spacing: -0.02em;
+  }
+  .chip.local { box-shadow: 0 0 0 2px rgba(63,214,198,.55), 0 24px 60px rgba(0,0,0,.45); }
+
+  /* cta */
+  .logo { width: 150px; height: 150px; }
+  .cmd {
+    font: 700 38px "JetBrains Mono", monospace; padding: 22px 34px; border-radius: 16px;
+    background: #15151f; box-shadow: 0 0 0 1px rgba(255,255,255,.12); color: var(--accent2);
+  }
+  .cmd em { color: var(--muted); font-style: normal; }
+
+  /* captions */
+  #cap {
+    position: absolute; left: 50%; bottom: 46px; transform: translateX(-50%);
+    max-width: 1640px; padding: 12px 28px; border-radius: 14px;
+    background: rgba(0,0,0,.62); font-size: 30px; font-weight: 600; text-align: center; line-height: 1.3;
+    will-change: opacity;
+  }
+  #progress { position: absolute; left: 0; bottom: 0; height: 5px; background: linear-gradient(90deg, var(--accent), var(--pink)); }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="bg" id="bg"></div>
+  <div class="grid"></div>
+
+  <!-- 1. hook -->
+  <section class="scene" id="s-hook">
+    <svg class="links" id="hook-links" viewBox="0 0 1920 1080"></svg>
+    <div id="hook-nodes"></div>
+    <div class="center">
+      <div class="h md" data-words>What if your AI agents</div>
+      <div class="h" data-words>worked like a <span class="grad">real team?</span></div>
+      <div class="sub" data-words data-delay="1.9">…one you could actually <b style="color:var(--ink)">see.</b></div>
+    </div>
+  </section>
+
+  <!-- 2. meet -->
+  <section class="scene" id="s-meet">
+    <div class="center">
+      <svg class="logo" id="meet-logo" viewBox="0 0 24 24" fill="none" stroke="url(#lg)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <defs><linearGradient id="lg" gradientUnits="userSpaceOnUse" x1="2" y1="2" x2="22" y2="22"><stop offset="0" stop-color="#7c6cff"/><stop offset="1" stop-color="#ff6fa8"/></linearGradient></defs>
+        <path d="M3 22h18"/><path d="M6 18v-7"/><path d="M10 18v-7"/><path d="M14 18v-7"/><path d="M18 18v-7"/><path d="M12 2l8 5H4z"/>
+      </svg>
+      <div class="kicker" data-words data-delay="0.5">Meet</div>
+      <div class="h" style="font-size:190px" data-words data-delay="0.6"><span class="grad">Pantheon</span></div>
+      <div class="sub" data-words data-delay="1.3">An open-source office for AI agents.</div>
+    </div>
+  </section>
+
+  <!-- 3. office -->
+  <section class="scene" id="s-office">
+    <div class="left">
+      <div class="kicker" data-words>01 · The office</div>
+      <div class="h sm" data-words data-delay="0.15">A live <span class="grad">3D world</span> of agents.</div>
+      <div class="sub" data-words data-delay="0.6">See who's thinking, working, and talking to whom.</div>
+    </div>
+    <div class="win" id="office-win"><div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="url">localhost:3710 / office</span></div><div class="view"><img src="../images/office.png" alt=""></div></div>
+    <div class="pill" id="p1" style="left:1010px;top:300px"><b style="background:var(--accent)"></b>thinking…</div>
+    <div class="pill" id="p2" style="left:1440px;top:520px"><b style="background:var(--warm)"></b>running a tool</div>
+    <div class="pill" id="p3" style="left:900px;top:700px"><b style="background:var(--accent2)"></b>talking to Marcus</div>
+  </section>
+
+  <!-- 4. board -->
+  <section class="scene" id="s-board">
+    <div class="left">
+      <div class="kicker" data-words>02 · Real teamwork</div>
+      <div class="h sm" data-words data-delay="0.15">Plan. <span class="grad2">Delegate.</span> <span class="grad">Review.</span></div>
+      <div class="sub" data-words data-delay="0.7">Agents create tasks, hand them off and check each other's work.</div>
+    </div>
+    <div class="win" id="board-win"><div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="url">localhost:3710 / board</span></div><div class="view"><img src="../images/board.png" alt=""></div></div>
+  </section>
+
+  <!-- 5. zeus -->
+  <section class="scene" id="s-zeus">
+    <div class="center" style="justify-content:flex-start;padding-top:150px">
+      <div class="kicker" data-words>03 · Zeus, your supervisor</div>
+      <div class="h sm" data-words data-delay="0.15">Describe a goal. <span class="grad">Get a team.</span></div>
+    </div>
+    <div class="prompt" id="zeus-prompt"><div class="z">Z</div><div><span id="zeus-text"></span><span class="caret" id="zeus-caret"></span></div></div>
+    <svg class="links" id="zeus-links" viewBox="0 0 1920 1080"></svg>
+    <div class="card" data-card style="left:300px;top:640px"><div class="av" style="background:#7c6cff">M</div><div class="n">Maya</div><div class="r">Team lead</div></div>
+    <div class="card" data-card style="left:640px;top:640px"><div class="av" style="background:#3fd6c6">I</div><div class="n">Iris</div><div class="r">Researcher</div></div>
+    <div class="card" data-card style="left:980px;top:640px"><div class="av" style="background:#ffb65c">T</div><div class="n">Theo</div><div class="r">Analyst</div></div>
+    <div class="card" data-card style="left:1320px;top:640px"><div class="av" style="background:#ff6fa8">Q</div><div class="n">Quinn</div><div class="r">Editor</div></div>
+  </section>
+
+  <!-- 6. stage -->
+  <section class="scene" id="s-stage">
+    <div class="left">
+      <div class="kicker" data-words>04 · The Stage</div>
+      <div class="h sm" data-words data-delay="0.15">They can <span class="grad">teach you.</span></div>
+      <div class="sub" data-words data-delay="0.7">Out loud, with animations, a shared whiteboard and a voice for every agent.</div>
+    </div>
+    <div class="win" id="stage-win"><div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="url">localhost:3710 / stage</span></div><div class="view"><img src="../images/stage.png" alt=""></div></div>
+    <div class="pill" id="stage-pill" style="left:960px;top:800px"><b style="background:var(--accent2)"></b>Euclid is speaking<div class="wave" id="wave"></div></div>
+  </section>
+
+  <!-- 7. trace -->
+  <section class="scene" id="s-trace">
+    <div class="left">
+      <div class="kicker" data-words>05 · Full trace</div>
+      <div class="h sm" data-words data-delay="0.15">Every decision, <span class="grad">on the record.</span></div>
+      <div class="sub" data-words data-delay="0.7">Prompts, tool calls, tokens and cost for every turn.</div>
+    </div>
+    <div class="win" id="trace-win"><div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="url">localhost:3710 / sessions</span></div><div class="view"><img src="../images/sessions.png" alt=""></div></div>
+  </section>
+
+  <!-- 8. models -->
+  <section class="scene" id="s-models">
+    <div class="center" style="justify-content:flex-start;padding-top:180px">
+      <div class="kicker" data-words>06 · Yours</div>
+      <div class="h md" data-words data-delay="0.1">Your machine. <span class="grad">Any model.</span></div>
+    </div>
+    <div class="chips">
+      <div class="chip" data-chip>OpenAI</div>
+      <div class="chip" data-chip>Anthropic</div>
+      <div class="chip" data-chip>OpenRouter</div>
+      <div class="chip local" data-chip>Ollama</div>
+      <div class="chip local" data-chip>vLLM</div>
+      <div class="chip local" data-chip>llama.cpp</div>
+      <div class="chip local" data-chip>LM Studio</div>
+      <div class="chip" data-chip>+ any API</div>
+    </div>
+  </section>
+
+  <!-- 9. cta -->
+  <section class="scene" id="s-cta">
+    <div class="center" style="gap:34px">
+      <svg class="logo" id="cta-logo" viewBox="0 0 24 24" fill="none" stroke="url(#lg2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <defs><linearGradient id="lg2" gradientUnits="userSpaceOnUse" x1="2" y1="2" x2="22" y2="22"><stop offset="0" stop-color="#7c6cff"/><stop offset="1" stop-color="#ff6fa8"/></linearGradient></defs>
+        <path d="M3 22h18"/><path d="M6 18v-7"/><path d="M10 18v-7"/><path d="M14 18v-7"/><path d="M18 18v-7"/><path d="M12 2l8 5H4z"/>
+      </svg>
+      <div class="h" data-words data-delay="0.2"><span class="grad">Pantheon</span></div>
+      <div class="sub" data-words data-delay="0.6">Free &amp; open source. Try it today.</div>
+      <div class="cmd" data-pop data-delay="1.1"><em>$</em> docker compose up</div>
+      <div class="kicker" style="color:var(--muted);letter-spacing:.06em;text-transform:none;font-size:30px" data-words data-delay="1.5" id="cta-url">github.com/adityaagarw/Pantheon</div>
+    </div>
+  </section>
+
+  <svg class="grain" width="1920" height="1080"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(#n)"/></svg>
+  <div id="cap"></div>
+  <div id="progress"></div>
+</div>
+
+<script>
+/* ---------- timeline ----------
+ * render.py injects the real timeline via window.__setup(); these defaults
+ * (from the current voiceover clips) let you preview the page directly. */
+let TL = {
+  lead: 0.35, tail: 0.65, end: 2.2,
+  scenes: [
+    ["hook", 3.76, "What if your AI agents worked like a real team... one you could actually see?"],
+    ["meet", 3.52, "Meet Pantheon. An open-source office for AI agents."],
+    ["office", 6.64, "Every agent is a character in a live 3D world. You can see who's thinking, who's working, and who's talking to whom."],
+    ["board", 4.72, "They plan the work, hand out tasks, and review each other, on a real board."],
+    ["zeus", 5.12, "Just describe a goal. Zeus, the built-in supervisor, designs the whole team for you."],
+    ["stage", 5.36, "They can even teach you, with animations, a shared whiteboard, and their own voices."],
+    ["trace", 5.2, "And every prompt, every tool call, every decision is on the record. So you can trust what they did."],
+    ["models", 4.08, "It runs on your own machine, with any model. Local or cloud."],
+    ["cta", 3.2, "Pantheon. Free and open source. Try it today."],
+  ],
+};
+let plan = [];
+function build() {
+  let t = 0;
+  plan = TL.scenes.map(([id, vo, text], i) => {
+    const dur = TL.lead + vo + TL.tail + (i === TL.scenes.length - 1 ? TL.end : 0);
+    const s = { id, start: t, dur, vo, text, el: document.getElementById("s-" + id) };
+    t += dur;
+    return s;
+  });
+  window.__duration = t;
+  window.__plan = plan.map(({ id, start, vo }) => ({ id, start: start + TL.lead, vo }));
+}
+window.__setup = (tl) => { TL = { ...TL, ...tl }; build(); };
+
+/* ---------- easing ---------- */
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, p) => a + (b - a) * p;
+const outExpo = (p) => (p >= 1 ? 1 : 1 - Math.pow(2, -10 * p));
+const outBack = (p) => { const c = 1.6; return 1 + (c + 1) * Math.pow(p - 1, 3) + c * Math.pow(p - 1, 2); };
+const inOut = (p) => (p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+const seg = (t, s, d) => clamp((t - s) / d);
+
+/* split headlines into words once */
+document.querySelectorAll("[data-words]").forEach((el) => {
+  const wrap = (node) => {
+    [...node.childNodes].forEach((c) => {
+      if (c.nodeType === 3) {
+        const frag = document.createDocumentFragment();
+        c.textContent.split(/(\s+)/).forEach((w) => {
+          if (!w) return;
+          if (/^\s+$/.test(w)) { frag.append(w); return; }
+          const s = document.createElement("span"); s.className = "w"; s.textContent = w; frag.append(s);
+        });
+        c.replaceWith(frag);
+      } else if (c.nodeType === 1 && c.tagName !== "BR") {
+        if (c.classList.contains("grad") || c.classList.contains("grad2")) c.classList.add("w");
+        else wrap(c);
+      }
+    });
+  };
+  wrap(el);
+});
+
+/* hook network */
+const NODES = [["N", "#7c6cff", 330, 250], ["R", "#3fd6c6", 1590, 230], ["L", "#ffb65c", 250, 820], ["M", "#ff6fa8", 1660, 820], ["P", "#9ee37d", 620, 140], ["S", "#6cb8ff", 1760, 520]];
+const LINKS = [[0, 4], [4, 1], [1, 3], [3, 5], [5, 2], [2, 0], [0, 5], [4, 3]];
+const hookNodes = document.getElementById("hook-nodes");
+NODES.forEach(([l, c]) => { const d = document.createElement("div"); d.className = "node"; d.style.background = c; d.textContent = l; hookNodes.append(d); });
+const hookLinks = document.getElementById("hook-links");
+hookLinks.innerHTML = LINKS.map(() => '<line stroke="rgba(160,150,255,.35)" stroke-width="2.5" stroke-dasharray="6 10"/>').join("");
+
+/* zeus links: prompt → cards */
+const zeusLinks = document.getElementById("zeus-links");
+zeusLinks.innerHTML = [430, 770, 1110, 1450].map((x) => `<path d="M960 470 C960 560 ${x} 560 ${x} 640" stroke="url(#zg)" stroke-width="3" fill="none" pathLength="1" stroke-dasharray="1 1"/>`).join("") +
+  '<defs><linearGradient id="zg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7c6cff"/><stop offset="1" stop-color="#3fd6c6"/></linearGradient></defs>';
+const ZEUS_TEXT = "Build me a team that tracks our competitors and writes a weekly brief.";
+
+const wave = document.getElementById("wave");
+for (let i = 0; i < 16; i++) wave.append(document.createElement("span"));
+
+/* ---------- per-scene animation ---------- */
+function words(scene, lt) {
+  scene.querySelectorAll("[data-words]").forEach((line, li) => {
+    const base = parseFloat(line.dataset.delay ?? li * 0.18);
+    line.querySelectorAll(".w").forEach((w, i) => {
+      const p = outExpo(seg(lt, base + i * 0.07, 0.8));
+      w.style.opacity = p;
+      w.style.transform = `translateY(${(1 - p) * 70}px)`;
+      w.style.filter = `blur(${(1 - p) * 10}px)`;
+    });
+  });
+  scene.querySelectorAll("[data-pop]").forEach((el) => {
+    const p = outBack(seg(lt, parseFloat(el.dataset.delay || 0), 0.6));
+    el.style.opacity = clamp(p * 1.4);
+    el.style.transform = `scale(${lerp(.7, 1, p)})`;
+  });
+}
+
+function windowIn(win, lt, dur, focus) {
+  // Swing in from a 3D tilt, then a slow push toward the focus point.
+  const p = outExpo(seg(lt, 0.25, 1.3));
+  win.style.opacity = clamp(p * 1.5);
+  win.style.transform = `perspective(2400px) translateX(${(1 - p) * 220}px) rotateY(${lerp(-24, -7, p)}deg) rotateX(${lerp(10, 3, p)}deg) scale(${lerp(.9, 1, p)})`;
+  const img = win.querySelector("img");
+  const k = inOut(seg(lt, 0.9, Math.max(1, dur - 0.9)));
+  img.style.transformOrigin = `${focus.x * 100}% ${focus.y * 100}%`;
+  img.style.transform = `scale(${lerp(1, focus.zoom, k)})`;
+}
+
+const ANIM = {
+  hook(el, lt) {
+    const nodes = hookNodes.children;
+    NODES.forEach(([, , x, y], i) => {
+      const p = outBack(seg(lt, 0.1 + i * 0.12, 0.7));
+      const fx = x + Math.sin(lt * 0.9 + i) * 14, fy = y + Math.cos(lt * 0.8 + i * 1.7) * 12;
+      nodes[i].style.left = fx + "px"; nodes[i].style.top = fy + "px";
+      nodes[i].style.opacity = clamp(p) * 0.9;
+      nodes[i].style.transform = `scale(${p})`;
+      NODES[i].pos = [fx, fy];
+    });
+    [...hookLinks.children].forEach((ln, i) => {
+      const [a, b] = LINKS[i];
+      const p = seg(lt, 0.8 + i * 0.1, 0.5);
+      const [x1, y1] = NODES[a].pos, [x2, y2] = NODES[b].pos;
+      ln.setAttribute("x1", x1); ln.setAttribute("y1", y1);
+      ln.setAttribute("x2", lerp(x1, x2, p)); ln.setAttribute("y2", lerp(y1, y2, p));
+      ln.style.strokeDashoffset = -lt * 30;
+    });
+    words(el, lt);
+  },
+  meet(el, lt) {
+    const logo = document.getElementById("meet-logo");
+    const p = outBack(seg(lt, 0, 0.8));
+    logo.style.opacity = clamp(p);
+    logo.style.transform = `scale(${lerp(.4, 1, p)}) rotate(${(1 - p) * -25}deg)`;
+    words(el, lt);
+  },
+  office(el, lt, s) {
+    words(el, lt);
+    windowIn(document.getElementById("office-win"), lt, s.dur, { x: 0.35, y: 0.5, zoom: 1.4 });
+    ["p1", "p2", "p3"].forEach((id, i) => {
+      const p = outBack(seg(lt, 1.6 + i * 0.9, 0.55));
+      const pill = document.getElementById(id);
+      pill.style.opacity = clamp(p * 1.4);
+      pill.style.transform = `translateY(${(1 - p) * 30}px) scale(${lerp(.6, 1, p)})`;
+    });
+  },
+  board(el, lt, s) {
+    words(el, lt);
+    windowIn(document.getElementById("board-win"), lt, s.dur, { x: 0.35, y: 0.1, zoom: 1.25 });
+  },
+  zeus(el, lt, s) {
+    words(el, lt);
+    const box = document.getElementById("zeus-prompt");
+    const pb = outExpo(seg(lt, 0.3, 0.7));
+    box.style.opacity = pb; box.style.transform = `translateY(${(1 - pb) * 40}px)`;
+    const n = Math.floor(clamp((lt - 0.7) / 1.9) * ZEUS_TEXT.length);
+    document.getElementById("zeus-text").textContent = ZEUS_TEXT.slice(0, n);
+    document.getElementById("zeus-caret").style.opacity = n < ZEUS_TEXT.length || Math.floor(lt * 2.5) % 2 ? 1 : 0;
+    [...zeusLinks.querySelectorAll("path")].forEach((p, i) => {
+      p.style.strokeDashoffset = 1 - inOut(seg(lt, 2.8 + i * 0.12, 0.6));
+    });
+    el.querySelectorAll("[data-card]").forEach((c, i) => {
+      const p = outBack(seg(lt, 3.2 + i * 0.16, 0.6));
+      c.style.opacity = clamp(p * 1.4);
+      c.style.transform = `translateY(${(1 - p) * 60}px) scale(${lerp(.7, 1, p)})`;
+    });
+  },
+  stage(el, lt, s) {
+    words(el, lt);
+    windowIn(document.getElementById("stage-win"), lt, s.dur, { x: 0.65, y: 0.55, zoom: 1.3 });
+    const pill = document.getElementById("stage-pill");
+    const p = outBack(seg(lt, 1.4, 0.6));
+    pill.style.opacity = clamp(p * 1.4); pill.style.transform = `scale(${lerp(.6, 1, p)})`;
+    [...wave.children].forEach((b, i) => {
+      const h = 12 + Math.abs(Math.sin(lt * 7 + i * 0.7) * Math.sin(lt * 3.1 + i * 1.3)) * 52;
+      b.style.height = h + "px";
+    });
+  },
+  trace(el, lt, s) {
+    words(el, lt);
+    windowIn(document.getElementById("trace-win"), lt, s.dur, { x: 0.55, y: 0.15, zoom: 1.3 });
+  },
+  models(el, lt) {
+    words(el, lt);
+    el.querySelectorAll("[data-chip]").forEach((c, i) => {
+      const p = outBack(seg(lt, 0.7 + i * 0.12, 0.6));
+      c.style.opacity = clamp(p * 1.4);
+      c.style.transform = `translateY(${(1 - p) * 80}px) scale(${lerp(.6, 1, p)})`;
+    });
+  },
+  cta(el, lt) {
+    const logo = document.getElementById("cta-logo");
+    const p = outBack(seg(lt, 0, 0.8));
+    logo.style.opacity = clamp(p); logo.style.transform = `scale(${lerp(.4, 1, p)})`;
+    words(el, lt);
+  },
+};
+
+/* ---------- master render ---------- */
+const bg = document.getElementById("bg");
+const cap = document.getElementById("cap");
+const XF = 0.55; // scene crossfade
+function render(t) {
+  bg.style.background = `radial-gradient(40% 50% at ${50 + Math.sin(t * .23) * 18}% ${40 + Math.cos(t * .19) * 15}%, rgba(124,108,255,.30), transparent 70%),
+    radial-gradient(35% 45% at ${30 + Math.cos(t * .17) * 20}% ${70 + Math.sin(t * .21) * 12}%, rgba(255,111,168,.16), transparent 70%),
+    radial-gradient(30% 40% at ${75 + Math.sin(t * .13) * 12}% ${75 + Math.cos(t * .29) * 10}%, rgba(63,214,198,.14), transparent 70%)`;
+  let caption = "", capAlpha = 0;
+  plan.forEach((s, i) => {
+    const lt = t - s.start;
+    const last = i === plan.length - 1;
+    const inP = i === 0 ? 1 : inOut(seg(lt, -XF / 2, XF));
+    const outP = last ? 0 : inOut(seg(lt, s.dur - XF / 2, XF));
+    const vis = Math.min(inP, 1 - outP);
+    if (vis <= 0) { s.el.style.opacity = 0; s.el.style.visibility = "hidden"; return; }
+    s.el.style.visibility = "visible";
+    s.el.style.opacity = vis;
+    s.el.style.transform = `scale(${lerp(1.06, 1, inP) * lerp(1, .94, outP)})`;
+    s.el.style.filter = outP > 0 ? `blur(${outP * 14}px)` : inP < 1 ? `blur(${(1 - inP) * 14}px)` : "none";
+    ANIM[s.id](s.el, lt, s);
+    const vs = lt - TL.lead;
+    if (vs > -0.2 && vs < s.vo + 0.25) {
+      caption = s.text;
+      capAlpha = Math.min(seg(vs, -0.2, 0.25), 1 - seg(vs, s.vo, 0.25));
+    }
+  });
+  cap.textContent = caption;
+  cap.style.opacity = caption ? capAlpha : 0;
+  document.getElementById("progress").style.width = `${(t / window.__duration) * 100}%`;
+}
+window.__render = render;
+window.__captions = (on) => { cap.style.display = on ? "" : "none"; };
+
+build();
+render(0);
+
+/* preview: play in real time when opened directly (?still=SECONDS to freeze) */
+if (!navigator.webdriver) {
+  const fit = () => { const k = Math.min(innerWidth / 1920, innerHeight / 1080); document.getElementById("stage").style.transform = `scale(${k})`; };
+  addEventListener("resize", fit); fit();
+  const still = new URLSearchParams(location.search).get("still");
+  if (still) render(parseFloat(still));
+  else { const t0 = performance.now(); const tick = () => { render(((performance.now() - t0) / 1000) % window.__duration); requestAnimationFrame(tick); }; requestAnimationFrame(tick); }
+}
+</script>
+</body>
+</html>

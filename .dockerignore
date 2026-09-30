@@ -1,0 +1,16 @@
+.git
+data
+**/.env
+**/.env.local
+server/.venv
+**/__pycache__
+server/.pytest_cache
+server/.ruff_cache
+server/.mypy_cache
+server/.secrets
+server/.test_artifacts
+web/node_modules
+web/.next
+web/test-results
+web/playwright-report
+*.log

@@ -1,0 +1,148 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --color-bg: #0b0c10;
+  --color-panel: #12141a;
+  --color-panel-2: #171a22;
+  --color-line: #242833;
+  --color-line-2: #2f3441;
+  --color-ink: #e7e9ee;
+  --color-ink-2: #a4aab8;
+  --color-ink-3: #6b7282;
+  --color-accent: #8b7cff;
+  --color-accent-2: #6d5dfc;
+  --color-ok: #3ecf8e;
+  --color-warn: #f5b454;
+  --color-bad: #f2667a;
+  --color-info: #5cc8ff;
+}
+
+html,
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  color-scheme: dark;
+}
+
+/* Phones: fill the visible viewport (not behind the browser toolbars), and keep
+   form fields at 16px so iOS doesn't zoom in when one is focused. */
+@media (max-width: 767px) {
+  html,
+  body {
+    height: 100dvh;
+    overflow: hidden;
+  }
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2f3441 transparent;
+}
+
+::selection {
+  background: rgba(139, 124, 255, 0.35);
+}
+
+.prose-pantheon {
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.prose-pantheon p {
+  margin: 0.35em 0;
+}
+.prose-pantheon ul,
+.prose-pantheon ol {
+  padding-left: 1.25em;
+  margin: 0.35em 0;
+}
+.prose-pantheon ul {
+  list-style: disc;
+}
+.prose-pantheon ol {
+  list-style: decimal;
+}
+.prose-pantheon code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+.prose-pantheon pre {
+  background: #0e1016;
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  padding: 0.7em 0.85em;
+  overflow-x: auto;
+  margin: 0.5em 0;
+}
+.prose-pantheon pre code {
+  background: none;
+  padding: 0;
+}
+.prose-pantheon a {
+  color: var(--color-info);
+  text-decoration: underline;
+}
+.prose-pantheon h1,
+.prose-pantheon h2,
+.prose-pantheon h3 {
+  font-weight: 600;
+  margin: 0.6em 0 0.3em;
+}
+.prose-pantheon blockquote {
+  border-left: 3px solid var(--color-line-2);
+  padding-left: 0.75em;
+  color: var(--color-ink-2);
+}
+.prose-pantheon table {
+  border-collapse: collapse;
+  margin: 0.5em 0;
+}
+.prose-pantheon th,
+.prose-pantheon td {
+  border: 1px solid var(--color-line);
+  padding: 0.25em 0.5em;
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(139, 124, 255, 0.55);
+  }
+  100% {
+    box-shadow: 0 0 0 8px rgba(139, 124, 255, 0);
+  }
+}
+.pulse-ring {
+  animation: pulse-ring 1.4s ease-out infinite;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+

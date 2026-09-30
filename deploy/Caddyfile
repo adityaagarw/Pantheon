@@ -1,0 +1,24 @@
+# HTTPS front door for phones and other devices on your network.
+# Browsers only allow the microphone on HTTPS (or localhost), so live talk from
+# a phone needs this. Caddy issues certificates from its own local CA; accept
+# the warning once on each device (or install the root from data/caddy).
+{
+	auto_https disable_redirects
+	# Browsers send no SNI when you browse to a bare IP; answer those with this address's certificate.
+	default_sni {$PANTHEON_HTTPS_DEFAULT_SNI:localhost}
+}
+
+{$PANTHEON_HTTPS_SITES:https://localhost:3711} {
+	tls internal
+	# REST, event stream and live voice go straight to the backend (WebSockets included).
+	handle /api/* {
+		reverse_proxy backend:8710
+	}
+	# Live view of the computer-use desktop (noVNC), when it's running.
+	handle_path /desktop/* {
+		reverse_proxy desktop:6901
+	}
+	handle {
+		reverse_proxy frontend:3710
+	}
+}

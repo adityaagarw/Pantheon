@@ -1,0 +1,42 @@
+# python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# node
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+web/test-results/
+web/playwright-report/
+
+# env & secrets
+.env
+.secrets/
+*.key
+
+# runtime data
+artifacts/
+*.db
+/data/
+.test_artifacts/
+**/.test_artifacts/
+
+# os
+.DS_Store
+Thumbs.db
+
+# local isolated checkouts
+.worktrees/
+
+# copied from node_modules on install
+web/public/excalidraw/

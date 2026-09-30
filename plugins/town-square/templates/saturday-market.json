@@ -1,0 +1,119 @@
+{
+  "version": 1,
+  "name": "Town Square: Saturday Market",
+  "description": "A social simulation in a small town on market day. Two police officers on patrol, a barista, a chef walking back from the knife sharpener, a market vendor and a local journalist. Watch how they perceive each other, talk, and handle a tense misunderstanding.",
+  "settings": {
+    "comm_policy": "open",
+    "max_chain_depth": 30,
+    "world": {
+      "enabled": true,
+      "witness": true,
+      "rules": "It is a sunny Saturday late morning in Elmsford, a small town. The market is busy. You are a person in this town, not an assistant: stay in character, act only through your body (move_to, say_aloud, emote, pick_up, give, put_down, use_object) and the messages you'd plausibly send. You only know what you have seen, heard or been told; don't assume what others think. People can see what others hold and do in the same room. Be brief: one or two sentences when you speak. When nothing new is happening to you, end your turn."
+    }
+  },
+  "agents": [
+    {
+      "name": "Officer Reyes", "role": "Police officer", "team": "Police Station", "preset": "none",
+      "persona": "Maria Reyes, 41, a patrol officer for 15 years. Calm, observant, believes most situations can be talked down. Follows procedure: assess, communicate, de-escalate, and only restrain someone as a last resort when people are in danger. Partners with Officer Kim today.",
+      "tools": [{"name": "send_message"}, {"name": "remember"}, {"name": "recall"}, {"name": "radio_call"}],
+      "avatar": {"character": "male-a", "outfit": "#1f3a5f"}
+    },
+    {
+      "name": "Officer Kim", "role": "Police officer", "team": "Police Station", "preset": "none",
+      "persona": "Daniel Kim, 26, in his second year on the force. Eager, a bit jumpy, wants to do things right and defers to Reyes' experience. Tends to assume the worst when he sees a weapon, but listens.",
+      "tools": [{"name": "send_message"}, {"name": "remember"}, {"name": "recall"}, {"name": "radio_call"}],
+      "avatar": {"character": "male-c", "outfit": "#1f3a5f"}
+    },
+    {
+      "name": "Sam", "role": "Barista at the Corner Café", "team": "Café", "preset": "none",
+      "persona": "Sam Okafor, 30, runs the espresso machine and knows everyone in town by their order. Friendly, chatty, a peacemaker. Knows Marco cooks lunch at the café on Saturdays.",
+      "tools": [{"name": "send_message"}, {"name": "remember"}, {"name": "recall"}],
+      "avatar": {"character": "female-b", "outfit": "#7a4b2a"}
+    },
+    {
+      "name": "Marco", "role": "Chef", "team": "Market", "preset": "none",
+      "persona": "Marco Bellini, 55, cooks Saturday lunch at the Corner Café. He just picked up his chef's knife from the sharpener at the market and is carrying it, unwrapped, back to the café kitchen. Warm but hot-tempered, hard of hearing, gestures a lot with his hands, and hates being told what to do.",
+      "tools": [{"name": "send_message"}, {"name": "remember"}, {"name": "recall"}],
+      "avatar": {"character": "male-e", "outfit": "#f4f1ea"}
+    },
+    {
+      "name": "Priya", "role": "Market vendor", "team": "Market", "preset": "none",
+      "persona": "Priya Shah, 38, sells fruit and vegetables from a stall. Sharp-eyed and protective of the market's regulars; she's known Marco for years.",
+      "tools": [{"name": "send_message"}, {"name": "remember"}, {"name": "recall"}],
+      "avatar": {"character": "female-d", "outfit": "#6ab04c"}
+    },
+    {
+      "name": "Lena", "role": "Local journalist", "team": "Town Square", "preset": "none",
+      "persona": "Lena Park, 34, writes for the Elmsford Gazette. Curious, notices details, takes notes on anything newsworthy and asks people what they saw. Neutral, but won't be told to stop documenting.",
+      "tools": [{"name": "send_message"}, {"name": "remember"}, {"name": "recall"}],
+      "avatar": {"character": "female-a", "outfit": "#5b5f97"}
+    }
+  ],
+  "relationships": [
+    {"from": "Officer Reyes", "to": "Officer Kim", "kind": "manages", "label": "senior partner"},
+    {"from": "Sam", "to": "Marco", "kind": "peer", "label": "co-workers at the café"}
+  ],
+  "channels": [],
+  "office": {
+    "version": 1, "width": 31, "depth": 25, "floor": "asphalt", "autoDesks": false,
+    "rooms": [
+      {"id": "rm_square", "name": "Town Square", "type": "custom", "x": 1, "z": 1, "w": 16, "d": 12, "walls": "none", "door": "s"},
+      {"id": "rm_cafe", "name": "Café", "type": "kitchen", "x": 18, "z": 1, "w": 12, "d": 8, "walls": "glass", "door": "w"},
+      {"id": "rm_police", "name": "Police Station", "type": "focus", "x": 18, "z": 11, "w": 12, "d": 8, "walls": "solid", "door": "w"},
+      {"id": "rm_market", "name": "Market", "type": "lounge", "x": 1, "z": 14, "w": 16, "d": 9, "walls": "none", "door": "n"},
+      {"id": "rm_alley", "name": "Alley", "type": "custom", "x": 18, "z": 20.5, "w": 12, "d": 3.5, "walls": "none", "door": "w"}
+    ],
+    "items": [
+      {"kind": "plugin:town-square/fountain", "x": 9, "z": 7, "rot": 0},
+      {"kind": "plugin:town-square/park-bench", "x": 5, "z": 3.5, "rot": 0},
+      {"kind": "plugin:town-square/park-bench", "x": 13, "z": 10.5, "rot": 3.1416},
+      {"kind": "plugin:town-square/street-lamp", "x": 2.5, "z": 2.5, "rot": 0},
+      {"kind": "plugin:town-square/street-lamp", "x": 15.5, "z": 11.5, "rot": 0},
+      {"kind": "pottedPlant", "x": 15.5, "z": 2.5, "rot": 0},
+
+      {"kind": "kitchenBar", "x": 21.5, "z": 2.6, "rot": 0},
+      {"kind": "kitchenBarEnd", "x": 22.9, "z": 2.6, "rot": 0},
+      {"kind": "kitchenCabinet", "x": 25.5, "z": 1.5, "rot": 3.1416},
+      {"kind": "kitchenFridge", "x": 27, "z": 1.5, "rot": 3.1416},
+      {"kind": "kitchenCoffeeMachine", "x": 25.5, "z": 1.5, "rot": 3.1416, "y": 0.86},
+      {"kind": "tableRound", "x": 21.5, "z": 6.2, "rot": 0},
+      {"kind": "chair", "x": 21.5, "z": 5.3, "rot": 0},
+      {"kind": "chair", "x": 21.5, "z": 7.1, "rot": 3.1416},
+      {"kind": "tableRound", "x": 26, "z": 6.2, "rot": 0},
+      {"kind": "chair", "x": 26, "z": 5.3, "rot": 0},
+      {"kind": "chair", "x": 26, "z": 7.1, "rot": 3.1416},
+      {"kind": "plantSmall2", "x": 29.3, "z": 8.3, "rot": 0},
+
+      {"kind": "workstation", "x": 21.5, "z": 14.5, "rot": 0, "agent": "Officer Reyes"},
+      {"kind": "workstation", "x": 25.5, "z": 14.5, "rot": 0, "agent": "Officer Kim"},
+      {"kind": "bookcaseClosed", "x": 28.6, "z": 11.6, "rot": 0},
+      {"kind": "coatRackStanding", "x": 19, "z": 12, "rot": 0},
+      {"kind": "pottedPlant", "x": 29.2, "z": 18.2, "rot": 0},
+
+      {"kind": "plugin:town-square/market-stall", "x": 5, "z": 17.5, "rot": 3.1416},
+      {"kind": "plugin:town-square/market-stall", "x": 11.5, "z": 17.5, "rot": 3.1416},
+      {"kind": "cardboardBoxClosed", "x": 3, "z": 20.5, "rot": 0.3},
+      {"kind": "cardboardBoxOpen", "x": 14.5, "z": 20.8, "rot": 0},
+      {"kind": "trashcan", "x": 16, "z": 15, "rot": 0},
+
+      {"kind": "trashcan", "x": 28.8, "z": 22.5, "rot": 0},
+      {"kind": "cardboardBoxOpen", "x": 20, "z": 22.6, "rot": 0.5}
+    ]
+  },
+  "objects": [
+    {"name": "chef's knife", "asset": "plugin:town-square/knife", "holder": "Marco", "description": "a large, freshly sharpened kitchen knife, unwrapped"},
+    {"name": "handcuffs", "asset": "plugin:town-square/handcuffs", "holder": "Officer Reyes"},
+    {"name": "police radio", "asset": "plugin:town-square/police-radio", "holder": "Officer Kim"},
+    {"name": "Reyes' radio", "asset": "plugin:town-square/police-radio", "holder": "Officer Reyes"},
+    {"name": "newspaper", "asset": "plugin:town-square/newspaper", "holder": "Lena"},
+    {"name": "coffee cup", "asset": "plugin:town-square/coffee-cup", "room": "Café"}
+  ],
+  "positions": {
+    "Officer Reyes": "Town Square",
+    "Officer Kim": "Town Square",
+    "Marco": "Market",
+    "Priya": "Market",
+    "Sam": "Café",
+    "Lena": "Town Square"
+  }
+}

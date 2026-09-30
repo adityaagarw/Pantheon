@@ -1,0 +1,8 @@
+3D assets used by the Pantheon office — all CC0 1.0 (public domain):
+
+- models/people/*    "Mini Characters" by Kenney (www.kenney.nl)
+- models/furniture/* "Furniture Kit" by Kenney (www.kenney.nl)
+- thumbs/*           previews from the same Kenney kits
+- models/robot.glb   "RobotExpressive" by Tomás Laulhé (Quaternius), modified by Don McCurdy
+
+https://creativecommons.org/publicdomain/zero/1.0/

@@ -1,0 +1,117 @@
+# Pantheon: docker compose up --build -d
+#
+# Host folders:
+#   ./data                   Pantheon's own data (encryption key, logs)
+#   PANTHEON_WORKSPACES      the host folder your agents work in (default ./data/workspaces)
+#                            -> mounted at /workspaces inside the backend
+#
+# Optional settings go in a .env file next to this one (see .env.example):
+#   PANTHEON_VOICE_SHARE_HOST_DIR  absolute host path of ./data/voice, so audio.cpp
+#                                  (on the host) can read clips for voice detection
+#   PANTHEON_HTTPS_SITES           addresses the HTTPS proxy answers on (port 3711)
+#   PANTHEON_HTTPS_DEFAULT_SNI     the LAN IP phones will open (IPs carry no SNI)
+#   POSTGRES_* / PANTHEON_*_PORT   database credentials and published host ports
+services:
+  postgres:
+    # Debian-based Postgres 16 (keep glibc collations stable for existing data).
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-pantheon}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pantheon}
+      POSTGRES_DB: ${POSTGRES_DB:-pantheon}
+    ports:
+      - "${PANTHEON_DB_BIND:-127.0.0.1}:${PANTHEON_DB_PORT:-5433}:5432"
+    restart: unless-stopped
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    environment:
+      PANTHEON_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-pantheon}:${POSTGRES_PASSWORD:-pantheon}@postgres:5432/${POSTGRES_DB:-pantheon}
+      PANTHEON_WORKSPACE_ROOTS: /workspaces
+      PANTHEON_VOICE_BASE_URL: ${PANTHEON_VOICE_BASE_URL:-http://host.docker.internal:8080}
+      PANTHEON_CORS_ORIGINS: ${PANTHEON_CORS_ORIGINS:-http://localhost:${PANTHEON_WEB_PORT:-3710},http://127.0.0.1:${PANTHEON_WEB_PORT:-3710}}
+      # Live talk: clips are written here and audio.cpp reads them via the host path.
+      PANTHEON_VOICE_SHARE_DIR: /data/voice
+      PANTHEON_VOICE_SHARE_HOST_DIR: ${PANTHEON_VOICE_SHARE_HOST_DIR:-}
+      # Plugins (./plugins on the host): scenarios, 3D assets, tools and object behaviours.
+      PANTHEON_PLUGINS_DIR: /plugins
+      # Computer use: the cua computer-server in the sandbox desktop (profile "computer").
+      PANTHEON_COMPUTER_URL: ${PANTHEON_COMPUTER_URL:-http://desktop:8000}
+      # The backend's own browser opens Stage pages here to check they render.
+      PANTHEON_STAGE_BASE_URL: http://127.0.0.1:8710
+    ports:
+      - "${PANTHEON_BACKEND_PORT:-8710}:8710"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    volumes:
+      - ./data:/data
+      - ${PANTHEON_WORKSPACES:-./data/workspaces}:/workspaces
+      - ./plugins:/plugins
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8710/api/v1/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 20s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+      args:
+        NEXT_PUBLIC_PANTHEON_BACKEND_PORT: ${PANTHEON_BACKEND_PORT:-8710}
+        NEXT_PUBLIC_PANTHEON_WEB_PORT: ${PANTHEON_WEB_PORT:-3710}
+        NEXT_PUBLIC_PANTHEON_DESKTOP_PORT: ${PANTHEON_DESKTOP_PORT:-6901}
+    ports:
+      - "${PANTHEON_WEB_PORT:-3710}:3710"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # A sandboxed Linux desktop agents can operate (computer use), via cua
+  # (github.com/trycua/cua). Optional: docker compose --profile computer up -d
+  # Watch / take over in Pantheon → an org → Stage → Computer.
+  desktop:
+    image: trycua/cua-xfce:latest
+    profiles: ["computer"]
+    shm_size: 1gb
+    environment:
+      VNC_RESOLUTION: ${PANTHEON_DESKTOP_RESOLUTION:-1280x720}
+    volumes:
+      - ./deploy/cua/start-computer-server.sh:/usr/local/bin/start-computer-server.sh:ro
+    ports:
+      - "127.0.0.1:${PANTHEON_DESKTOP_PORT:-6901}:6901"   # noVNC (live view); on this machine only
+      - "127.0.0.1:${PANTHEON_COMPUTER_PORT:-8711}:8000"   # computer-server API, for a backend running outside Docker
+    restart: unless-stopped
+
+  # HTTPS for phones/tablets (the microphone needs a secure page): https://<this-pc>:3711
+  https:
+    image: caddy:2.8-alpine
+    ports:
+      - "${PANTHEON_HTTPS_PORT:-3711}:3711"
+    environment:
+      PANTHEON_HTTPS_SITES: ${PANTHEON_HTTPS_SITES:-https://localhost:3711}
+      PANTHEON_HTTPS_DEFAULT_SNI: ${PANTHEON_HTTPS_DEFAULT_SNI:-localhost}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./data/caddy:/data
+    depends_on:
+      - frontend
+    restart: unless-stopped
+
+volumes:
+  pgdata:

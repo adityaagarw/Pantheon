@@ -1,0 +1,42 @@
+{
+  "voice": "alba",
+  "scenes": [
+    {
+      "id": "hook",
+      "vo": "What if your AI agents worked like a real team... one you could actually see?"
+    },
+    {
+      "id": "meet",
+      "vo": "Meet Pantheon. An open-source office for AI agents."
+    },
+    {
+      "id": "office",
+      "vo": "Every agent is a character in a live 3D world. You can see who's thinking, who's working, and who's talking to whom."
+    },
+    {
+      "id": "board",
+      "vo": "They plan the work, hand out tasks, and review each other, on a real board."
+    },
+    {
+      "id": "zeus",
+      "vo": "Just describe a goal. Zeus, the built-in supervisor, designs the whole team for you."
+    },
+    {
+      "id": "stage",
+      "vo": "They can even teach you, with animations, a shared whiteboard, and their own voices."
+    },
+    {
+      "id": "trace",
+      "vo": "And every prompt, every tool call, every decision is on the record. So you can trust what they did."
+    },
+    {
+      "id": "models",
+      "vo": "It runs on your own machine, with any model. Local or cloud."
+    },
+    {
+      "id": "cta",
+      "vo": "Pantheon. Free and open source. Try it today."
+    }
+  ],
+  "url": "github.com/adityaagarw/Pantheon"
+}

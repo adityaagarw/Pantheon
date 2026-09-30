@@ -1,0 +1,84 @@
+{
+  "id": "town-square",
+  "name": "Town Square",
+  "version": "0.1.0",
+  "description": "A small town for social simulations: a square, a café, a market and a police station, with props people can carry and use (and police radios and handcuffs that actually do something).",
+  "templates": ["templates/*.json"],
+  "module": "plugin.py",
+  "assets": [
+    {
+      "id": "park-bench", "label": "Park bench", "category": "Seating",
+      "parts": [
+        {"shape": "box", "size": [1.6, 0.06, 0.42], "pos": [0, 0.45, 0], "color": "#8a5a3b"},
+        {"shape": "box", "size": [1.6, 0.36, 0.05], "pos": [0, 0.7, -0.2], "rot": [-0.15, 0, 0], "color": "#8a5a3b"},
+        {"shape": "box", "size": [0.06, 0.45, 0.4], "pos": [-0.72, 0.22, 0], "color": "#2f3338"},
+        {"shape": "box", "size": [0.06, 0.45, 0.4], "pos": [0.72, 0.22, 0], "color": "#2f3338"}
+      ]
+    },
+    {
+      "id": "street-lamp", "label": "Street lamp", "category": "Decor",
+      "parts": [
+        {"shape": "cylinder", "size": [0.12, 3.2, 0.12], "pos": [0, 1.6, 0], "color": "#2f3338"},
+        {"shape": "cylinder", "size": [0.34, 0.08, 0.34], "pos": [0, 0.04, 0], "color": "#2f3338"},
+        {"shape": "sphere", "size": [0.36, 0.36, 0.36], "pos": [0, 3.3, 0], "color": "#fff1c1"}
+      ]
+    },
+    {
+      "id": "market-stall", "label": "Market stall", "category": "Tables",
+      "parts": [
+        {"shape": "box", "size": [2.0, 0.08, 0.9], "pos": [0, 0.9, 0], "color": "#b08457"},
+        {"shape": "box", "size": [2.0, 0.86, 0.06], "pos": [0, 0.45, 0.42], "color": "#9a7049"},
+        {"shape": "cylinder", "size": [0.06, 2.2, 0.06], "pos": [-0.95, 1.1, -0.4], "color": "#6d4c33"},
+        {"shape": "cylinder", "size": [0.06, 2.2, 0.06], "pos": [0.95, 1.1, -0.4], "color": "#6d4c33"},
+        {"shape": "cylinder", "size": [0.06, 2.2, 0.06], "pos": [-0.95, 1.1, 0.4], "color": "#6d4c33"},
+        {"shape": "cylinder", "size": [0.06, 2.2, 0.06], "pos": [0.95, 1.1, 0.4], "color": "#6d4c33"},
+        {"shape": "box", "size": [2.2, 0.06, 1.1], "pos": [0, 2.22, 0], "rot": [0.12, 0, 0], "color": "#d9534f"},
+        {"shape": "sphere", "size": [0.14, 0.14, 0.14], "pos": [-0.5, 1.0, 0], "color": "#e94f37"},
+        {"shape": "sphere", "size": [0.14, 0.14, 0.14], "pos": [-0.3, 1.0, 0.1], "color": "#f5b454"},
+        {"shape": "sphere", "size": [0.14, 0.14, 0.14], "pos": [0.4, 1.0, -0.05], "color": "#6ab04c"}
+      ]
+    },
+    {
+      "id": "fountain", "label": "Fountain", "category": "Decor",
+      "parts": [
+        {"shape": "cylinder", "size": [2.6, 0.5, 2.6], "pos": [0, 0.25, 0], "color": "#b9b4aa"},
+        {"shape": "cylinder", "size": [2.3, 0.06, 2.3], "pos": [0, 0.47, 0], "color": "#6fb7d9"},
+        {"shape": "cylinder", "size": [0.3, 1.2, 0.3], "pos": [0, 0.9, 0], "color": "#b9b4aa"},
+        {"shape": "cylinder", "size": [0.9, 0.12, 0.9], "pos": [0, 1.5, 0], "color": "#b9b4aa"}
+      ]
+    },
+    {
+      "id": "knife", "label": "Kitchen knife", "category": "Props", "carryable": true,
+      "description": "A chef's knife",
+      "parts": [
+        {"shape": "box", "size": [0.03, 0.02, 0.12], "pos": [0, 0.01, -0.07], "color": "#3b2a20"},
+        {"shape": "box", "size": [0.035, 0.005, 0.2], "pos": [0, 0.012, 0.09], "color": "#d6dbe0"}
+      ]
+    },
+    {
+      "id": "handcuffs", "label": "Handcuffs", "category": "Props", "carryable": true,
+      "parts": [
+        {"shape": "cylinder", "size": [0.08, 0.015, 0.08], "pos": [-0.05, 0.01, 0], "color": "#a8adb3"},
+        {"shape": "cylinder", "size": [0.08, 0.015, 0.08], "pos": [0.05, 0.01, 0], "color": "#a8adb3"}
+      ]
+    },
+    {
+      "id": "police-radio", "label": "Police radio", "category": "Props", "carryable": true,
+      "parts": [
+        {"shape": "box", "size": [0.06, 0.13, 0.03], "pos": [0, 0.065, 0], "color": "#1f2327"},
+        {"shape": "cylinder", "size": [0.01, 0.08, 0.01], "pos": [0.02, 0.17, 0], "color": "#1f2327"}
+      ]
+    },
+    {
+      "id": "coffee-cup", "label": "Coffee cup", "category": "Props", "carryable": true,
+      "parts": [
+        {"shape": "cylinder", "size": [0.08, 0.1, 0.08], "pos": [0, 0.05, 0], "color": "#f4f1ea"},
+        {"shape": "cylinder", "size": [0.07, 0.01, 0.07], "pos": [0, 0.1, 0], "color": "#5b3a26"}
+      ]
+    },
+    {
+      "id": "newspaper", "label": "Newspaper", "category": "Props", "carryable": true,
+      "parts": [{"shape": "box", "size": [0.3, 0.02, 0.22], "pos": [0, 0.01, 0], "color": "#e8e4d8"}]
+    }
+  ]
+}

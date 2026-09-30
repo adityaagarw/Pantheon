@@ -1,0 +1,35 @@
+1
+00:00:00,350 --> 00:00:04,110
+What if your AI agents worked like a real team... one you could actually see?
+
+2
+00:00:05,110 --> 00:00:08,630
+Meet Pantheon. An open-source office for AI agents.
+
+3
+00:00:09,630 --> 00:00:16,270
+Every agent is a character in a live 3D world. You can see who's thinking, who's working, and who's talking to whom.
+
+4
+00:00:17,270 --> 00:00:21,990
+They plan the work, hand out tasks, and review each other, on a real board.
+
+5
+00:00:22,990 --> 00:00:28,110
+Just describe a goal. Zeus, the built-in supervisor, designs the whole team for you.
+
+6
+00:00:29,110 --> 00:00:34,470
+They can even teach you, with animations, a shared whiteboard, and their own voices.
+
+7
+00:00:35,470 --> 00:00:40,670
+And every prompt, every tool call, every decision is on the record. So you can trust what they did.
+
+8
+00:00:41,670 --> 00:00:45,750
+It runs on your own machine, with any model. Local or cloud.
+
+9
+00:00:46,750 --> 00:00:49,950
+Pantheon. Free and open source. Try it today.
