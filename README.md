@@ -26,6 +26,14 @@ Ollama, vLLM, llama.cpp or LM Studio.
 
 ---
 
+> [!WARNING]
+> **Pantheon is early software. Expect bugs, and use it at your own risk.** Agents can run shell
+> commands, edit files in the workspace you give them, browse the web and spend tokens on your API keys.
+> Start with a folder you can afford to lose, keep risky tools on *ask* so you approve each call, set a
+> daily token budget, and don't expose Pantheon to the internet: it has no login. It comes with no
+> warranty (see the [license](LICENSE)). Found a bug? Please
+> [open an issue](https://github.com/adityaagarw/Pantheon/issues).
+
 ## Why Pantheon?
 
 Most multi-agent frameworks are a black box: you start a script, wait, and read a log. Pantheon treats
@@ -50,9 +58,21 @@ or a local server such as [Ollama](https://ollama.com).
 ```bash
 git clone https://github.com/adityaagarw/Pantheon.git
 cd Pantheon
-cp .env.example .env        # optional: every setting has a default
+cp .env.example .env        # then edit it: see below
 docker compose up --build -d
 ```
+
+**Edit `.env` before the first start.** Every setting has a working default, so you can skip this to
+try Pantheon on one machine, but these are worth setting:
+
+| Setting | Why |
+|---|---|
+| `POSTGRES_PASSWORD` | Choose your own. Postgres keeps the password it was first started with, so changing it later means starting with a fresh database volume. |
+| `PANTHEON_WORKSPACES` | The folder on your machine that agents work in. The default is `./data/workspaces`. |
+| `PANTHEON_HTTPS_SITES` and `PANTHEON_HTTPS_DEFAULT_SNI` | Only if you'll open Pantheon from a phone or another computer: list `https://<this machine's IP>:3711` and set the default to that IP. See [Phones and other devices](#phones-and-other-devices). |
+| `PANTHEON_VOICE_SHARE_HOST_DIR` | Only for live talk with a local audio.cpp server. See [Voice](#voice). |
+
+After changing `.env`, apply it with `docker compose up -d` (add `--build` if you changed a port).
 
 Then open **http://localhost:3710**.
 
@@ -282,7 +302,17 @@ org → *Stage* → *Computer*.
 Browsers only allow the microphone on HTTPS pages, so the stack includes a Caddy proxy on
 **https://&lt;this-pc&gt;:3711** with a locally issued certificate (accept the warning once per device).
 List the addresses you'll use in `PANTHEON_HTTPS_SITES` and set `PANTHEON_HTTPS_DEFAULT_SNI` to the LAN
-IP your phone opens.
+IP your phone opens. Use the address of the network the phone is on: a machine on both ethernet and
+Wi-Fi has two (`ip addr` on Linux, `ipconfig` on Windows). For example:
+
+```bash
+# .env
+PANTHEON_HTTPS_SITES=https://localhost:3711, https://192.168.1.20:3711
+PANTHEON_HTTPS_DEFAULT_SNI=192.168.1.20
+```
+
+Then `docker compose up -d --force-recreate https`. Open `http://<ip>:3710` from another device and most
+things work, but the microphone and the live view of the sandbox desktop need the HTTPS address.
 
 ### Teaching sessions
 
