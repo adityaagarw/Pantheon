@@ -2,6 +2,18 @@
   "voice": "alba",
   "scenes": [
     {
+      "id": "live1",
+      "vo": "This is an office. And everyone in it is an AI agent.",
+      "hold": 6.0,
+      "caption": false
+    },
+    {
+      "id": "live2",
+      "vo": "Right now, they're walking into their daily standup.",
+      "hold": 5.8,
+      "caption": false
+    },
+    {
       "id": "hook",
       "vo": "What if your AI agents worked like a real team... one you could actually see?"
     },

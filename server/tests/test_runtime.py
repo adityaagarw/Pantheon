@@ -132,6 +132,21 @@ async def test_parallel_tool_calls_all_answered(app_client):
     assert len(tool_msgs) == 3
 
 
+async def test_binary_tool_output_does_not_break_the_agent(app_client):
+    # Postgres text can't hold NUL bytes; `cat` on a binary file used to park the agent.
+    org = await make_org(app_client)
+    a = await make_agent(app_client, org["id"], "Bin")
+    prompts = script(a["id"], call("write_file", path="blob.bin", content="head\x00\x00tail"),
+                     call("read_file", path="blob.bin"), say("read it"))
+    await dm(app_client, org["id"], "Bin", "go")
+    await wait_for(lambda: _turn_done(a["id"]), msg="turn")
+    out = [str(m.content) for m in prompts[2] if m.type == "tool"][-1]
+    assert "headtail" in out and "\x00" not in out
+    assert (await _agent(a["id"])).runtime_status != "error"
+    stored = await rows(ToolCall, ToolCall.agent_id == a["id"], ToolCall.name == "read_file")
+    assert stored[0].status == "ok" and "headtail" in stored[0].result
+
+
 async def test_approval_flow_approve_and_deny(app_client, workspace_root):
     org = await make_org(app_client)
     a = await make_agent(app_client, org["id"], "Ops")  # run_command defaults to "ask"

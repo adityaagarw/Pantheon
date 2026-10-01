@@ -12,7 +12,7 @@ trace of every prompt, tool call and decision.
 Runs on your own machine with any model: OpenAI, Anthropic, OpenRouter, or local models through
 Ollama, vLLM, llama.cpp or LM Studio.
 
-[**▶ Watch the 50-second tour**](docs/explainer/pantheon-explainer.mp4) ·
+[**▶ Watch the 1-minute tour**](docs/explainer/pantheon-explainer.mp4) ·
 [Quick start](#quick-start) ·
 [Tour](#a-tour-of-pantheon) ·
 [Guides](#guides) ·

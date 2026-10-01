@@ -129,6 +129,22 @@
   }
   .cmd em { color: var(--muted); font-style: normal; }
 
+  /* live footage */
+  .footage { position: absolute; inset: 0; overflow: hidden; background: #000; }
+  .footage video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; will-change: transform; }
+  .footage .shade { position: absolute; inset: 0; background:
+      linear-gradient(180deg, rgba(8,8,16,.82) 0%, rgba(8,8,16,.3) 34%, rgba(8,8,16,0) 55%, rgba(8,8,16,.35) 100%); }
+  .ovl { position: absolute; left: 96px; top: 84px; right: 96px; display: flex; flex-direction: column; gap: 10px;
+    text-shadow: 0 6px 30px rgba(0,0,0,.55); }
+  .ovl .h { font-size: 104px; }
+  /* Over bright footage a solid highlight reads better than gradient text. */
+  .ovl .grad { background: var(--accent); -webkit-background-clip: border-box; background-clip: border-box;
+    color: #fff; padding: 0 .16em .04em; border-radius: .14em; text-shadow: none; }
+  .livebadge { position: absolute; right: 64px; top: 64px; display: flex; align-items: center; gap: 12px;
+    padding: 12px 22px; border-radius: 999px; background: rgba(12,12,20,.72); backdrop-filter: blur(6px);
+    box-shadow: 0 0 0 1px rgba(255,255,255,.14); font: 700 22px "JetBrains Mono", monospace; letter-spacing: .12em; }
+  .livebadge b { width: 14px; height: 14px; border-radius: 50%; background: #ff4d5e; display: block; box-shadow: 0 0 18px #ff4d5e; }
+
   /* captions */
   #cap {
     position: absolute; left: 50%; bottom: 46px; transform: translateX(-50%);
@@ -143,6 +159,24 @@
 <div id="stage">
   <div class="bg" id="bg"></div>
   <div class="grid"></div>
+
+  <!-- 0. live footage from the office -->
+  <section class="scene" id="s-live1">
+    <div class="footage"><video src="footage/desks.webm" muted preload="auto" playsinline></video><div class="shade"></div></div>
+    <div class="ovl">
+      <div class="h" data-words data-delay="0.3">This is an office.</div>
+      <div class="h" data-words data-delay="1.5">Everyone in it is an <span class="grad">AI agent.</span></div>
+    </div>
+    <div class="livebadge" data-pop data-delay="0.2"><b></b>LIVE · REAL AGENTS AT WORK</div>
+  </section>
+  <section class="scene" id="s-live2">
+    <div class="footage"><video src="footage/meeting.webm" muted preload="auto" playsinline></video><div class="shade"></div></div>
+    <div class="ovl">
+      <div class="h" data-words data-delay="0.3">Right now,</div>
+      <div class="h" data-words data-delay="0.8">they're walking into <span class="grad">standup.</span></div>
+    </div>
+    <div class="livebadge"><b></b>LIVE · REAL AGENTS AT WORK</div>
+  </section>
 
   <!-- 1. hook -->
   <section class="scene" id="s-hook">
@@ -270,6 +304,8 @@
 let TL = {
   lead: 0.35, tail: 0.65, end: 2.2,
   scenes: [
+    ["live1", 3.44, "This is an office. And everyone in it is an AI agent.", 6.0, false],
+    ["live2", 2.64, "Right now, they're walking into their daily standup.", 5.8, false],
     ["hook", 3.76, "What if your AI agents worked like a real team... one you could actually see?"],
     ["meet", 3.52, "Meet Pantheon. An open-source office for AI agents."],
     ["office", 6.64, "Every agent is a character in a live 3D world. You can see who's thinking, who's working, and who's talking to whom."],
@@ -284,9 +320,9 @@ let TL = {
 let plan = [];
 function build() {
   let t = 0;
-  plan = TL.scenes.map(([id, vo, text], i) => {
-    const dur = TL.lead + vo + TL.tail + (i === TL.scenes.length - 1 ? TL.end : 0);
-    const s = { id, start: t, dur, vo, text, el: document.getElementById("s-" + id) };
+  plan = TL.scenes.map(([id, vo, text, hold = 0, caption = true], i) => {
+    const dur = Math.max(TL.lead + vo + TL.tail, hold) + (i === TL.scenes.length - 1 ? TL.end : 0);
+    const s = { id, start: t, dur, vo, text, caption, el: document.getElementById("s-" + id) };
     t += dur;
     return s;
   });
@@ -370,7 +406,30 @@ function windowIn(win, lt, dur, focus) {
   img.style.transform = `scale(${lerp(1, focus.zoom, k)})`;
 }
 
+/* Footage: each frame seeks its video to the scene's clock; render.py waits for the seek. */
+const seeking = [];
+function footage(el, lt, s, zoom, origin) {
+  const v = el.querySelector("video");
+  const target = Math.min(Math.max(lt, 0), (v.duration || 60) - 0.05);
+  if (Math.abs(v.currentTime - target) > 0.004) {
+    seeking.push(new Promise((r) => v.addEventListener("seeked", r, { once: true })));
+    v.currentTime = target;
+  }
+  v.style.transformOrigin = origin;
+  v.style.transform = `scale(${lerp(1.02, zoom, inOut(seg(lt, 0, s.dur)))})`;
+  words(el, lt);
+}
+window.__settle = () => Promise.all(seeking.splice(0));
+
 const ANIM = {
+  live1(el, lt, s) {
+    footage(el, lt, s, 1.14, "45% 55%");
+  },
+  live2(el, lt, s) {
+    footage(el, lt, s, 1.18, "40% 60%");
+    const badge = el.querySelector(".livebadge");
+    badge.style.opacity = 1;
+  },
   hook(el, lt) {
     const nodes = hookNodes.children;
     NODES.forEach(([, , x, y], i) => {
@@ -482,7 +541,7 @@ function render(t) {
     s.el.style.filter = outP > 0 ? `blur(${outP * 14}px)` : inP < 1 ? `blur(${(1 - inP) * 14}px)` : "none";
     ANIM[s.id](s.el, lt, s);
     const vs = lt - TL.lead;
-    if (vs > -0.2 && vs < s.vo + 0.25) {
+    if (s.caption && vs > -0.2 && vs < s.vo + 0.25) {
       caption = s.text;
       capAlpha = Math.min(seg(vs, -0.2, 0.25), 1 - seg(vs, s.vo, 0.25));
     }

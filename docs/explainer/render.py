@@ -57,7 +57,8 @@ async def main() -> None:
     script = json.loads((HERE / "script.json").read_text(encoding="utf-8"))
     if args.voice:
         synthesize(script, args.api)
-    scenes = [[sc["id"], duration(HERE / "vo" / f"{sc['id']}.wav"), sc["vo"]] for sc in script["scenes"]]
+    scenes = [[sc["id"], duration(HERE / "vo" / f"{sc['id']}.wav"), sc["vo"], sc.get("hold", 0),
+               sc.get("caption", True)] for sc in script["scenes"]]
 
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -65,6 +66,7 @@ async def main() -> None:
         await page.goto((HERE / "index.html").as_uri())
         await page.evaluate("document.fonts.ready")
         await page.wait_for_function("[...document.images].every(i => i.complete)")
+        await page.wait_for_function("[...document.querySelectorAll('video')].every(v => v.readyState >= 2)")
         await page.evaluate("(s) => window.__setup({scenes: s})", scenes)
         if script.get("url"):
             await page.evaluate("(u) => document.getElementById('cta-url').querySelector('.w').textContent = u",
@@ -92,6 +94,7 @@ async def main() -> None:
             stdin=subprocess.PIPE)
         for f in range(frames):
             await page.evaluate(f"window.__render({f / FPS})")
+            await page.evaluate("window.__settle()")  # video frames finish seeking
             ff.stdin.write(await page.screenshot(type="jpeg", quality=95))
             if f % (FPS * 5) == 0:
                 print(f"frame {f}/{frames}")

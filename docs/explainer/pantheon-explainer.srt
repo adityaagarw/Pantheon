@@ -1,35 +1,43 @@
 1
-00:00:00,350 --> 00:00:04,110
-What if your AI agents worked like a real team... one you could actually see?
+00:00:00,350 --> 00:00:03,790
+This is an office. And everyone in it is an AI agent.
 
 2
-00:00:05,110 --> 00:00:08,630
-Meet Pantheon. An open-source office for AI agents.
+00:00:06,350 --> 00:00:08,990
+Right now, they're walking into their daily standup.
 
 3
-00:00:09,630 --> 00:00:16,270
-Every agent is a character in a live 3D world. You can see who's thinking, who's working, and who's talking to whom.
+00:00:12,150 --> 00:00:15,910
+What if your AI agents worked like a real team... one you could actually see?
 
 4
-00:00:17,270 --> 00:00:21,990
-They plan the work, hand out tasks, and review each other, on a real board.
+00:00:16,910 --> 00:00:20,430
+Meet Pantheon. An open-source office for AI agents.
 
 5
-00:00:22,990 --> 00:00:28,110
-Just describe a goal. Zeus, the built-in supervisor, designs the whole team for you.
+00:00:21,430 --> 00:00:28,070
+Every agent is a character in a live 3D world. You can see who's thinking, who's working, and who's talking to whom.
 
 6
-00:00:29,110 --> 00:00:34,470
-They can even teach you, with animations, a shared whiteboard, and their own voices.
+00:00:29,070 --> 00:00:33,790
+They plan the work, hand out tasks, and review each other, on a real board.
 
 7
-00:00:35,470 --> 00:00:40,670
-And every prompt, every tool call, every decision is on the record. So you can trust what they did.
+00:00:34,790 --> 00:00:39,910
+Just describe a goal. Zeus, the built-in supervisor, designs the whole team for you.
 
 8
-00:00:41,670 --> 00:00:45,750
-It runs on your own machine, with any model. Local or cloud.
+00:00:40,910 --> 00:00:46,270
+They can even teach you, with animations, a shared whiteboard, and their own voices.
 
 9
-00:00:46,750 --> 00:00:49,950
+00:00:47,270 --> 00:00:52,470
+And every prompt, every tool call, every decision is on the record. So you can trust what they did.
+
+10
+00:00:53,470 --> 00:00:57,550
+It runs on your own machine, with any model. Local or cloud.
+
+11
+00:00:58,550 --> 00:01:01,750
 Pantheon. Free and open source. Try it today.

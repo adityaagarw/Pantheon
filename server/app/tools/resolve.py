@@ -130,7 +130,20 @@ async def resolve_tools(org: Org, agent: Agent) -> ResolvedTools:
 
 
 async def execute(tool: EffectiveTool, args: dict[str, Any], ctx: ToolContext) -> tuple[str, bool]:
-    """Run a tool; never raises. Returns (output, ok)."""
+    """Run a tool; never raises. Returns (output, ok) as text Postgres and models accept."""
+    out, ok = await _execute(tool, args, ctx)
+    return storable(out), ok
+
+
+def storable(text: str) -> str:
+    """Drop NUL bytes and invalid code points, e.g. from `cat` on a binary file."""
+    clean = text.replace("\x00", "").encode("utf-8", "replace").decode("utf-8")
+    if clean == text:
+        return text
+    return base.ToolOutput(clean, text.images) if isinstance(text, base.ToolOutput) else clean
+
+
+async def _execute(tool: EffectiveTool, args: dict[str, Any], ctx: ToolContext) -> tuple[str, bool]:
     if not isinstance(args, dict):
         return "ERROR: tool arguments must be a JSON object", False
     try:
