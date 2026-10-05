@@ -136,10 +136,16 @@ async def execute(tool: EffectiveTool, args: dict[str, Any], ctx: ToolContext) -
 
 
 def storable(text: str) -> str:
-    """Drop NUL bytes and invalid code points, e.g. from `cat` on a binary file."""
+    """Drop NUL bytes and invalid code points, e.g. from `cat` on a binary file, and say so."""
+    nuls = text.count("\x00")
     clean = text.replace("\x00", "").encode("utf-8", "replace").decode("utf-8")
     if clean == text:
         return text
+    fixed = sum(a != b for a, b in zip(clean, text.replace("\x00", ""), strict=False))
+    parts = [f"{nuls} NUL byte{'s' * (nuls != 1)} removed"] if nuls else []
+    if fixed:
+        parts.append(f"{fixed} invalid character{'s' * (fixed != 1)} replaced with '?'")
+    clean += f"\n[Pantheon: {' and '.join(parts)} so this output could be stored]"
     return base.ToolOutput(clean, text.images) if isinstance(text, base.ToolOutput) else clean
 
 

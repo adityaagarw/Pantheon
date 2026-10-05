@@ -16,7 +16,7 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents import signals
@@ -54,10 +54,11 @@ async def _turn_has_thinking(session: AsyncSession, turn_id: str) -> bool:
     """Did the model return any reasoning during this turn (so far)?"""
     from app.models import LlmCall
 
-    found = await session.scalar(select(LlmCall.id).where(
-        LlmCall.turn_id == turn_id, LlmCall.purpose == "turn",
-        func.length(func.coalesce(LlmCall.response["reasoning"].as_string(), "")) > 0).limit(1))
-    return found is not None
+    # Checked in Python: Postgres refuses to look inside a JSON value that holds an escaped
+    # NUL (e.g. tool-call args with binary content), which used to drop the agent's reply.
+    responses = (await session.scalars(select(LlmCall.response).where(
+        LlmCall.turn_id == turn_id, LlmCall.purpose == "turn"))).all()
+    return any(isinstance(r, dict) and r.get("reasoning") for r in responses)
 
 
 def dm_key(a: str, b: str) -> str:

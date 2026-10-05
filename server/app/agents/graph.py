@@ -347,6 +347,45 @@ def route_after_gate(state: AgentState) -> list[Send]:
     ]
 
 
+def _record_text(out: str) -> str:
+    cap = settings.tool_record_cap_chars
+    if len(out) <= cap:
+        return out
+    return out[:cap] + f"\n[Pantheon: record truncated, {cap:,} of {len(out):,} characters kept]"
+
+
+async def _record_tool_call(tc_id: str, org_id: str, agent_id: str, turn_id: str | None, name: str,
+                            args: dict[str, Any], status: str, out: str, duration: int) -> None:
+    """Save the finished call. A payload the database can't store degrades the record to a
+    visible placeholder; it never fails the turn (the agent already has the result)."""
+
+    async def write(result: str, stored_args: dict[str, Any]) -> None:
+        async with SessionLocal() as session:
+            row = await session.get(ToolCall, tc_id)
+            if row is None:
+                session.add(ToolCall(id=tc_id, org_id=org_id, agent_id=agent_id, turn_id=turn_id,
+                                     name=name, args=stored_args, status=status, result=result,
+                                     duration_ms=duration))
+            else:
+                row.status, row.result, row.duration_ms = status, result, duration
+                row.args = stored_args
+            await session.commit()
+
+    try:
+        await write(_record_text(out), args)
+        return
+    except Exception as e:  # noqa: BLE001
+        detail = str(e).splitlines()[0] if str(e) else type(e).__name__
+        problem = detail.split("'>: ", 1)[-1][:300]  # drop the driver's exception wrapper
+        log.warning("tool call %s (%s) could not be recorded: %s", tc_id, name, problem)
+    placeholder = (f"[Pantheon: this {name} result could not be stored ({problem}). "
+                   f"It was {len(out):,} characters; the agent received it in full.]")
+    try:
+        await write(placeholder, {"_unrecorded": True, "keys": sorted(map(str, args))})
+    except Exception:  # noqa: BLE001 - losing the record must not lose the turn
+        log.exception("tool call %s placeholder could not be recorded either", tc_id)
+
+
 async def tool_node(arg: dict[str, Any], config: RunnableConfig) -> dict:
     call = arg["call"]
     tc_id, name, args = call["id"], call["name"], call.get("args") or {}
@@ -391,16 +430,7 @@ async def tool_node(arg: dict[str, Any], config: RunnableConfig) -> dict:
         out, ok = await execute(t, args, ctx)
         status = "ok" if ok else "error"
     duration = int((time.monotonic() - started) * 1000)
-    record = out[: settings.tool_record_cap_chars]
-    async with SessionLocal() as session:
-        row = await session.get(ToolCall, tc_id)
-        if row is None:
-            session.add(ToolCall(id=tc_id, org_id=org.id, agent_id=agent.id, turn_id=turn_id,
-                                 name=name, args=args, status=status, result=record,
-                                 duration_ms=duration))
-        else:
-            row.status, row.result, row.duration_ms = status, record, duration
-        await session.commit()
+    await _record_tool_call(tc_id, org.id, agent.id, turn_id, name, args, status, out, duration)
     await bus.publish("tool.completed", {"toolCallId": tc_id, "tool": name, "status": status,
                                          "durationMs": duration, "preview": out[:600],
                                          "turnId": turn_id},
