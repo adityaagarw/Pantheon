@@ -326,7 +326,7 @@ async def create_agent(org_id: str, data: dict[str, Any]) -> Agent:
         if org.kind != "system":
             general = await _general(session, org_id)
             general.members = sorted({*general.members, agent.id})
-        restored = await _restore_channels(session, org, agent)
+        restored, restored_rels = await _restore_predecessor(session, org, agent)
         await session.commit()
     if agent.worktree:
         try:
@@ -339,24 +339,58 @@ async def create_agent(org_id: str, data: dict[str, Any]) -> Agent:
     await bus.publish("agent.created", agent_to_dict(agent), org_id=org_id, agent_id=agent.id)
     for ch in restored:
         await bus.publish("channel.updated", comms_channel_dict(ch), org_id=org_id)
-    agent.restored_channels = [ch.key for ch in restored]  # reported by Zeus's create_agent
+    for rel in restored_rels:
+        await bus.publish("relationship.changed", rel_to_dict(rel), org_id=org_id)
+    if agent.id in ((org.layout or {}).get("team") or {}):
+        await bus.publish("org.updated", org_to_dict(org), org_id=org_id)  # chart slot restored
+    # Reported by Zeus's create_agent.
+    agent.restored_channels = [ch.key for ch in restored]
+    agent.restored_relationships = len(restored_rels)
     return agent
 
 
-async def _restore_channels(session, org: Org, agent: Agent) -> list[Channel]:
-    """A recreated agent (same name as one deleted from this org) gets its channels back."""
-    former = dict((org.settings or {}).get("former_channels") or {})
-    ids = former.pop(agent.name.lower(), None)
-    if not ids:
-        return []
-    org.settings = {**(org.settings or {}), "former_channels": former}
+async def _restore_predecessor(session, org: Org, agent: Agent) -> tuple[list[Channel], list]:
+    """A recreated agent (same name as one deleted from this org) takes over its place:
+    channels, its spot on the org chart, and its reporting lines (issues #4 and #5)."""
+    former = dict((org.settings or {}).get("former_agents") or {})
+    record = former.pop(agent.name.lower(), None)
+    if not record:
+        return [], []
+    org.settings = {**(org.settings or {}), "former_agents": former}
+
     restored = []
+    ids = record.get("channels") or []
     for ch in (await session.execute(select(Channel).where(
             Channel.id.in_(ids), Channel.org_id == org.id))).scalars():
         if agent.id not in ch.members:
             ch.members = sorted({*ch.members, agent.id})
             restored.append(ch)
-    return restored
+
+    slot = record.get("slot")
+    if isinstance(slot, dict):
+        layout = dict(org.layout or {})
+        layout["team"] = {**dict(layout.get("team") or {}), agent.id: slot}
+        org.layout = layout
+
+    from app.services.comms import resolve_agent
+
+    rels = []
+    for r in record.get("relationships") or []:
+        other = await resolve_agent(session, org.id, r.get("other") or "") or \
+            await resolve_agent(session, org.id, r.get("otherName") or "")
+        if other is None or other.id == agent.id:
+            continue
+        a, b = (agent.id, other.id) if r.get("outgoing") else (other.id, agent.id)
+        exists = await session.scalar(select(func.count()).select_from(Relationship).where(
+            Relationship.org_id == org.id, Relationship.from_id == a, Relationship.to_id == b,
+            Relationship.kind == r.get("kind")))
+        if not exists and r.get("kind") in REL_KINDS:
+            rel = Relationship(org_id=org.id, from_id=a, to_id=b, kind=r["kind"],
+                               label=r.get("label") or "")
+            session.add(rel)
+            rels.append(rel)
+    await session.flush()
+    return restored, rels
 
 
 async def update_agent(agent_id: str, patch: dict[str, Any]) -> Agent:
@@ -426,6 +460,7 @@ async def delete_agent(agent_id: str) -> None:
 
     await files.delete_for_agent(agent_id)
     await tasks.reassign_from(org_id, agent_id)
+    slot_freed = False
     async with SessionLocal() as session:
         left: list[str] = []
         for ch in (await session.execute(select(Channel).where(
@@ -434,15 +469,36 @@ async def delete_agent(agent_id: str) -> None:
                 ch.members = [m for m in ch.members if m != agent_id]
                 if ch.kind == "channel":
                     left.append(ch.id)
-        # Remember its channels by name, so recreating the agent restores them (issue #5).
+        # Remember its place by name, so recreating the agent restores it (issues #4, #5):
+        # channels, its spot on the org chart, and its relationships (which cascade away).
         org = await session.get(Org, org_id)
-        if org is not None and left:
-            former = dict((org.settings or {}).get("former_channels") or {})
-            former[agent.name.lower()] = left
-            org.settings = {**(org.settings or {}), "former_channels": former}
+        if org is not None:
+            names = dict((await session.execute(select(Agent.id, Agent.name).where(
+                Agent.org_id == org_id))).all())
+            rels = []
+            for r in (await session.execute(select(Relationship).where(
+                    Relationship.org_id == org_id, (Relationship.from_id == agent_id)
+                    | (Relationship.to_id == agent_id)))).scalars():
+                outgoing = r.from_id == agent_id
+                other = r.to_id if outgoing else r.from_id
+                rels.append({"kind": r.kind, "label": r.label, "outgoing": outgoing,
+                             "other": other, "otherName": names.get(other, "")})
+            layout = dict(org.layout or {})
+            team = dict(layout.get("team") or {})
+            slot = team.pop(agent_id, None)
+            if slot is not None:
+                org.layout = {**layout, "team": team}
+                slot_freed = True
+            if left or rels or slot is not None:
+                former = dict((org.settings or {}).get("former_agents") or {})
+                former[agent.name.lower()] = {"channels": left, "slot": slot,
+                                              "relationships": rels}
+                org.settings = {**(org.settings or {}), "former_agents": former}
         await session.execute(delete(Agent).where(Agent.id == agent_id))
         await session.commit()
     await bus.publish("agent.deleted", {"id": agent_id}, org_id=org_id, agent_id=agent_id)
+    if slot_freed:
+        await bus.publish("org.updated", org_to_dict(org), org_id=org_id)
 
 
 # --- relationships -----------------------------------------------------------------------
@@ -517,8 +573,14 @@ async def snapshot(org_id: str) -> dict[str, Any]:
             McpServer.org_id == org_id))).scalars().all()
     from app.services.comms import channel_to_dict
 
+    org_dict = org_to_dict(org)
+    team = (org_dict["layout"] or {}).get("team")
+    if isinstance(team, dict):  # drop chart slots of deleted agents (issue #4)
+        live = {a.id for a in agents}
+        org_dict["layout"] = {**org_dict["layout"],
+                              "team": {k: v for k, v in team.items() if k in live}}
     return {
-        "org": org_to_dict(org),
+        "org": org_dict,
         "agents": [agent_to_dict(a) for a in agents],
         "relationships": [rel_to_dict(r) for r in rels],
         "channels": [channel_to_dict(c) for c in channels],

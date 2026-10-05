@@ -86,11 +86,54 @@ async def list_orgs(args: dict, ctx: ToolContext) -> str:
                      for o, n in rows)
 
 
-@meta("get_org", "Full definition of an organization: agents (persona, tools, model), "
-      "relationships, channels, boards, MCP servers.", obj({"org": S}, ["org"]))
+@meta("get_org", "An organization at a glance: settings, the full agent roster (id, name, "
+      "role, team, status, model, tool names), relationships, channels and boards, by name. "
+      "Pass `agent` (name or id) for one agent's full definition: persona, tools with "
+      "approvals, model, permissions, limits. The 3D office design is left out (see the "
+      "world tools).", obj({"org": S, "agent": S}, ["org"]))
 async def get_org(args: dict, ctx: ToolContext) -> str:
     org = await _org(args["org"])
-    return _dump(await orgs.snapshot(org.id))
+    snap = await orgs.snapshot(org.id)
+    if args.get("agent"):
+        ref = str(args["agent"]).strip().lower()
+        hit = next((a for a in snap["agents"] if ref in (a["id"].lower(), a["name"].lower())), None)
+        if hit is None:
+            raise ToolError(f"no agent '{args['agent']}' in {org.name}; agents: "
+                            + ", ".join(a["name"] for a in snap["agents"]))
+        return _dump({k: v for k, v in hit.items() if k not in ("avatar", "orgId")})
+    return json.dumps(org_overview(snap), ensure_ascii=False, separators=(",", ":"), default=str)
+
+
+def org_overview(snap: dict) -> dict:
+    """Roster first and compact, so it never gets cut off (issue #4)."""
+    names = {a["id"]: a["name"] for a in snap["agents"]}
+    workers = [a for a in snap["agents"] if not a["isSupervisor"]]
+    tool_sets = [{t["name"] for t in a["tools"]} for a in workers]
+    common = set.intersection(*tool_sets) if tool_sets else set()
+    o = snap["org"]
+    return {
+        "org": {"id": o["id"], "name": o["name"], "description": o["description"],
+                "status": o["status"], "workspace": o["workspace"], "settings": {
+                    k: v for k, v in o["settings"].items()
+                    if k != "former_agents"}},
+        "agents": [
+            {"id": a["id"], "name": a["name"], "role": a["role"], "team": a["team"],
+             "status": a["status"], "runtime": a["runtimeStatus"],
+             "model": (a["model"] or {}).get("model") or "org default",
+             "extraTools": sorted({t["name"] for t in a["tools"]} - common),
+             **({"builtIn": a["metaRole"] or True} if a["isSupervisor"] else {})}
+            for a in snap["agents"]],
+        "toolsEveryAgentHas": sorted(common),
+        "relationships": [f"{names.get(r['fromId'], r['fromId'])} {r['kind']} "
+                          f"{names.get(r['toId'], r['toId'])}" + (f" ({r['label']})" if r["label"]
+                                                                  else "")
+                          for r in snap["relationships"]],
+        "channels": [{"key": c["key"], "topic": c["topic"], "archived": c["archived"],
+                      "members": [names.get(m, "you (the user)" if m == "user" else m)
+                                  for m in c["members"]]} for c in snap["channels"]],
+        "boards": [{"id": b["id"], "name": b["name"]} for b in snap["boards"]],
+        "mcpServers": [m["name"] for m in snap["mcpServers"]],
+    }
 
 
 @meta("create_org", "Create a new organization (with a Main board and #general).",
@@ -131,8 +174,14 @@ async def create_agent(args: dict, ctx: ToolContext) -> str:
     if args.get("manager"):
         await orgs.set_relationship(org.id, args["manager"], agent.name, "manages")
     restored = getattr(agent, "restored_channels", [])
-    back = f" Restored the channels its predecessor was in: {', '.join(restored)}." if restored else ""
-    return f"Hired {agent.name} ({agent.role}) into {org.name} [{agent.id}].{back}"
+    rels = getattr(agent, "restored_relationships", 0)
+    back = []
+    if restored:
+        back.append(f"its predecessor's channels ({', '.join(restored)})")
+    if rels:
+        back.append(f"{rels} reporting line{'s' * (rels != 1)}")
+    note = f" Took over {' and '.join(back)}." if back else ""
+    return f"Hired {agent.name} ({agent.role}) into {org.name} [{agent.id}].{note}"
 
 
 @meta("update_agent", "Change an agent's name, role, team, persona, tools, model, worktree, "
