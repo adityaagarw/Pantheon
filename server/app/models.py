@@ -705,3 +705,47 @@ class LgWrite(Base):
     type: Mapped[str] = mapped_column(String)
     blob: Mapped[bytes] = mapped_column(LargeBinary)
     task_path: Mapped[str] = mapped_column(String, default="")
+
+
+# --- secrets ----------------------------------------------------------------------------
+
+
+class Secret(Base):
+    """A credential agents use by name (``{{secret:NAME}}`` / ``$NAME``) without seeing it.
+
+    The value is encrypted, write-only through the API, injected only at the moment a tool
+    runs, and masked out of everything stored or shown to a model."""
+
+    __tablename__ = "secrets"
+    __table_args__ = (UniqueConstraint("org_id", "name"),)
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: new_id("sec"))
+    org_id: Mapped[str] = mapped_column(ForeignKey("orgs.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str] = mapped_column(String)  # UPPER_SNAKE, e.g. GITHUB_TOKEN
+    description: Mapped[str] = mapped_column(Text, default="")
+    value_enc: Mapped[str] = mapped_column(Text)
+    # agents allowed to use it
+    agent_ids: Mapped[list] = mapped_column(JSON, default=list)
+    # hosts HTTP tools may send it to ("api.github.com", "*.example.com")
+    domains: Mapped[list] = mapped_column(JSON, default=list)
+    # also exposed to run_command as an environment variable
+    allow_shell: Mapped[bool] = mapped_column(Boolean, default=False)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = _ts()
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class SecretUse(Base):
+    """Audit trail: which agent used which secret, where. Never the value."""
+
+    __tablename__ = "secret_uses"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: new_id("scu"))
+    org_id: Mapped[str] = mapped_column(ForeignKey("orgs.id", ondelete="CASCADE"), index=True)
+    secret_id: Mapped[str] = mapped_column(String, index=True)  # kept after the secret is deleted
+    secret_name: Mapped[str] = mapped_column(String)
+    agent_id: Mapped[str] = mapped_column(String)
+    tool: Mapped[str] = mapped_column(String)
+    target: Mapped[str] = mapped_column(String, default="")  # host, or "shell"
+    created_at: Mapped[datetime] = _ts()

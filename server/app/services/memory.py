@@ -52,7 +52,9 @@ def _scope(agent_id: str | None, include_shared: bool = True):
 
 async def add(org_id: str, content: str, *, agent_id: str | None, kind: str = "note",
               source: str = "agent") -> Memory:
-    content = content.strip()
+    from app.services import secrets
+
+    content = secrets.redact(org_id, content.strip())
     vec = (await embeddings.embed([content]) or [None])[0]
     async with SessionLocal() as session:
         if vec is not None:

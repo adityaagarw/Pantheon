@@ -71,7 +71,10 @@ async def reset_schema() -> None:
 
 @pytest.fixture
 async def db():
+    from app.services import secrets
+
     await reset_schema()
+    secrets._values.clear()
     mock.clear_scripts()
     yield
     mock.clear_scripts()

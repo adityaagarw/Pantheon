@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from app.models import Agent, Org
+from app.services import secrets
 from app.tools import base
 from app.tools.base import ToolContext, ToolError, ToolSpec, truncate
 from app.tools.mcp import McpTool, manager
@@ -132,7 +133,11 @@ async def resolve_tools(org: Org, agent: Agent) -> ResolvedTools:
 async def execute(tool: EffectiveTool, args: dict[str, Any], ctx: ToolContext) -> tuple[str, bool]:
     """Run a tool; never raises. Returns (output, ok) as text Postgres and models accept."""
     out, ok = await _execute(tool, args, ctx)
-    return storable(out), ok
+    out = storable(out)
+    masked = secrets.redact(ctx.org.id, out)  # a secret never reaches the model or the record
+    if masked != out:
+        out = base.ToolOutput(masked, out.images) if isinstance(out, base.ToolOutput) else masked
+    return out, ok
 
 
 def storable(text: str) -> str:
@@ -160,7 +165,7 @@ async def _execute(tool: EffectiveTool, args: dict[str, Any], ctx: ToolContext) 
         assert tool.mcp is not None
         out, is_error = await manager.call(tool.mcp.server_id, tool.mcp.name, args)
         return (f"ERROR: {out}" if is_error else out), not is_error
-    except ToolError as e:
+    except (ToolError, secrets.SecretError) as e:
         return f"ERROR: {e}", False
     except TimeoutError:
         return f"ERROR: tool '{tool.name}' timed out", False

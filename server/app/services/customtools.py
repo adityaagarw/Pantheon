@@ -35,6 +35,7 @@ from sqlalchemy import select
 from app.core.db import SessionLocal
 from app.events import bus
 from app.models import CustomTool
+from app.services import secrets
 from app.tools import base
 from app.tools.base import ToolContext, ToolError, ToolSpec
 
@@ -139,8 +140,16 @@ async def _run_action(row: CustomTool, args: dict[str, Any], ctx: ToolContext) -
 
 async def _run_http(row: CustomTool, args: dict[str, Any], ctx: ToolContext) -> str:
     cfg = row.config or {}
-    url = _fill(str(cfg["url"]), args, url=True)
-    headers = {str(k): _fill(str(v), args) for k, v in (cfg.get("headers") or {}).items()}
+    url = _fill(secrets.protect(str(cfg["url"])), args, url=True)
+    headers = {str(k): _fill(secrets.protect(str(v)), args)
+               for k, v in (cfg.get("headers") or {}).items()}
+    try:
+        for k, v in headers.items():
+            headers[k] = await secrets.resolve(ctx.org.id, ctx.agent.id, v, url=url, tool=row.name)
+        url = await secrets.resolve(ctx.org.id, ctx.agent.id, url, url=url, tool=row.name,
+                                    url_encode=True)
+    except secrets.SecretError as e:
+        raise ToolError(str(e)) from None
     body = cfg.get("body")
     kwargs: dict[str, Any] = {"headers": headers}
     if isinstance(body, str) and body:
@@ -149,8 +158,11 @@ async def _run_http(row: CustomTool, args: dict[str, Any], ctx: ToolContext) -> 
         kwargs["json"] = json.loads(_fill(json.dumps(body), args))
     elif cfg["method"] != "GET":
         kwargs["json"] = args
+    # A request carrying a secret never follows redirects: one could hand it to another host.
+    carries_secret = any(secrets.PLACEHOLDER.search(str(t)) for t in
+                         [cfg["url"], *(cfg.get("headers") or {}).values()])
     try:
-        async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=30, follow_redirects=not carries_secret) as client:
             res = await client.request(cfg["method"], url, **kwargs)
     except httpx.HTTPError as e:
         raise ToolError(f"request failed: {e}") from None

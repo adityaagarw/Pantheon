@@ -157,6 +157,28 @@ async def update_channel(args: dict, ctx: ToolContext) -> str:
 
 
 @tool(
+    "list_secrets",
+    "List the secrets you may use (names, descriptions, where they work). Values are never "
+    "shown; use {{secret:NAME}} in fetch_url headers or URL, or $NAME in run_command for "
+    "shell-enabled ones.",
+    obj({}),
+    category="communication",
+)
+async def list_secrets(args: dict, ctx: ToolContext) -> str:
+    from app.services import secrets
+
+    granted = await secrets.grants_for(ctx.org.id, ctx.agent.id)
+    if not granted:
+        return ("You have no secrets. If a task needs a credential, ask the user to add one in "
+                "the organization's Settings → Secrets and grant it to you. Never ask for the "
+                "value in chat.")
+    return "\n".join(
+        f"{g.name}: {g.description or 'no description'} | HTTP to "
+        f"{', '.join(g.domains) or 'no hosts yet'} | shell: {'$' + g.name if g.shell else 'no'}"
+        for g in granted)
+
+
+@tool(
     "list_colleagues",
     "List everyone in your organization: name, role, team, and how they relate to you.",
     obj({}),

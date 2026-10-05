@@ -7,6 +7,7 @@ import { ActivitiesPanel } from "@/components/ActivitiesPanel";
 import { AgentFiles } from "@/components/Files";
 import { DeleteOrgDialog } from "@/components/DeleteOrgDialog";
 import { McpServersPanel } from "@/components/settings/McpServersPanel";
+import { SecretsPanel } from "@/components/settings/SecretsPanel";
 import { Button, Card, ErrorNote, Field, Input, Select, Textarea } from "@/components/ui";
 import { api } from "@/lib/api";
 import type { Org, Provider } from "@/lib/types";
@@ -227,6 +228,15 @@ export default function OrgSettingsPage() {
           <div className="mb-1 text-sm font-semibold">Activities</div>
           <div className="mb-4 text-xs text-ink-3">Recurring happenings: participants are gathered in a room (optional) and told what&apos;s going on.</div>
           <ActivitiesPanel orgId={org.id} />
+        </Card>
+
+        <Card className="p-5">
+          <div className="mb-1 text-sm font-semibold">Secrets</div>
+          <div className="mb-4 text-xs text-ink-3">
+            API keys and tokens agents use by name ({"{{secret:NAME}}"}) without ever seeing them. Values are encrypted and masked out of every transcript, record
+            and log. Never paste a credential into a chat.
+          </div>
+          <SecretsPanel orgId={org.id} />
         </Card>
 
         <Card className="p-5">

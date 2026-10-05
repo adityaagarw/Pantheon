@@ -371,6 +371,9 @@ async def _record_tool_call(tc_id: str, org_id: str, agent_id: str, turn_id: str
                 row.args = stored_args
             await session.commit()
 
+    from app.services import secrets
+
+    args = secrets.redact_value(org_id, args)
     try:
         await write(_record_text(out), args)
         return

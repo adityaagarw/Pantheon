@@ -22,6 +22,7 @@ from app.api import (
     memory,
     observe,
     orgs,
+    secrets,
     stage,
     voice,
     whiteboards,
@@ -79,10 +80,13 @@ async def lifespan(app: FastAPI):
     await ensure_mock_provider()
     from app import plugins
     from app.services import customtools, oversight
+    from app.services import secrets as secrets_svc
     from app.services.supervisor import ensure_supervisor
 
     plugins.load_all()
     await customtools.load_all()
+    await secrets_svc.warm()
+    secrets_svc.install_log_filter()
     await ensure_supervisor()
     await runtime.start()
     watcher = asyncio.create_task(oversight.run_forever(), name="argus-watches")
@@ -121,7 +125,7 @@ async def domain_error(request: Request, exc: Exception) -> JSONResponse:
 
 for r in (orgs.router, comms.router, meetings.router, work.router, observe.router, admin.router,
           voice.router, world.router, extend.router, stage.router, memory.router, whiteboards.router,
-          attachments.router,
+          attachments.router, secrets.router,
           ws.router):
     app.include_router(r)
 

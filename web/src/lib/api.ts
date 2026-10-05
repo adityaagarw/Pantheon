@@ -254,6 +254,13 @@ export const api = {
   deleteAsset: (id: string) => del(`/assets/${id}`),
   plugins: () => get<{ dir: string; plugins: PluginInfo[] }>("/plugins"),
 
+  // secrets (values are write-only: never returned)
+  secrets: (orgId: string) => get<SecretInfo[]>(`/orgs/${orgId}/secrets`),
+  createSecret: (orgId: string, b: SecretInput & { name: string; value: string }) => post<SecretInfo>(`/orgs/${orgId}/secrets`, b),
+  updateSecret: (id: string, b: Partial<SecretInput> & { value?: string; enabled?: boolean }) => patch<SecretInfo>(`/secrets/${id}`, b),
+  deleteSecret: (id: string) => del(`/secrets/${id}`),
+  secretUsage: (orgId: string) => get<SecretUse[]>(`/orgs/${orgId}/secrets/usage?limit=30`),
+
   // voice
   voiceConfig: () => get<VoiceConfig>("/voice/config"),
   saveVoiceConfig: (b: Partial<VoiceConfig>) => req<VoiceConfig>("PUT", "/voice/config", b),
@@ -269,6 +276,36 @@ export type AttentionView =
   | { kind: "page"; pageId: string; title: string; text: string; held: boolean }
   | { kind: "browser"; title: string; url: string }
   | { kind: "whiteboard"; title: string };
+
+export interface SecretInput {
+  description: string;
+  agents: string[];
+  domains: string[];
+  allowShell: boolean;
+}
+
+export interface SecretInfo {
+  id: string;
+  name: string;
+  description: string;
+  agentIds: string[];
+  agents: string[];
+  domains: string[];
+  allowShell: boolean;
+  enabled: boolean;
+  hasValue: boolean;
+  createdAt: string | null;
+  updatedAt: string | null;
+  lastUsedAt: string | null;
+}
+
+export interface SecretUse {
+  secret: string;
+  agent: string;
+  tool: string;
+  target: string;
+  at: string | null;
+}
 
 export interface VoiceConfig {
   baseUrl: string;

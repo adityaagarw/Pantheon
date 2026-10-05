@@ -320,6 +320,24 @@ Create an org from the *Tutors* template and ask the lead tutor to teach you som
 refraction works"*). Lessons appear on the *Stage*. Press **Talk** to ask questions out loud mid-lesson,
 or **Ask** to type.
 
+### Give agents API keys and tokens safely
+
+Never paste a credential into a chat: it would stay in the transcript. Add it as a **secret** instead,
+in an organization's *Settings → Secrets*:
+
+1. Give it a name (`GITHUB_TOKEN`), the value, and a description agents can read.
+2. Choose which agents may use it and which hosts it may be sent to (`api.github.com`).
+3. Optionally let `run_command` see it as `$GITHUB_TOKEN`, for git and other CLIs.
+
+Agents use it by name, e.g. a `fetch_url` header `Authorization: Bearer {{secret:GITHUB_TOKEN}}`. The
+value is filled in only at the moment of the request, only for its allowed hosts, and is replaced with
+`[secret:GITHUB_TOKEN]` in everything an agent sees and everything Pantheon stores or logs. Disabling or
+deleting a secret takes effect on the next call, and the usage log shows who used which secret where.
+Zeus can grant and revoke existing secrets but can never create one or see a value.
+
+One honest limit: an agent with shell access to a secret runs code that can read it, so enable shell
+access only for agents you trust and keep `run_command` on *ask*.
+
 ## Configuration
 
 Docker settings live in `.env` next to `docker-compose.yml`. Copy `.env.example`; everything is
@@ -388,6 +406,10 @@ and *Sessions → Usage & stats* shows exactly where tokens go. With a local mod
 **Can agents break things on my machine?** They can only reach the workspace roots you mount. Risky
 tools (shell, file writes, computer use) can require your approval per call, and computer use runs in
 a separate sandbox container.
+
+**How do I give an agent an API key?** Add it under the org's *Settings → Secrets* and grant it to the
+agent. It uses the key by name and never sees the value (see
+[Give agents API keys and tokens safely](#give-agents-api-keys-and-tokens-safely)).
 
 **Do I need audio.cpp?** No. Voice is optional, and without a speech server agents speak with your
 browser's voices. For the microphone and live talk, use audio.cpp or a hosted speech API (see

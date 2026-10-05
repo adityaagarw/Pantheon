@@ -125,6 +125,20 @@ async def build_system_prompt(
     else:
         parts.append("# Your open work\nNothing assigned to you right now.")
 
+    from app.services import secrets
+
+    granted = await secrets.grants_for(org.id, agent.id)
+    if granted:
+        lines = [f"- {g.name}: {g.description or 'no description'} (HTTP to "
+                 f"{', '.join(g.domains) or 'no hosts yet'}"
+                 f"{'; also $' + g.name + ' in run_command' if g.shell else ''})" for g in granted]
+        parts.append(
+            "# Secrets you can use\nYou never see these values and must not ask for them. "
+            "Put a secret in fetch_url headers or URL as {{secret:NAME}} (e.g. "
+            "\"Authorization\": \"Bearer {{secret:GITHUB_TOKEN}}\"); it is filled in only for "
+            "its allowed hosts. Shell-enabled ones are environment variables in run_command. "
+            "Anything that echoes a value back shows [secret:NAME].\n" + "\n".join(lines))
+
     parts.append(OPERATING_RULES)
     if agent.meta_role == "argus":
         parts.append(ARGUS_RULES)

@@ -333,7 +333,9 @@ async def post(
     direct inbox notifications (task updates, system notices). ``deliver=False``
     records the message (e.g. a live meeting transcript) without inbox items.
     """
-    content = (content or "").strip()
+    from app.services import secrets
+
+    content = secrets.redact(org_id, (content or "").strip())
     if not content:
         raise CommsError("message is empty")
     own = session is None

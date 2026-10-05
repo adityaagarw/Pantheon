@@ -15,6 +15,7 @@ import sys
 from pathlib import Path
 
 from app.core.config import settings
+from app.services import secrets
 from app.tools.base import (
     B,
     I,
@@ -181,6 +182,7 @@ async def run_command(args: dict, ctx: ToolContext) -> str:
     timeout = max(1, min(int(args.get("timeout") or settings.shell_timeout_seconds), 900))
     env = {k: v for k, v in os.environ.items() if not k.startswith("PANTHEON_")}
     env["PANTHEON_AGENT"] = ctx.agent.name
+    env.update(await secrets.shell_env(ctx.org.id, ctx.agent.id, args["command"]))
     kwargs: dict = {}
     if sys.platform != "win32":
         kwargs["start_new_session"] = True

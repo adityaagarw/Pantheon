@@ -267,6 +267,37 @@ async def update_org_channel(args: dict, ctx: ToolContext) -> str:
     return f"{ch.key} in {org.name}: {'; '.join(changes) or 'nothing to change'}."
 
 
+@meta("list_org_secrets", "The secrets of an organization: names, descriptions, who may "
+      "use them and where. Values are never shown; the user adds and edits secrets in the "
+      "org's Settings → Secrets.", obj({"org": S}, ["org"]))
+async def list_org_secrets(args: dict, ctx: ToolContext) -> str:
+    from app.services import secrets
+
+    org = await _org(args["org"])
+    rows = await secrets.list_secrets(org.id)
+    if not rows:
+        return f"{org.name} has no secrets. The user adds them in Settings → Secrets."
+    return "\n".join(
+        f"{r['name']}{'' if r['enabled'] else ' (disabled)'}: {r['description'] or '-'} | "
+        f"agents: {', '.join(r['agents']) or 'none'} | hosts: {', '.join(r['domains']) or 'none'}"
+        f" | shell: {'yes' if r['allowShell'] else 'no'}" for r in rows)
+
+
+@meta("grant_secret", "Let an agent use an existing secret (or stop it with `revoke`: true). "
+      "You can't create secrets or see values: ask the user to add one in Settings → "
+      "Secrets. Never ask anyone to paste a credential into chat.",
+      obj({"org": S, "secret": S, "agent": S, "revoke": B}, ["org", "secret", "agent"]))
+async def grant_secret(args: dict, ctx: ToolContext) -> str:
+    from app.services import secrets
+
+    org = await _org(args["org"])
+    try:
+        return await secrets.set_grant(org.id, args["secret"], args["agent"],
+                                       granted=not args.get("revoke"))
+    except secrets.SecretError as e:
+        raise ToolError(str(e)) from None
+
+
 @meta("tool_catalog", "All built-in tools (with categories and default approval) and every "
       "configured MCP server with its tools.", obj({"org": S}))
 async def tool_catalog(args: dict, ctx: ToolContext) -> str:
