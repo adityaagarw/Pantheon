@@ -12,7 +12,9 @@ import { useDmMessages } from "./AgentInspector";
 import { Composer, LiveThinking, MessageList, useAutoSpeak } from "./Chat";
 import { ContextControls } from "./ContextControls";
 import { ApprovalCard } from "./InboxDrawer";
-import { Button, Toggle } from "./ui";
+import { ModelSettings } from "./team/AgentEditor";
+import { Button, ErrorNote, Modal, Toggle } from "./ui";
+import type { Agent } from "@/lib/types";
 
 export const SYSTEM_ORG = "org_pantheon";
 
@@ -44,6 +46,7 @@ export function MetaChat({
   const messages = useDmMessages(agentId);
   const [speakOn, setSpeakOn] = useState(false);
   const [liveOn, setLiveOn] = useState(false);
+  const [modelOpen, setModelOpen] = useState(false);
   useAutoSpeak(messages, speakOn || liveOn);
   const name = agent?.name ?? fallbackName;
   const send = (t: string, files?: string[]) => api.send(SYSTEM_ORG, { to: agentId, content: t, attachments: files }).then(() => undefined);
@@ -62,6 +65,12 @@ export function MetaChat({
           {(live.status === "working" || live.status === "awaiting_approval") && (
             <Button size="sm" variant="danger" onClick={() => api.stopAgent(agentId)}>
               ■ Stop
+            </Button>
+          )}
+          {agent && (
+            <Button size="sm" variant="ghost" title={`Choose the model ${name} uses`} onClick={() => setModelOpen(true)}>
+              <span className="hidden sm:inline">Model: </span>
+              <span className="max-w-32 truncate">{agent.model?.model || "default"}</span>
             </Button>
           )}
           <Toggle checked={speakOn || liveOn} onChange={setSpeakOn} label="Speak" />
@@ -101,7 +110,56 @@ export function MetaChat({
         </div>
       )}
       <Composer placeholder={placeholder} onSend={send} attach={{ orgId: SYSTEM_ORG, agentId }} live={{ orgId: SYSTEM_ORG, agentId, agentName: name }} onLiveChange={setLiveOn} />
+      {agent && <ModelDialog open={modelOpen} agent={agent} onClose={() => setModelOpen(false)} />}
     </>
+  );
+}
+
+/** Pick the model a meta agent runs on (it inherits the global default otherwise). */
+function ModelDialog({ open, agent, onClose }: { open: boolean; agent: Agent; onClose: () => void }) {
+  const [model, setModel] = useState<Agent["model"]>(agent.model ?? {});
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) {
+      setModel(agent.model ?? {});
+      setError(null);
+    }
+  }
+  const save = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const updated = await api.updateAgent(agent.id, { model });
+      useOrg.setState((s) => ({ agents: { ...s.agents, [agent.id]: updated } }));
+      onClose();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={`${agent.name}'s model`}
+      footer={
+        <Button variant="primary" loading={busy} onClick={save}>
+          Save
+        </Button>
+      }
+    >
+      <div className="grid gap-3">
+        <p className="text-sm text-ink-2">
+          {agent.name} uses the default provider unless you pick one here. A strong model with reliable tool calling works best: {agent.name} builds and changes organizations for you.
+        </p>
+        <ModelSettings model={model} onChange={setModel} />
+        <ErrorNote error={error} />
+      </div>
+    </Modal>
   );
 }
 

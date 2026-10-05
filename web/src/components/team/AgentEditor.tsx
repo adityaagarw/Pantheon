@@ -75,7 +75,7 @@ export function AgentEditor({ agentId, onClose }: { agentId: string; onClose: ()
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
         {tab === "profile" && <ProfileTab draft={draft} set={set} />}
-        {tab === "model" && <ModelTab draft={draft} set={set} />}
+        {tab === "model" && <ModelSettings model={draft.model ?? {}} onChange={(m) => set("model", m)} />}
         {tab === "tools" && <ToolsTab draft={draft} set={set} orgId={orgId} />}
         {tab === "files" && <AgentFiles orgId={orgId} agentId={agentId} agentName={draft.name} />}
         {tab === "permissions" && <PermissionsTab draft={draft} set={set} />}
@@ -160,14 +160,15 @@ function ProfileTab({ draft, set }: { draft: Agent; set: SetFn }) {
   );
 }
 
-function ModelTab({ draft, set }: { draft: Agent; set: SetFn }) {
+/** Provider, model, thinking and limits for one agent (the editor's Model tab; also Zeus and Argus). */
+export function ModelSettings({ model, onChange }: { model: Agent["model"]; onChange: (m: Agent["model"]) => void }) {
   const [providers, setProviders] = useState<Provider[]>([]);
   const org = useOrg((s) => s.org);
   useEffect(() => {
     api.providers().then(setProviders).catch(() => {});
   }, []);
-  const m = draft.model ?? {};
-  const upd = (patch: Partial<Agent["model"]>) => set("model", { ...m, ...patch });
+  const m = model ?? {};
+  const upd = (patch: Partial<Agent["model"]>) => onChange({ ...m, ...patch });
   const provider = providers.find((p) => p.id === m.provider_id);
   const orgDefault = org?.settings.default_model;
   return (
