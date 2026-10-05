@@ -22,12 +22,13 @@ export default function CommsPage() {
   const channels = useMemo(() => Object.values(channelsMap), [channelsMap]);
   const byRecent = (a: Channel, b: Channel) => (b.lastMessageAt ?? "").localeCompare(a.lastMessageAt ?? "");
   const groups = {
-    channels: channels.filter((c) => c.kind === "channel").sort((a, b) => a.key.localeCompare(b.key)),
+    channels: channels.filter((c) => c.kind === "channel" && !c.archived).sort((a, b) => a.key.localeCompare(b.key)),
+    archived: channels.filter((c) => c.kind === "channel" && c.archived).sort((a, b) => a.key.localeCompare(b.key)),
     mine: channels.filter((c) => c.kind === "dm" && c.members.includes("user")).sort(byRecent),
     agents: channels.filter((c) => c.kind === "dm" && !c.members.includes("user")).sort(byRecent),
     meetings: channels.filter((c) => c.kind === "meeting").sort(byRecent),
   };
-  const current = selected ? channelsMap[selected] : (groups.channels[0] ?? null);
+  const current = (selected ? channelsMap[selected] : null) ?? groups.channels[0] ?? null;
 
   const label = (c: Channel) =>
     c.kind === "channel" ? c.key : c.kind === "meeting" ? c.name : c.members.filter((m) => m !== "user").map(agentName).join(" ↔ ");
@@ -85,6 +86,13 @@ export default function CommsPage() {
             ))}
           </Group>
         )}
+        {groups.archived.length > 0 && (
+          <Group title="Archived" hint="superseded">
+            {groups.archived.map((c) => (
+              <Item key={c.id} c={c} />
+            ))}
+          </Group>
+        )}
       </aside>
       <section className={cx("min-w-0 flex-1 flex-col md:flex", selected ? "flex" : "hidden")}>
         {selected?.startsWith("pending:") ? (
@@ -135,12 +143,13 @@ function ChannelView({ channel, orgId, title, onBack }: { channel: Channel; orgI
   const loadChannel = useOrg((s) => s.loadChannel);
   const [speak, setSpeak] = useState(false);
   const [liveOn, setLiveOn] = useState(false);
+  const [settings, setSettings] = useState(false);
   useEffect(() => {
     void loadChannel(channel.id);
   }, [channel.id, loadChannel]);
   useAutoSpeak(messages ?? [], (speak || liveOn) && channel.members.includes("user"));
 
-  const canPost = channel.kind === "channel" || (channel.kind === "dm" && channel.members.includes("user"));
+  const canPost = (channel.kind === "channel" && !channel.archived) || (channel.kind === "dm" && channel.members.includes("user"));
   const dmTarget = channel.kind === "dm" ? channel.members.find((m) => m !== "user") : undefined;
   return (
     <>
@@ -162,8 +171,19 @@ function ChannelView({ channel, orgId, title, onBack }: { channel: Channel; orgI
               ))}
           </div>
           {channel.members.includes("user") && <Toggle checked={speak || liveOn} onChange={setSpeak} label="Speak" />}
+          {channel.kind === "channel" && (
+            <button
+              title="Channel settings: members, name, archive"
+              aria-label="Channel settings"
+              onClick={() => setSettings(true)}
+              className="flex size-8 items-center justify-center rounded-md text-ink-2 hover:bg-panel-2 hover:text-ink cursor-pointer"
+            >
+              ⚙
+            </button>
+          )}
         </div>
       </div>
+      {channel.kind === "channel" && <ChannelSettingsModal open={settings} channel={channel} onClose={() => setSettings(false)} />}
       <MessageList messages={messages ?? []} agents={agents} />
       {canPost ? (
         <Composer
@@ -174,7 +194,11 @@ function ChannelView({ channel, orgId, title, onBack }: { channel: Channel; orgI
           onLiveChange={setLiveOn}
         />
       ) : (
-        <div className="border-t border-line px-5 py-3 text-xs text-ink-3">You&apos;re observing a conversation between agents.</div>
+        <div className="border-t border-line px-5 py-3 text-xs text-ink-3">
+          {channel.archived
+            ? "This channel is archived. Unarchive it in its settings (⚙) to post again."
+            : "You're observing a conversation between agents."}
+        </div>
       )}
     </>
   );
@@ -287,6 +311,120 @@ function NewChannelModal({ open, onClose, orgId, onCreated }: { open: boolean; o
         </div>
         <ErrorNote error={error} />
         <Badge>You are always added</Badge>
+      </div>
+    </Modal>
+  );
+}
+
+function ChannelSettingsModal({ open, channel, onClose }: { open: boolean; channel: Channel; onClose: () => void }) {
+  const agents = useOrg(useShallow((s) => Object.values(s.agents).filter((a) => !a.isSupervisor)));
+  const [name, setName] = useState(channel.name);
+  const [topic, setTopic] = useState(channel.topic);
+  const [notify, setNotify] = useState(channel.notify);
+  const [members, setMembers] = useState<string[]>(channel.members);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    setName(channel.name);
+    setTopic(channel.topic);
+    setNotify(channel.notify);
+    setMembers(channel.members);
+    setError(null);
+    setConfirmDelete(false);
+  }, [open, channel]);
+  const run = async (fn: () => Promise<unknown>) => {
+    setBusy(true);
+    setError(null);
+    try {
+      await fn();
+      onClose();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const isGeneral = channel.key === "#general";
+  const toggle = (id: string) => setMembers((m) => (m.includes(id) ? m.filter((x) => x !== id) : [...m, id]));
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={`${channel.key} settings`}
+      footer={
+        <Button
+          variant="primary"
+          loading={busy}
+          disabled={!name.trim()}
+          onClick={() => run(() => api.updateChannel(channel.id, { name: name === channel.name ? undefined : name, topic, notify, members }))}
+        >
+          Save
+        </Button>
+      }
+    >
+      <div className="grid gap-4">
+        <Field label="Name" hint={isGeneral ? "#general can't be renamed" : undefined}>
+          <Input value={name} disabled={isGeneral} onChange={(e) => setName(e.target.value)} />
+        </Field>
+        <Field label="Topic">
+          <Input value={topic} onChange={(e) => setTopic(e.target.value)} />
+        </Field>
+        <Field label="Notifications">
+          <Select value={notify} onChange={(e) => setNotify(e.target.value as "all" | "mentions")}>
+            <option value="all">All posts reach every member</option>
+            <option value="mentions">Only @mentions reach members</option>
+          </Select>
+        </Field>
+        <div>
+          <div className="mb-1.5 text-xs font-medium text-ink-2">Members</div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => toggle("user")}
+              className={cx("rounded-full border px-2.5 py-0.5 text-xs cursor-pointer", members.includes("user") ? "border-accent bg-accent/15" : "border-line-2")}
+            >
+              You
+            </button>
+            {agents.map((a) => (
+              <button
+                key={a.id}
+                onClick={() => toggle(a.id)}
+                className={cx(
+                  "flex items-center gap-1.5 rounded-full border py-0.5 pl-0.5 pr-2.5 text-xs cursor-pointer",
+                  members.includes(a.id) ? "border-accent bg-accent/15" : "border-line-2",
+                )}
+              >
+                <AgentAvatar agent={a} size={18} /> {a.name}
+              </button>
+            ))}
+          </div>
+        </div>
+        <ErrorNote error={error} />
+        {!isGeneral && (
+          <div className="flex flex-wrap items-center gap-2 border-t border-line pt-4">
+            <Button size="sm" disabled={busy} onClick={() => run(() => api.updateChannel(channel.id, { archived: !channel.archived }))}>
+              {channel.archived ? "Unarchive" : "Archive"}
+            </Button>
+            {confirmDelete ? (
+              <>
+                <Button size="sm" variant="danger" disabled={busy} onClick={() => run(() => api.deleteChannel(channel.id))}>
+                  Delete {channel.key} and its messages
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(false)}>
+                  Cancel
+                </Button>
+              </>
+            ) : (
+              <Button size="sm" variant="ghost" disabled={busy} onClick={() => setConfirmDelete(true)}>
+                Delete…
+              </Button>
+            )}
+            <span className="w-full text-xs text-ink-3">
+              Archiving keeps the history, marks it superseded and frees the name for a new channel. Deleting removes it for good.
+            </span>
+          </div>
+        )}
       </div>
     </Modal>
   );

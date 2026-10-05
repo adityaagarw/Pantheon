@@ -116,7 +116,8 @@ export const api = {
   channels: (orgId: string) => get<Channel[]>(`/orgs/${orgId}/channels`),
   createChannel: (orgId: string, b: { name: string; members: string[]; topic?: string; notify?: string }) =>
     post<Channel>(`/orgs/${orgId}/channels`, b),
-  updateChannel: (id: string, b: Partial<Channel>) => patch<Channel>(`/channels/${id}`, b),
+  updateChannel: (id: string, b: Partial<Channel> & { add?: string[]; remove?: string[] }) => patch<Channel>(`/channels/${id}`, b),
+  deleteChannel: (id: string) => del(`/channels/${id}`),
   channelMessages: (id: string, before?: string) =>
     get<Message[]>(`/channels/${id}/messages${q({ limit: 200, before })}`),
   send: (orgId: string, b: { to?: string; channel?: string; content: string; attachments?: string[] }) =>

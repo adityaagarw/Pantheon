@@ -135,31 +135,58 @@ async def find_channel(session: AsyncSession, org_id: str, ref: str) -> Channel 
     ).scalar_one_or_none()
 
 
+def channel_slug(name: str) -> str:
+    slug = re.sub(r"[^a-z0-9_-]+", "-", (name or "").strip().lower().lstrip("#")).strip("-")
+    if not slug:
+        raise CommsError("channel name is empty")
+    return slug
+
+
+async def _member_ids(session: AsyncSession, org_id: str, refs: list[str]) -> list[str]:
+    ids: list[str] = []
+    for ref in refs:
+        if ref == USER:
+            ids.append(USER)
+            continue
+        agent = await resolve_agent(session, org_id, ref)
+        if agent is None:
+            raise CommsError(f"unknown member '{ref}'")
+        ids.append(agent.id)
+    return ids
+
+
+async def _claim_key(session: AsyncSession, org_id: str, key: str, keep_id: str | None = None) -> None:
+    """Make ``key`` available: an archived channel holding it steps aside (renamed with an
+    ``-archived-<date>`` suffix); a live one means the name is taken."""
+    holder = (await session.execute(
+        select(Channel).where(Channel.org_id == org_id, Channel.key == key))).scalar_one_or_none()
+    if holder is None or holder.id == keep_id:
+        return
+    if not holder.archived:
+        raise CommsError(f"channel {key} already exists; use update_channel to change its "
+                         "members, or pick another name")
+    await _retire_key(session, holder)
+
+
+async def _retire_key(session: AsyncSession, ch: Channel) -> None:
+    base = f"{ch.key}-archived-{utcnow():%Y-%m-%d}"
+    key, n = base, 2
+    while await session.scalar(select(Channel.id).where(
+            Channel.org_id == ch.org_id, Channel.key == key, Channel.id != ch.id)):
+        key, n = f"{base}-{n}", n + 1
+    ch.key, ch.name = key, key[1:]
+    await session.flush()
+
+
 async def create_channel(
     org_id: str, name: str, members: list[str], topic: str = "", created_by: str = USER,
     notify: str = "all",
 ) -> Channel:
-    slug = re.sub(r"[^a-z0-9_-]+", "-", name.strip().lower()).strip("-")
-    if not slug:
-        raise CommsError("channel name is empty")
+    slug = channel_slug(name)
     async with SessionLocal() as session:
         key = f"#{slug}"
-        existing = (
-            await session.execute(
-                select(Channel).where(Channel.org_id == org_id, Channel.key == key)
-            )
-        ).scalar_one_or_none()
-        if existing is not None:
-            raise CommsError(f"channel {key} already exists")
-        ids: list[str] = []
-        for ref in members:
-            if ref == USER:
-                ids.append(USER)
-                continue
-            agent = await resolve_agent(session, org_id, ref)
-            if agent is None:
-                raise CommsError(f"unknown member '{ref}'")
-            ids.append(agent.id)
+        await _claim_key(session, org_id, key)
+        ids = await _member_ids(session, org_id, members)
         if created_by != USER and created_by not in ids:
             ids.append(created_by)
         ch = Channel(org_id=org_id, kind="channel", key=key, name=slug, topic=topic,
@@ -168,6 +195,83 @@ async def create_channel(
         await session.commit()
     await bus.publish("channel.created", channel_to_dict(ch), org_id=org_id)
     return ch
+
+
+async def update_channel(
+    org_id: str, ref: str, *, actor: str = USER, add: list[str] | None = None,
+    remove: list[str] | None = None, members: list[str] | None = None, name: str | None = None,
+    topic: str | None = None, notify: str | None = None, archived: bool | None = None,
+) -> tuple[Channel, list[str]]:
+    """Change a channel. ``actor`` is the agent asking (members and the creator may manage a
+    channel); the user, Zeus and the system may change any. Returns the channel and a
+    human-readable list of what changed."""
+    changes: list[str] = []
+    async with SessionLocal() as session:
+        ch = await find_channel(session, org_id, ref)
+        if ch is None or ch.kind != "channel":
+            raise CommsError(f"no channel '{ref}' (DMs and meeting rooms can't be changed)")
+        if actor not in (USER, SYSTEM) and actor not in ch.members and actor != ch.created_by:
+            raise CommsError(f"only members of {ch.key} can change it; ask one of them")
+        names = await _names_in(session, org_id)
+        current = list(ch.members)
+        if members is not None:
+            current = await _member_ids(session, org_id, members)
+        for m in await _member_ids(session, org_id, add or []):
+            if m not in current:
+                current.append(m)
+                changes.append(f"added {names.get(m, m)}")
+        for m in await _member_ids(session, org_id, remove or []):
+            if m in current:
+                current.remove(m)
+                changes.append(f"removed {names.get(m, m)}")
+        if members is not None:
+            changes.append("set members")
+        ch.members = sorted(set(current))
+        if name is not None:
+            key = f"#{channel_slug(name)}"
+            if key != ch.key:
+                await _claim_key(session, org_id, key, keep_id=ch.id)
+                changes.append(f"renamed {ch.key} to {key}")
+                ch.key, ch.name = key, key[1:]
+        if topic is not None and topic != ch.topic:
+            ch.topic = str(topic)
+            changes.append("updated the topic")
+        if notify is not None:
+            if notify not in ("all", "mentions"):
+                raise CommsError("notify must be 'all' or 'mentions'")
+            if notify != ch.notify:
+                ch.notify = notify
+                changes.append(f"notifications: {notify}")
+        if archived is not None and archived != ch.archived:
+            ch.archived = archived
+            if archived:
+                await _retire_key(session, ch)  # frees the name for a replacement
+                changes.append(f"archived it as {ch.key}")
+            else:
+                changes.append("unarchived it")
+        await session.commit()
+    await bus.publish("channel.updated", channel_to_dict(ch), org_id=org_id)
+    return ch, changes
+
+
+async def delete_channel(org_id: str, ref: str) -> Channel:
+    """Remove a channel and its messages for good (the user's call; agents archive)."""
+    async with SessionLocal() as session:
+        ch = await find_channel(session, org_id, ref)
+        if ch is None or ch.kind != "channel":
+            raise CommsError(f"no channel '{ref}'")
+        if ch.key == "#general":
+            raise CommsError("#general can't be deleted")
+        await session.delete(ch)
+        await session.commit()
+    await bus.publish("channel.deleted", {"id": ch.id, "key": ch.key}, org_id=org_id)
+    return ch
+
+
+async def _names_in(session: AsyncSession, org_id: str) -> dict[str, str]:
+    agents = (await session.execute(select(Agent.id, Agent.name).where(
+        Agent.org_id == org_id))).all()
+    return {USER: "you (the user)", **{a: n for a, n in agents}}
 
 
 async def may_contact(session: AsyncSession, org: Org, sender_id: str, target_id: str) -> bool:

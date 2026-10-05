@@ -15,6 +15,7 @@ from app.events import bus
 from app.llm import effort as effort_mod
 from app.models import Agent, Board, Channel, McpServer, Org, Provider, Relationship
 from app.services import tasks
+from app.services.comms import channel_to_dict as comms_channel_dict
 from app.services.permissions import validate_task_policy
 from app.tools import base as tools_base
 
@@ -325,6 +326,7 @@ async def create_agent(org_id: str, data: dict[str, Any]) -> Agent:
         if org.kind != "system":
             general = await _general(session, org_id)
             general.members = sorted({*general.members, agent.id})
+        restored = await _restore_channels(session, org, agent)
         await session.commit()
     if agent.worktree:
         try:
@@ -335,7 +337,26 @@ async def create_agent(org_id: str, data: dict[str, Any]) -> Agent:
                 await session.commit()
             raise OrgError(str(e)) from None
     await bus.publish("agent.created", agent_to_dict(agent), org_id=org_id, agent_id=agent.id)
+    for ch in restored:
+        await bus.publish("channel.updated", comms_channel_dict(ch), org_id=org_id)
+    agent.restored_channels = [ch.key for ch in restored]  # reported by Zeus's create_agent
     return agent
+
+
+async def _restore_channels(session, org: Org, agent: Agent) -> list[Channel]:
+    """A recreated agent (same name as one deleted from this org) gets its channels back."""
+    former = dict((org.settings or {}).get("former_channels") or {})
+    ids = former.pop(agent.name.lower(), None)
+    if not ids:
+        return []
+    org.settings = {**(org.settings or {}), "former_channels": former}
+    restored = []
+    for ch in (await session.execute(select(Channel).where(
+            Channel.id.in_(ids), Channel.org_id == org.id))).scalars():
+        if agent.id not in ch.members:
+            ch.members = sorted({*ch.members, agent.id})
+            restored.append(ch)
+    return restored
 
 
 async def update_agent(agent_id: str, patch: dict[str, Any]) -> Agent:
@@ -406,10 +427,19 @@ async def delete_agent(agent_id: str) -> None:
     await files.delete_for_agent(agent_id)
     await tasks.reassign_from(org_id, agent_id)
     async with SessionLocal() as session:
+        left: list[str] = []
         for ch in (await session.execute(select(Channel).where(
                 Channel.org_id == org_id))).scalars():
             if agent_id in ch.members:
                 ch.members = [m for m in ch.members if m != agent_id]
+                if ch.kind == "channel":
+                    left.append(ch.id)
+        # Remember its channels by name, so recreating the agent restores them (issue #5).
+        org = await session.get(Org, org_id)
+        if org is not None and left:
+            former = dict((org.settings or {}).get("former_channels") or {})
+            former[agent.name.lower()] = left
+            org.settings = {**(org.settings or {}), "former_channels": former}
         await session.execute(delete(Agent).where(Agent.id == agent_id))
         await session.commit()
     await bus.publish("agent.deleted", {"id": agent_id}, org_id=org_id, agent_id=agent_id)

@@ -137,6 +137,26 @@ async def create_channel(args: dict, ctx: ToolContext) -> str:
 
 
 @tool(
+    "update_channel",
+    "Change a channel you belong to: add or remove members (names, or \"user\"), rename it, "
+    "change its topic, or archive it when it's obsolete (archiving frees its name for a "
+    "replacement). Use this instead of creating a duplicate channel.",
+    obj({"channel": S, "add_members": arr(S), "remove_members": arr(S), "rename_to": S,
+         "topic": S, "archive": B}, ["channel"]),
+    category="communication",
+)
+async def update_channel(args: dict, ctx: ToolContext) -> str:
+    try:
+        ch, changes = await comms.update_channel(
+            ctx.org.id, args["channel"], actor=ctx.agent.id, add=args.get("add_members"),
+            remove=args.get("remove_members"), name=args.get("rename_to"),
+            topic=args.get("topic"), archived=args.get("archive"))
+    except CommsError as e:
+        raise ToolError(str(e)) from None
+    return f"{ch.key}: {'; '.join(changes)}." if changes else f"{ch.key}: nothing to change."
+
+
+@tool(
     "list_colleagues",
     "List everyone in your organization: name, role, team, and how they relate to you.",
     obj({}),

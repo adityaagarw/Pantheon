@@ -47,29 +47,33 @@ async def create_channel(org_id: str, body: dict[str, Any] = Body(...)) -> dict[
 
 @router.patch("/channels/{channel_id}")
 async def update_channel(channel_id: str, body: dict[str, Any] = Body(...)) -> dict[str, Any]:
+    """Members (``members`` to replace, or ``add``/``remove``), ``name``, ``topic``,
+    ``notify`` and ``archived``. Archiving frees the name for a replacement channel."""
     async with SessionLocal() as session:
         ch = await session.get(Channel, channel_id)
-        if ch is None:
-            raise HTTPException(404, "channel not found")
-        if "topic" in body:
-            ch.topic = str(body["topic"])
-        if "notify" in body and body["notify"] in ("all", "mentions"):
-            ch.notify = body["notify"]
-        if "archived" in body:
-            ch.archived = bool(body["archived"])
-        if "members" in body and ch.kind == "channel":
-            ids = []
-            for ref in body["members"]:
-                if ref == "user":
-                    ids.append("user")
-                    continue
-                a = await comms.resolve_agent(session, ch.org_id, ref)
-                if a is None:
-                    raise HTTPException(400, f"unknown member '{ref}'")
-                ids.append(a.id)
-            ch.members = sorted(set(ids))
-        await session.commit()
-    return channel_to_dict(ch)
+    if ch is None:
+        raise HTTPException(404, "channel not found")
+    try:
+        updated, _ = await comms.update_channel(
+            ch.org_id, ch.id, members=body.get("members"), add=body.get("add"),
+            remove=body.get("remove"), name=body.get("name"), topic=body.get("topic"),
+            notify=body.get("notify"),
+            archived=bool(body["archived"]) if "archived" in body else None)
+    except comms.CommsError as e:
+        raise HTTPException(400, str(e)) from None
+    return channel_to_dict(updated)
+
+
+@router.delete("/channels/{channel_id}", status_code=204)
+async def delete_channel(channel_id: str) -> None:
+    async with SessionLocal() as session:
+        ch = await session.get(Channel, channel_id)
+    if ch is None:
+        raise HTTPException(404, "channel not found")
+    try:
+        await comms.delete_channel(ch.org_id, ch.id)
+    except comms.CommsError as e:
+        raise HTTPException(400, str(e)) from None
 
 
 @router.get("/channels/{channel_id}/messages")

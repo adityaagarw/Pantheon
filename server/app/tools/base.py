@@ -169,7 +169,7 @@ def arr(items: dict[str, Any]) -> dict[str, Any]:
 DEFAULT_TOOLSET: list[dict[str, str]] = [
     {"name": n, "approval": "auto"} for n in (
         "send_message", "post_message", "read_channel", "list_channels", "create_channel",
-        "list_colleagues", "create_task", "update_task", "list_tasks", "get_task",
+        "update_channel", "list_colleagues", "create_task", "update_task", "list_tasks", "get_task",
         "remember", "recall", "request_feature", "hold_meeting",
     )
 ]

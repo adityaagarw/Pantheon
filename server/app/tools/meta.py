@@ -130,7 +130,9 @@ async def create_agent(args: dict, ctx: ToolContext) -> str:
     agent = await orgs.create_agent(org.id, data)
     if args.get("manager"):
         await orgs.set_relationship(org.id, args["manager"], agent.name, "manages")
-    return f"Hired {agent.name} ({agent.role}) into {org.name} [{agent.id}]."
+    restored = getattr(agent, "restored_channels", [])
+    back = f" Restored the channels its predecessor was in: {', '.join(restored)}." if restored else ""
+    return f"Hired {agent.name} ({agent.role}) into {org.name} [{agent.id}].{back}"
 
 
 @meta("update_agent", "Change an agent's name, role, team, persona, tools, model, worktree, "
@@ -196,6 +198,24 @@ async def create_org_channel(args: dict, ctx: ToolContext) -> str:
     except comms.CommsError as e:
         raise ToolError(str(e)) from None
     return f"Created {ch.key} in {org.name}."
+
+
+@meta("update_org_channel", "Change a channel in an organization: add or remove members, "
+      "rename, set the topic or notifications, or archive/unarchive it (archiving frees the "
+      "name). Use it to repair memberships, e.g. after an agent was recreated.",
+      obj({"org": S, "channel": S, "add_members": arr(S), "remove_members": arr(S),
+           "rename_to": S, "topic": S, "notify": {"type": "string", "enum": ["all", "mentions"]},
+           "archive": B}, ["org", "channel"]))
+async def update_org_channel(args: dict, ctx: ToolContext) -> str:
+    org = await _org(args["org"])
+    try:
+        ch, changes = await comms.update_channel(
+            org.id, args["channel"], add=args.get("add_members"),
+            remove=args.get("remove_members"), name=args.get("rename_to"),
+            topic=args.get("topic"), notify=args.get("notify"), archived=args.get("archive"))
+    except comms.CommsError as e:
+        raise ToolError(str(e)) from None
+    return f"{ch.key} in {org.name}: {'; '.join(changes) or 'nothing to change'}."
 
 
 @meta("tool_catalog", "All built-in tools (with categories and default approval) and every "

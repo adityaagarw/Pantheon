@@ -278,9 +278,17 @@ export function reduce(s: OrgState, e: PantheonEvent, now = Date.now()): OrgStat
         ref: m.channelId ?? undefined,
       });
     }
-    case "channel.created": {
+    case "channel.created":
+    case "channel.updated": {
       const c = p as unknown as Channel;
-      return { ...s, channels: { ...s.channels, [c.id]: c } };
+      const prev = s.channels[c.id];
+      // Keep what only the list endpoint knows (last activity, counts).
+      return { ...s, channels: { ...s.channels, [c.id]: { ...prev, ...c } } };
+    }
+    case "channel.deleted": {
+      const rest = { ...s.channels };
+      delete rest[String(p.id)];
+      return { ...s, channels: rest };
     }
     case "task.created":
     case "task.updated": {
