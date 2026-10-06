@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 import pytest
 
 from app.services import templates
@@ -50,7 +52,8 @@ async def test_validation_errors_are_400s(app_client):
     r = await app_client.post(f"/api/v1/orgs/{org['id']}/relationships",
                               json={"fromId": b["id"], "toId": ann["id"], "kind": "manages"})
     assert r.status_code == 400 and "cycle" in r.json()["detail"]
-    r = await app_client.post("/api/v1/orgs", json={"name": "X", "workspace": "C:/Windows"})
+    outside = os.path.abspath(os.sep)  # the filesystem root: outside the workspace roots anywhere
+    r = await app_client.post("/api/v1/orgs", json={"name": "X", "workspace": outside})
     assert r.status_code == 400
 
 

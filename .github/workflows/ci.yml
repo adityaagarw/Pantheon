@@ -10,7 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16-alpine
+        # Same image as docker-compose: memory and file search need the pgvector extension.
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_USER: pantheon
           POSTGRES_PASSWORD: pantheon
@@ -27,6 +28,9 @@ jobs:
       - name: Ruff
         working-directory: server
         run: uv run ruff check app tests
+      - name: Browser for the agent-browser tests
+        working-directory: server
+        run: uv run playwright install --with-deps chromium
       - name: Migrations apply cleanly
         working-directory: server
         run: uv run alembic upgrade head
