@@ -86,6 +86,10 @@ async def lifespan(app: FastAPI):
     plugins.load_all()
     await customtools.load_all()
     await secrets_svc.warm()
+    from app.services import meetings as meetings_svc
+
+    if swept := await meetings_svc.sweep_interrupted():
+        log.info("closed %d meeting(s) a restart had interrupted", swept)
     secrets_svc.install_log_filter()
     await ensure_supervisor()
     await runtime.start()

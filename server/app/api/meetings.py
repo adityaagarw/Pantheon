@@ -36,6 +36,15 @@ async def get_meeting(meeting_id: str) -> dict[str, Any]:
     return meetings.meeting_to_dict(m)
 
 
+@router.post("/meetings/{meeting_id}/end")
+async def end_meeting(meeting_id: str) -> dict[str, Any]:
+    """End a meeting that is stuck in progress."""
+    row = await meetings.end_meeting(meeting_id)
+    if row is None:
+        raise HTTPException(404, "no meeting in progress with that id")
+    return {"id": row.id, "status": row.status}
+
+
 @router.post("/orgs/{org_id}/meetings", status_code=202)
 async def call_meeting(org_id: str, body: dict[str, Any] = Body(...)) -> dict[str, Any]:
     """The user convenes a meeting; an agent facilitates and writes the minutes."""

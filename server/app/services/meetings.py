@@ -15,12 +15,14 @@ to shared memory, the meeting channel and every participant's inbox.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import re
 from dataclasses import dataclass, field
 from typing import Any
 
 from langchain_core.messages import HumanMessage, SystemMessage
+from sqlalchemy import select
 
 from app.agents import llm
 from app.core.db import SessionLocal
@@ -116,6 +118,39 @@ async def prepare(org: Org, facilitator: Agent, participant_refs: list[str], age
     )
 
 
+async def end_meeting(meeting_id: str, reason: str = "ended by the user") -> Meeting | None:
+    """Stop treating a meeting as in progress (frees its room and participants). Returns the
+    meeting, or None if it wasn't running."""
+    async with SessionLocal() as session:
+        row = await session.get(Meeting, meeting_id)
+        if row is None or row.status != "running":
+            return None
+        row.status, row.ended_at = "failed", utcnow()
+        row.minutes = row.minutes or f"(The meeting did not finish: {reason}.)"
+        await session.commit()
+    await bus.publish("meeting.ended", {"meetingId": row.id, "status": "failed",
+                                        "reason": reason},
+                      org_id=row.org_id, agent_id=row.facilitator_id)
+    return row
+
+
+async def sweep_interrupted() -> int:
+    """At startup nothing can still be running: close meetings a restart cut short."""
+    async with SessionLocal() as session:
+        ids = (await session.execute(select(Meeting.id).where(
+            Meeting.status == "running"))).scalars().all()
+    for mid in ids:
+        await end_meeting(mid, "the server restarted while it was in progress")
+    return len(ids)
+
+
+async def running_meetings(org_id: str) -> list[Meeting]:
+    async with SessionLocal() as session:
+        return list((await session.execute(select(Meeting).where(
+            Meeting.org_id == org_id, Meeting.status == "running")
+            .order_by(Meeting.created_at))).scalars().all())
+
+
 async def run(req: MeetingRequest) -> dict[str, Any]:
     """Run the meeting to completion. Returns {meeting, transcript, minutes, tasks}."""
     org = req.org
@@ -158,14 +193,13 @@ async def run(req: MeetingRequest) -> dict[str, Any]:
                                   org_id=org.id, agent_id=a.id)
         minutes, items = await _minutes(req, everyone, transcript)
     except llm.LLMFailure as e:
-        async with SessionLocal() as session:
-            row = await session.get(Meeting, mtg.id)
-            if row:
-                row.status, row.ended_at = "failed", utcnow()
-                await session.commit()
-        await bus.publish("meeting.ended", {"meetingId": mtg.id, "status": "failed"},
-                          org_id=org.id, agent_id=req.facilitator.id)
+        await end_meeting(mtg.id, f"the model failed: {e}")
         raise MeetingError(f"the meeting was interrupted: {e}") from None
+    except BaseException as e:  # noqa: BLE001 - incl. cancellation: never leave it "running"
+        reason = "it was cancelled" if isinstance(e, asyncio.CancelledError) else \
+            f"{type(e).__name__}: {e}"
+        await asyncio.shield(end_meeting(mtg.id, reason))
+        raise
 
     if req.create_tasks:
         created = await _create_action_tasks(req, everyone, items, mtg.id)

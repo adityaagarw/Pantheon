@@ -298,6 +298,34 @@ async def grant_secret(args: dict, ctx: ToolContext) -> str:
         raise ToolError(str(e)) from None
 
 
+@meta("meetings_in_progress", "Meetings an organization currently has in progress (who, "
+      "where, since when). Use end_meeting on one that's stuck.", obj({"org": S}, ["org"]))
+async def meetings_in_progress(args: dict, ctx: ToolContext) -> str:
+    from app.services import meetings
+
+    org = await _org(args["org"])
+    rows = await meetings.running_meetings(org.id)
+    if not rows:
+        return f"No meetings in progress in {org.name}."
+    snap = await orgs.snapshot(org.id)
+    names = {a["id"]: a["name"] for a in snap["agents"]}
+    return "\n".join(
+        f"{m.id}: {m.agenda.splitlines()[0][:80]} | in {(m.options or {}).get('room') or 'the meeting room'}"
+        f" | since {m.created_at:%Y-%m-%d %H:%M} UTC | "
+        f"{', '.join(names.get(p, p) for p in m.participants or [])}" for m in rows)
+
+
+@meta("end_meeting", "End a meeting that's stuck in progress, freeing its room and participants. "
+      "Get its id from meetings_in_progress.", obj({"meeting": S, "reason": S}, ["meeting"]))
+async def end_meeting(args: dict, ctx: ToolContext) -> str:
+    from app.services import meetings
+
+    row = await meetings.end_meeting(args["meeting"], args.get("reason") or "ended by Zeus")
+    if row is None:
+        raise ToolError(f"no meeting in progress with id {args['meeting']}")
+    return f"Ended meeting {row.id}; its room and participants are free."
+
+
 @meta("tool_catalog", "All built-in tools (with categories and default approval) and every "
       "configured MCP server with its tools.", obj({"org": S}))
 async def tool_catalog(args: dict, ctx: ToolContext) -> str:

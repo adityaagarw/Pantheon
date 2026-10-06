@@ -193,8 +193,9 @@ async def _meeting_rooms(org_id: str) -> dict[str, str]:
             Meeting.org_id == org_id, Meeting.status == "running"))).scalars().all()
     out: dict[str, str] = {}
     for m in rows:
+        room = (m.options or {}).get("room") or "the meeting room"
         for p in m.participants or []:
-            out[p] = m.room or "the meeting room"
+            out[p] = room
     return out
 
 

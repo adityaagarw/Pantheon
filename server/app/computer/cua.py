@@ -24,11 +24,13 @@ class CuaComputer:
         self.headers = {k: v for k, v in (("X-API-Key", api_key),
                                           ("X-Container-Name", container)) if v}
 
-    async def cmd(self, command: str, timeout: float = 60, **params: Any) -> dict[str, Any]:
+    async def cmd(self, action: str, /, timeout: float = 60, **params: Any) -> dict[str, Any]:
+        """Run a computer-server action. ``action`` is positional-only so a ``command``
+        parameter (the shell text for ``run_command``) can be passed through."""
         try:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 res = await client.post(f"{self.base_url}/cmd", headers=self.headers,
-                                        json={"command": command, "params": params})
+                                        json={"command": action, "params": params})
         except httpx.HTTPError as e:
             raise ComputerError(f"the computer is not reachable at {self.base_url} ({e}). "
                                 "Start it with: docker compose --profile computer up -d") from None
@@ -37,15 +39,15 @@ class CuaComputer:
                 detail = res.json().get("detail")
             except ValueError:
                 detail = res.text[:300]
-            raise ComputerError(f"{command} failed: HTTP {res.status_code} {detail}")
+            raise ComputerError(f"{action} failed: HTTP {res.status_code} {detail}")
         result: dict[str, Any] | None = None
         for line in res.text.splitlines():
             if line.startswith("data:"):
                 result = json.loads(line[5:].strip())
         if result is None:
-            raise ComputerError(f"{command}: empty response")
+            raise ComputerError(f"{action}: empty response")
         if not result.get("success", False):
-            raise ComputerError(f"{command} failed: {result.get('error') or result}")
+            raise ComputerError(f"{action} failed: {result.get('error') or result}")
         return result
 
     async def screenshot(self, quality: int = 70) -> str:

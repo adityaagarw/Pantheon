@@ -93,6 +93,9 @@ services:
       VNC_RESOLUTION: ${PANTHEON_DESKTOP_RESOLUTION:-1280x720}
     volumes:
       - ./deploy/cua/start-computer-server.sh:/opt/pantheon/start-computer-server.sh:ro
+      # A host folder shared with the desktop (its ~/shared): hand agents files to work
+      # on in GUI apps, and get back what they save there.
+      - ${PANTHEON_DESKTOP_SHARE:-./data/desktop-share}:/home/cua/shared
     # Install our start script with its own permissions: a checkout from Windows or a zip
     # may have lost the executable bit, and supervisord runs the script directly.
     command: ["/bin/sh", "-c", "install -m 755 /opt/pantheon/start-computer-server.sh /usr/local/bin/start-computer-server.sh && exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf"]

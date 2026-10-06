@@ -190,6 +190,36 @@ async def test_computer_use_drives_cua_and_one_agent_at_a_time(app_client, monke
     assert "in use by Ada" in _out(bp, 1)
 
 
+async def test_computer_shell_reaches_the_real_wrapper(app_client, monkeypatch):
+    """computer_shell goes through the real CuaComputer.cmd (no fake): its `command`
+    argument used to collide with cmd()'s own first parameter (Zeus-triaged bug)."""
+    import json
+
+    import httpx
+
+    from app.tools import computer as computer_tools
+
+    computer_tools._lease.clear()  # another test's agent may still hold the desktop
+    seen: list[dict] = []
+
+    def server(request: httpx.Request) -> httpx.Response:
+        seen.append(json.loads(request.content))
+        result = {"success": True, "stdout": "hello\n", "stderr": "", "return_code": 0}
+        return httpx.Response(200, text="data: " + json.dumps(result) + "\n\n")
+
+    real = httpx.AsyncClient
+    monkeypatch.setattr(httpx, "AsyncClient",
+                        lambda *a, **k: real(*a, transport=httpx.MockTransport(server), **k))
+    org = await make_org(app_client)
+    ada = await make_agent(app_client, org["id"], "Ada",
+                           tools=[{"name": "computer_shell", "approval": "auto"}])
+    ap = script(ada["id"], call("computer_shell", command="echo hello"), say("done"))
+    await dm(app_client, org["id"], "Ada", "Say hello on the computer.")
+    await wait_for(lambda: _done(ada["id"], 1), msg="ran")
+    assert seen == [{"command": "run_command", "params": {"command": "echo hello"}}], _out(ap, 1)
+    assert _out(ap, 1) == "exit 0\nhello\n"
+
+
 # --- the browser -----------------------------------------------------------------------------
 
 

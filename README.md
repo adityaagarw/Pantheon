@@ -297,6 +297,12 @@ This starts a sandboxed XFCE desktop (`trycua/cua-xfce`, 1280×720 by default). 
 `computer_*` tools (Team tab, or ask Zeus), make sure their model has *Sees images* on, and watch in an
 org → *Stage* → *Computer*.
 
+To hand the desktop files, put them in `./data/desktop-share` on your machine: they appear in the
+desktop as `~/shared` (`/home/cua/shared`), and whatever agents save there shows up on your side. Point
+`PANTHEON_DESKTOP_SHARE` in `.env` at another folder (for example your agents' workspace) and run
+`docker compose --profile computer up -d desktop`. On Linux the desktop's user is uid 1001, so for agents
+to save files there, give it write access (e.g. `sudo chown -R 1001 data/desktop-share`).
+
 ### Phones and other devices
 
 Browsers only allow the microphone on HTTPS pages, so the stack includes a Caddy proxy on
