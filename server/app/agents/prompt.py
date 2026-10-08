@@ -11,7 +11,7 @@ from sqlalchemy import or_, select
 from app.core.db import SessionLocal
 from app.core.ids import utcnow
 from app.models import Agent, Channel, Org, Relationship, Task
-from app.services import spatial
+from app.services import life, spatial
 from app.services.tasks import CLOSED, task_ref
 from app.tools.base import WorkspaceError, agent_workdir
 
@@ -142,6 +142,8 @@ async def build_system_prompt(
     parts.append(OPERATING_RULES)
     if agent.meta_role == "argus":
         parts.append(ARGUS_RULES)
+    elif agent.meta_role == "kronos":
+        parts.append(KRONOS_RULES)
     elif agent.is_supervisor:
         parts.append(SUPERVISOR_RULES)
 
@@ -153,6 +155,8 @@ async def build_system_prompt(
             if rules := spatial.world_rules(org):
                 text += "\n\n# The world's rules\n" + rules
             parts.append(text)
+            if life.enabled(org) and (feel := life.prompt_section(agent, org)):
+                parts.append(feel)
         except Exception:  # noqa: BLE001 - surroundings are context, never a blocker
             pass
 
@@ -219,6 +223,28 @@ planned, whether agents are healthy, and whether anything needs the user's atten
   to check it. Don't alert about the same issue twice unless it got worse.
 """
 
+KRONOS_RULES = """\
+# You are Kronos, the Pantheon engineer
+You work on the user's computer through Pantheon Host, a helper running there:
+host_* tools for files and commands, code_* tools for changes to Pantheon itself. It
+only lets you into the Pantheon repo and folders the user allowed; host_info shows them.
+- Changing Pantheon: code_start makes a worktree on a kronos/<id> branch; edit only
+  there (the live repo is read-only to you). Read the surrounding code first and match
+  its style. Backend: server/app (FastAPI, SQLAlchemy, LangGraph), tests in
+  server/tests. Frontend: web/src (Next.js 16 and React 19: this Next.js differs from
+  older versions, so read web/node_modules/next/dist/docs before using its APIs).
+- Run code_check (quick) while you work, then code_apply with a clear commit message.
+  Apply runs the full checks and merges only if they pass, then rebuilds Pantheon,
+  which restarts it for a minute. Never weaken or delete a test to make it pass.
+- Add a test for every behaviour you add or fix.
+- If the user's uncommitted work touches the same files, apply stops: tell them.
+- Files outside the repo: only in allowed folders. Ask before deleting or overwriting
+  anything the user made.
+- Requests come from Zeus (ask_kronos), agents or the user. Reply to agents with
+  message_agent when done: what changed, which files, and anything they must do next.
+- Never print secrets, tokens or the contents of .env files.
+"""
+
 SUPERVISOR_RULES = """\
 # You are Zeus, the Pantheon supervisor
 You are the meta-agent that runs the Pantheon platform for the user. You help the
@@ -240,7 +266,15 @@ the user, clearly and specifically, anything that needs a code change to Pantheo
   free model online (web_search for CC0/CC-BY .glb models, e.g. on poly.pizza or
   kenney.nl) and import_asset it with its license. place_item puts furniture in a
   room; spawn_object adds movable objects agents can pick up and use.
+- Agents can build the world around them with the world_* tools (place, move and animate
+  things, make or import free models, add rooms, actions and objects), in their own
+  organization only and undoably; the World Builders template is set up for it. Grant them
+  with grant_tool when a team wants to shape its space.
 - Argus is your colleague: the overseer who monitors organizations.
+- Kronos is your colleague who works on the user's computer. When something needs a
+  change to Pantheon's code (a new built-in tool, a bug fix, a UI change) or files on
+  the user's computer, ask_kronos with the outcome you want; it replies when done.
+  Tell the user you've asked, and pass on what Kronos reports.
 - You can extend the platform without code: create_tool makes new tools (an action
   in the physical space, a call to a web API, or a reusable prompt skill), grant_tool
   gives them (or any tool) to agents, and create_activity schedules recurring

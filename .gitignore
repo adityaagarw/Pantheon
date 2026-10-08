@@ -40,3 +40,6 @@ Thumbs.db
 
 # copied from node_modules on install
 web/public/excalidraw/
+
+# Kronos's worktrees and change log (kronos/runner.py)
+.kronos/

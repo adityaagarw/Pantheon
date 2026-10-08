@@ -30,6 +30,17 @@ PERMISSIONS_SCHEMA = {"type": "object", "properties": {"tasks": {
     "additionalProperties": False,
     "description": "Task permissions: create tasks?; assign to anyone / reports / self; edit any / "
                    "involved / assigned tasks; require review before closing own tasks"}
+# How agents look in the office (web/src/office/characters.ts).
+ANIMALS = ("beaver", "bee", "bunny", "cat", "caterpillar", "chick", "cow", "crab", "deer", "dog",
+           "elephant", "fish", "fox", "giraffe", "hog", "koala", "lion", "monkey", "panda",
+           "parrot", "penguin", "pig", "polar", "tiger")
+CHARACTERS = (*(f"{g}-{c}" for g in ("female", "male") for c in "abcdef"),
+              *(f"blocky-{c}" for c in "abcdefghijklmnopqr"), *(f"pet-{a}" for a in ANIMALS),
+              "dungeon-human", "dungeon-orc", "robot")
+CHARACTER = {"type": "string", "enum": list(CHARACTERS),
+             "description": "how the agent looks in the office: a person (female-a..f, "
+                            "male-a..f), blocky-a..r, an animal (pet-fox, pet-panda, pet-cat, "
+                            "pet-penguin...), dungeon-human, dungeon-orc or robot"}
 TOOL_ENTRY = {"type": "object", "properties": {
     "name": S, "approval": {"type": "string", "enum": ["auto", "ask", "deny"]}},
     "required": ["name"], "additionalProperties": False}
@@ -165,11 +176,13 @@ async def update_org(args: dict, ctx: ToolContext) -> str:
       "approval policy. `manager` sets a reporting line.",
       obj({"org": S, "name": S, "role": S, "team": S, "persona": S,
            "tools": arr(TOOL_ENTRY), "model": MODEL_SCHEMA, "worktree": S, "manager": S,
-           "permissions": PERMISSIONS_SCHEMA},
+           "permissions": PERMISSIONS_SCHEMA, "character": CHARACTER},
           ["org", "name", "role", "persona"]))
 async def create_agent(args: dict, ctx: ToolContext) -> str:
     org = await _org(args["org"])
-    data = {k: v for k, v in args.items() if k not in ("org", "manager")}
+    data = {k: v for k, v in args.items() if k not in ("org", "manager", "character")}
+    if args.get("character"):
+        data["avatar"] = {"character": args["character"]}
     agent = await orgs.create_agent(org.id, data)
     if args.get("manager"):
         await orgs.set_relationship(org.id, args["manager"], agent.name, "manages")
@@ -185,16 +198,20 @@ async def create_agent(args: dict, ctx: ToolContext) -> str:
 
 
 @meta("update_agent", "Change an agent's name, role, team, persona, tools, model, worktree, "
-      "limits or status (active/paused/disabled). `tools` replaces the whole list.",
+      "limits, status (active/paused/disabled) or how it looks (character). `tools` replaces "
+      "the whole list.",
       obj({"org": S, "agent": S, "name": S, "role": S, "team": S, "persona": S,
            "tools": arr(TOOL_ENTRY), "model": MODEL_SCHEMA, "worktree": S,
            "limits": {"type": "object"}, "permissions": PERMISSIONS_SCHEMA,
-           "status": {"type": "string", "enum": ["active", "paused", "disabled"]}},
+           "status": {"type": "string", "enum": ["active", "paused", "disabled"]},
+           "character": CHARACTER},
           ["org", "agent"]))
 async def update_agent(args: dict, ctx: ToolContext) -> str:
     org = await _org(args["org"])
     agent = await _agent(org, args["agent"])
-    patch = {k: v for k, v in args.items() if k not in ("org", "agent")}
+    patch = {k: v for k, v in args.items() if k not in ("org", "agent", "character")}
+    if args.get("character"):
+        patch["avatar"] = {"character": args["character"]}
     agent = await orgs.update_agent(agent.id, patch)
     return f"Updated {agent.name}: {', '.join(patch) or 'nothing'}."
 
@@ -324,6 +341,32 @@ async def end_meeting(args: dict, ctx: ToolContext) -> str:
     if row is None:
         raise ToolError(f"no meeting in progress with id {args['meeting']}")
     return f"Ended meeting {row.id}; its room and participants are free."
+
+
+@meta("set_space_theme", "Change an organization's office theme. Each is a look and a floor "
+      "plan with its own furniture: classic (warm wood, desk pods, boardroom, lounge), corporate "
+      "(reception, rows of dual-monitor desks, boardroom, private offices, phone booths, café), "
+      "tech (shared benches with laptops, hangout, huddle rooms, café bar), operations (desks "
+      "facing a wall of dashboards, server room, war room), industrial (production floor with "
+      "machines and a conveyor line, loading bay), lab (benches, experiment bay, server room, "
+      "seminar room), station (space station: command deck, airlock, crew quarters). "
+      "rebuild=true lays the office out again in that style (replacing a hand-made layout); "
+      "otherwise only the look changes.",
+      obj({"org": S, "theme": {"type": "string", "enum": list(orgs.THEMES)}, "rebuild": B},
+          ["org", "theme"]))
+async def set_space_theme(args: dict, ctx: ToolContext) -> str:
+    org = await _org(args["org"])
+    if args["theme"] not in orgs.THEMES:
+        raise ToolError(f"theme must be one of {', '.join(orgs.THEMES)}")
+    layout = dict(org.layout or {})
+    layout["theme"] = args["theme"]
+    if args.get("rebuild"):
+        layout.pop("office", None)  # the office is generated afresh in the theme's style
+    elif isinstance(layout.get("office"), dict):
+        layout["office"] = {**layout["office"], "theme": args["theme"]}
+    await orgs.update_org(org.id, {"layout": layout})
+    return (f"{org.name} now uses the {args['theme']} theme"
+            + (", with its office rebuilt in that style." if args.get("rebuild") else "."))
 
 
 @meta("tool_catalog", "All built-in tools (with categories and default approval) and every "

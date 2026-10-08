@@ -6,7 +6,8 @@ export type RuntimeStatus =
   | "awaiting_approval"
   | "error"
   | "retrying"
-  | "cooling_down";
+  | "cooling_down"
+  | "queued"; // waiting for a free slot (Settings > Agents)
 
 export interface ToolEntry {
   name: string;
@@ -55,7 +56,18 @@ export interface Agent {
   isSupervisor: boolean;
   metaRole?: "zeus" | "argus" | null;
   location?: AgentLocation | null;
+  /** Needs, mood, traits and wants, in organizations where life is on. */
+  life?: AgentLife | null;
   createdAt: string | null;
+}
+
+export interface AgentLife {
+  needs: Record<"energy" | "food" | "hygiene" | "social" | "fun" | "comfort", number>;
+  mood: "great" | "good" | "okay" | "low" | "miserable";
+  traits: string[];
+  wants: { id: string; text: string; since: string }[];
+  done: { text: string; at: string }[];
+  doing?: string | null;
 }
 
 /** Where an agent chose to be; null = its default spot (desk, meetings, breaks). */
@@ -87,6 +99,10 @@ export interface PrimitivePart {
   pos: [number, number, number];
   rot: [number, number, number];
   color: string;
+  /** Glow color, e.g. screens and status lights. */
+  emissive?: string;
+  /** < 1 for glass. */
+  opacity?: number;
 }
 
 /** A runtime 3D asset (built, imported or from a plugin). */
@@ -119,6 +135,79 @@ export interface PluginInfo {
   templates: string[];
   tools: string[];
   error: string | null;
+}
+
+export type StageDocKind = "sheet" | "pdf" | "notebook";
+
+/** A spreadsheet, PDF or notebook on the Stage (list form). */
+export interface StageDocInfo {
+  id: string;
+  orgId: string;
+  kind: StageDocKind;
+  title: string;
+  version: number;
+  createdBy: string;
+  updatedBy: string;
+  createdAt: string | null;
+  updatedAt: string | null;
+  summary: string;
+}
+
+export interface SheetCell {
+  v?: string | number | boolean | null;
+  f?: string;
+}
+
+export interface SheetData {
+  sheets: { name: string; cells: Record<string, SheetCell> }[];
+}
+
+export interface PdfHighlight {
+  id: string;
+  page: number;
+  text: string;
+  note: string;
+  by: string;
+}
+
+export interface PdfData {
+  attachmentId: string;
+  name: string;
+  pages: number | null;
+  page: number;
+  highlights: PdfHighlight[];
+}
+
+export type NotebookOutput =
+  | { type: "stream"; name: string; text: string }
+  | { type: "result"; text: string; html?: string }
+  | { type: "image"; data: string }
+  | { type: "error"; ename: string; evalue: string; traceback: string };
+
+export interface NotebookCell {
+  id: string;
+  type: "code" | "markdown";
+  source: string;
+  outputs: NotebookOutput[];
+  count: number | null;
+  status: "idle" | "running" | "ok" | "error";
+  by: string;
+}
+
+export interface NotebookData {
+  cells: NotebookCell[];
+}
+
+export interface StageDoc extends StageDocInfo {
+  data: SheetData | PdfData | NotebookData;
+}
+
+/** The last change to a document, as published live. */
+export interface StageDocEvent extends StageDocInfo {
+  changes?: Record<string, Record<string, SheetCell | null>>;
+  source?: string;
+  focus?: { page: number };
+  data?: StageDoc["data"];
 }
 
 export interface WhiteboardInfo {
@@ -228,6 +317,62 @@ export interface Activity {
   lastRunAt: string | null;
 }
 
+export type ShadowSource = "sandbox" | "browser" | "desktop";
+
+export interface ShadowSession {
+  id: string;
+  orgId: string;
+  agentId: string;
+  agentName: string | null;
+  title: string;
+  note: string;
+  source: ShadowSource;
+  status: "recording" | "stopped" | "learning" | "learned";
+  code: string | null;
+  /** "My computer" recordings: the computer Pantheon Host is recording it on. */
+  hostRecording?: string | null;
+  hostAvailable?: boolean;
+  eventCount: number;
+  startedAt: string;
+  endedAt: string | null;
+}
+
+export interface ShadowEvent {
+  id: string;
+  t: number;
+  kind: "click" | "input" | "submit" | "navigate" | "window" | "typing" | "screen" | "note" | "key";
+  data: Record<string, unknown>;
+  image: string | null;
+}
+
+export interface Playbook {
+  id: string;
+  orgId: string;
+  agentId: string;
+  sessionId: string | null;
+  title: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+/** Pantheon Host, the helper on the user's computer. */
+export interface HostStatus {
+  connected: boolean;
+  secondsSinceSeen: number | null;
+  info: {
+    repo: string;
+    branch?: string;
+    allowed: string[];
+    os?: string;
+    host?: string;
+    version?: number;
+    capabilities?: string[];
+    recording?: { sessionId: string; title: string } | null;
+    openChanges?: { id: string; title: string; path: string }[];
+  } | null;
+}
+
 export interface ArgusWatch {
   orgId: string;
   orgName: string;
@@ -241,6 +386,10 @@ export interface OrgSettings {
   comm_policy: "open" | "structured";
   max_chain_depth: number;
   daily_token_budget: number;
+  /** "auto": shell commands (run_command, computer_shell) run without asking; agents set to deny still can't. */
+  shell_approval?: "ask" | "auto";
+  /** Agents of this org working at once; 0: only the global limit. */
+  max_concurrent?: number;
   default_model?: ModelBinding;
   task_policy?: TaskPolicy;
   meetings?: MeetingSettings;

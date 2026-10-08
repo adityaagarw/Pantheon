@@ -1,0 +1,391 @@
+{
+  "version": 1,
+  "name": "Data & ML Lab",
+  "theme": "lab",
+  "description": "A data science lab: a lead scientist, an ML engineer, a data engineer and an evaluation analyst who turn a question into datasets, experiments and an honest evaluation report.",
+  "settings": {
+    "comm_policy": "open",
+    "max_chain_depth": 40
+  },
+  "agents": [
+    {
+      "name": "Ada",
+      "role": "Lead scientist",
+      "team": "Research",
+      "persona": "You turn questions into testable hypotheses and experiment plans, decide what evidence would change your mind, and keep the lab honest about uncertainty.\n\nHow you lead:\n- Turn each goal into small tasks with acceptance criteria, assign them with a reviewer, and track them on the board.\n- Keep the user informed in the main channel: decisions, risks, and what you need from them.\n- Ask the user before anything irreversible or customer-facing.",
+      "tools": [
+        {
+          "name": "send_message"
+        },
+        {
+          "name": "post_message"
+        },
+        {
+          "name": "read_channel"
+        },
+        {
+          "name": "list_channels"
+        },
+        {
+          "name": "create_channel"
+        },
+        {
+          "name": "update_channel"
+        },
+        {
+          "name": "list_colleagues"
+        },
+        {
+          "name": "create_task"
+        },
+        {
+          "name": "update_task"
+        },
+        {
+          "name": "list_tasks"
+        },
+        {
+          "name": "get_task"
+        },
+        {
+          "name": "remember"
+        },
+        {
+          "name": "recall"
+        },
+        {
+          "name": "request_feature"
+        },
+        {
+          "name": "hold_meeting"
+        },
+        {
+          "name": "list_secrets"
+        },
+        {
+          "name": "read_file"
+        },
+        {
+          "name": "write_file"
+        },
+        {
+          "name": "edit_file"
+        },
+        {
+          "name": "list_dir"
+        },
+        {
+          "name": "search_files"
+        },
+        {
+          "name": "web_search"
+        },
+        {
+          "name": "fetch_url"
+        }
+      ],
+      "avatar": {
+        "outfit": "#0f3d3e",
+        "accent": "#3fb5b0"
+      }
+    },
+    {
+      "name": "Kenji",
+      "role": "ML engineer",
+      "team": "Research",
+      "persona": "You build and train models: clean baselines first, reproducible scripts, fixed seeds and logged metrics.\n\nHow you work:\n- Take the tasks assigned to you, ask your lead when something is unclear, and move work to review with a short summary of what you did and how you checked it.\n- Record decisions and useful facts with remember.",
+      "tools": [
+        {
+          "name": "send_message"
+        },
+        {
+          "name": "post_message"
+        },
+        {
+          "name": "read_channel"
+        },
+        {
+          "name": "list_channels"
+        },
+        {
+          "name": "create_channel"
+        },
+        {
+          "name": "update_channel"
+        },
+        {
+          "name": "list_colleagues"
+        },
+        {
+          "name": "create_task"
+        },
+        {
+          "name": "update_task"
+        },
+        {
+          "name": "list_tasks"
+        },
+        {
+          "name": "get_task"
+        },
+        {
+          "name": "remember"
+        },
+        {
+          "name": "recall"
+        },
+        {
+          "name": "request_feature"
+        },
+        {
+          "name": "hold_meeting"
+        },
+        {
+          "name": "list_secrets"
+        },
+        {
+          "name": "read_file"
+        },
+        {
+          "name": "write_file"
+        },
+        {
+          "name": "edit_file"
+        },
+        {
+          "name": "list_dir"
+        },
+        {
+          "name": "search_files"
+        },
+        {
+          "name": "web_search"
+        },
+        {
+          "name": "fetch_url"
+        },
+        {
+          "name": "run_command",
+          "approval": "ask"
+        }
+      ],
+      "avatar": {
+        "outfit": "#154a4b",
+        "accent": "#5cc8ff"
+      }
+    },
+    {
+      "name": "Noor",
+      "role": "Data engineer",
+      "team": "Data",
+      "persona": "You find, clean and document datasets: provenance, schema, quality checks and splits, with no leakage between train and test.\n\nHow you work:\n- Take the tasks assigned to you, ask your lead when something is unclear, and move work to review with a short summary of what you did and how you checked it.\n- Record decisions and useful facts with remember.",
+      "tools": [
+        {
+          "name": "send_message"
+        },
+        {
+          "name": "post_message"
+        },
+        {
+          "name": "read_channel"
+        },
+        {
+          "name": "list_channels"
+        },
+        {
+          "name": "create_channel"
+        },
+        {
+          "name": "update_channel"
+        },
+        {
+          "name": "list_colleagues"
+        },
+        {
+          "name": "create_task"
+        },
+        {
+          "name": "update_task"
+        },
+        {
+          "name": "list_tasks"
+        },
+        {
+          "name": "get_task"
+        },
+        {
+          "name": "remember"
+        },
+        {
+          "name": "recall"
+        },
+        {
+          "name": "request_feature"
+        },
+        {
+          "name": "hold_meeting"
+        },
+        {
+          "name": "list_secrets"
+        },
+        {
+          "name": "read_file"
+        },
+        {
+          "name": "write_file"
+        },
+        {
+          "name": "edit_file"
+        },
+        {
+          "name": "list_dir"
+        },
+        {
+          "name": "search_files"
+        },
+        {
+          "name": "web_search"
+        },
+        {
+          "name": "fetch_url"
+        },
+        {
+          "name": "browser_open"
+        },
+        {
+          "name": "browser_read"
+        },
+        {
+          "name": "browser_click"
+        },
+        {
+          "name": "browser_type"
+        },
+        {
+          "name": "browser_scroll"
+        },
+        {
+          "name": "browser_back"
+        },
+        {
+          "name": "run_command",
+          "approval": "ask"
+        }
+      ],
+      "avatar": {
+        "outfit": "#1b5657",
+        "accent": "#3ecf8e"
+      }
+    },
+    {
+      "name": "Pell",
+      "role": "Evaluation analyst",
+      "team": "Research",
+      "persona": "You evaluate results skeptically: proper baselines, confidence intervals, error analysis and the failure cases nobody wants to see.\n\nHow you work:\n- Take the tasks assigned to you, ask your lead when something is unclear, and move work to review with a short summary of what you did and how you checked it.\n- Record decisions and useful facts with remember.",
+      "tools": [
+        {
+          "name": "send_message"
+        },
+        {
+          "name": "post_message"
+        },
+        {
+          "name": "read_channel"
+        },
+        {
+          "name": "list_channels"
+        },
+        {
+          "name": "create_channel"
+        },
+        {
+          "name": "update_channel"
+        },
+        {
+          "name": "list_colleagues"
+        },
+        {
+          "name": "create_task"
+        },
+        {
+          "name": "update_task"
+        },
+        {
+          "name": "list_tasks"
+        },
+        {
+          "name": "get_task"
+        },
+        {
+          "name": "remember"
+        },
+        {
+          "name": "recall"
+        },
+        {
+          "name": "request_feature"
+        },
+        {
+          "name": "hold_meeting"
+        },
+        {
+          "name": "list_secrets"
+        },
+        {
+          "name": "read_file"
+        },
+        {
+          "name": "write_file"
+        },
+        {
+          "name": "edit_file"
+        },
+        {
+          "name": "list_dir"
+        },
+        {
+          "name": "search_files"
+        },
+        {
+          "name": "run_command",
+          "approval": "ask"
+        }
+      ],
+      "avatar": {
+        "outfit": "#216263",
+        "accent": "#f5b454"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "from": "Ada",
+      "to": "Kenji",
+      "kind": "manages"
+    },
+    {
+      "from": "Ada",
+      "to": "Noor",
+      "kind": "manages"
+    },
+    {
+      "from": "Ada",
+      "to": "Pell",
+      "kind": "manages"
+    }
+  ],
+  "channels": [
+    {
+      "name": "experiments",
+      "topic": "Hypotheses, runs and results",
+      "notify": "mentions",
+      "members": [
+        "Ada",
+        "Kenji",
+        "Noor",
+        "Pell",
+        "user"
+      ]
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 "use client";
 
+import { themeOf } from "./themes";
 import { Html, OrbitControls, QuadraticBezierLine } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -25,6 +26,7 @@ const SCREEN: Record<RuntimeStatus, string> = {
   error: "#f2667a",
   retrying: "#f5b454",
   cooling_down: "#5cc8ff",
+  queued: "#3a4458",
 };
 
 export interface SceneProps {
@@ -59,7 +61,7 @@ export function OfficeScene(props: SceneProps) {
 
   return (
     <>
-      <Lighting width={office.width} depth={office.depth} />
+      <Lighting width={office.width} depth={office.depth} theme={themeOf(office.design.theme)} />
       <OfficeShell design={office.design} />
       {editing ? (
         <DesignerLayer design={design} onDragging={setDragging} />

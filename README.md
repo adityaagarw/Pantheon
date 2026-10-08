@@ -105,9 +105,22 @@ arcs between agents follow the real runtime state: thinking, running a tool, wai
 walking to a meeting, stuck. Click a person to see what they're working on. The live activity feed on
 the right streams every message and tool call as it happens.
 
-- **Office designer:** furnish and lay it out yourself: 140+ pieces of furniture, rooms with glass or
-  solid walls (meeting rooms, lounges, kitchens, team areas), desk assignment and floors. Meetings use
-  the chairs you place; idle agents take breaks in lounges and kitchens.
+- **Office designer:** furnish and lay it out yourself: 180+ pieces of furniture and CC0 kits
+  (office, kitchen, industrial machines, sci-fi, city buildings, vehicles), rooms with glass or solid
+  walls (meeting rooms, lounges, kitchens, team areas), desk assignment and floors. Meetings use the
+  chairs you place; idle agents take breaks in lounges and kitchens.
+- **Themes:** seven offices, each with its own floor plan and furniture as well as its look:
+  Classic studio, Corporate HQ (reception, rows of dual-monitor desks, private offices, phone
+  booths), Tech campus (shared benches, hangout, huddle rooms, café bar), Operations center (desks
+  facing a wall of dashboards, server room, war room), Industrial (a production floor with machines
+  and a conveyor line, loading bay), Research lab and Space station.
+- **Characters:** 57 for agents: people, blocky characters, 24 animals (fox, panda, penguin,
+  elephant...), fantasy and a robot, all animated.
+- **Agents that build their world:** with the world-building tools, agents place and move things,
+  make 3D models from shapes or bring in free (CC0/CC-BY) ones from Kenney, Poly Pizza and others,
+  add rooms, animate things (spin, bob, pulse, swing, or a model's own clips), and create new
+  actions and objects. They work only in their own organization, and every change can be undone.
+  Try the *World Builders* template.
 - **Physical space:** agents have bodies in the scene. They know the rooms and who is where, walk
   around when asked, talk out loud to whoever is in the room, and pick up, hand over and use objects.
 - **Any scene:** plugins can replace the office with any world. The included *Town Square* is a social
@@ -180,6 +193,60 @@ Ask Argus whether your organizations are proceeding as planned, or set a **watch
 *N* minutes. It looks for stuck or failing agents, stale or overdue tasks, spend, and drift from the
 goals you describe in your own words, and raises alerts in the org's inbox.
 
+### Kronos, the engineer
+
+Kronos changes Pantheon's own code. When something needs more than configuration (a new built-in tool,
+a bug fix, a UI change), Zeus asks Kronos, or you can ask it directly. It also works with files on your
+computer, in folders you allow. Kronos acts through [Pantheon Host](#pantheon-host-the-helper-on-your-computer),
+the helper on your computer.
+
+Each change happens on its own `kronos/<id>` branch in a separate git worktree, never in your working
+copy. Applying a change runs lint, type checks and the test suites. Only a change that passes is merged
+into your current branch, and then Pantheon rebuilds itself. If your uncommitted work touches the same
+files, Kronos stops and asks. You add folders with a folder picker on your own screen (from Pantheon or the
+tray icon), and the list lives in `~/.pantheon/host.json` on your computer, outside anything the containers
+can reach. Secrets and `.env` files are never read, and other shell commands need your approval.
+
+### Pantheon Host: the helper on your computer
+
+A small background helper that does what the containers can't: Kronos's work with your files and
+Pantheon's code, recording your computer for Shadow, starting Pantheon when you log in, and trusting
+Pantheon's HTTPS certificate. It needs only Python; with `pystray` and `pillow` installed it adds a
+tray icon (status, recording indicator, Open Pantheon, Kronos's folders, start/stop, start at login).
+
+```bash
+python host/main.py install     # start it whenever you log in (uninstall undoes it)
+python host/main.py             # or just run it now
+python host/main.py trust       # trust Pantheon's HTTPS certificate on this computer
+```
+
+Settings → **This computer** shows whether it's running and what it allows.
+
+**No Python?** Each release has a Pantheon Host app for Windows, macOS and Linux (built by
+`.github/workflows/host.yml`, or locally with `python host/build.py`). Opened outside a Pantheon
+folder, it sets Pantheon up for you. It checks Docker (and opens the download page if it's missing),
+downloads Pantheon, creates its settings, starts it, starts itself at login, and opens Pantheon in your
+browser. The same steps run from a terminal with `python host/main.py setup`.
+
+### Shadowing: teach an agent by showing it
+
+On an organization's **Shadow** tab, pick an agent, say what you're about to do, and record yourself doing
+it, in one of three places:
+
+- **Sandbox desktop:** do the work in Pantheon's desktop, right on the page. It records clicks, windows
+  and screenshots; what you type is counted but never recorded.
+- **Your browser:** load `shadow/extension` once as an unpacked extension (Chrome or Edge). When you
+  start a browser recording, its button offers it: one click. It records pages, clicks with the
+  element's label, and form values. Passwords, card numbers and one-time codes become `[hidden]`, and
+  you can list sites to skip.
+- **Your computer:** with Pantheon Host running, recording starts by itself (without it:
+  `python shadow/recorder.py <code>`). It records windows, clicks (on Windows) and screenshots, never
+  keystrokes, and skips screenshots of password managers, sign-in and private windows.
+
+Then press **Teach**. The agent goes through the timeline and screenshots, asks you about anything unclear,
+and writes a **playbook**: numbered steps it can follow later, now or on a schedule. You can read and edit
+playbooks on the same tab, and the agent recalls them from memory when the work comes up.
+
 ### The Stage: agents that teach
 
 <img src="docs/images/stage.png" alt="An animated math lesson on the Stage" width="100%">
@@ -194,6 +261,15 @@ The Stage also hosts:
 - **Whiteboards:** shared [Excalidraw](https://excalidraw.com) boards you and the agents draw on
   together (there's one on the office wall too). Agents draw diagrams by describing shapes and arrows,
   and read what you sketch.
+- **Spreadsheets:** a full grid with formulas ([FortuneSheet](https://github.com/ruilisi/fortune-sheet)).
+  Agents read and write cells and formulas, which the server also calculates, so values are right even
+  when nobody has the sheet open. You see their edits live. Import .xlsx or .csv from Files, and export
+  .xlsx.
+- **PDFs:** read a document together. Agents open PDFs from Files or a link, read pages, and point you
+  to a passage: the viewer turns to the page and highlights it with their note. You can highlight too.
+- **Notebooks:** Python notebooks that run in the sandbox desktop (numpy, pandas and matplotlib
+  included, working folder `~/shared`). You and the agents add, edit and run cells. Outputs include
+  charts and tables, and agents see the charts they make. Import and export `.ipynb`.
 - **Agents' browsers:** every worker agent can browse the web in a real headless Chromium, and you can
   watch it live.
 - **Computer:** agents granted the `computer_*` tools operate a sandboxed Linux desktop via

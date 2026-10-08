@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { HostStatusCard } from "@/components/HostStatus";
 import { McpServersPanel } from "@/components/settings/McpServersPanel";
 import { Badge, Button, Card, ErrorNote, Field, Input, Modal, Select, Tabs, Toggle } from "@/components/ui";
 import { api, type VoiceConfig } from "@/lib/api";
@@ -8,7 +9,7 @@ import type { Provider, ProviderModel } from "@/lib/types";
 import { browserSttSupported, browserTtsSupported, listen, speak, voiceStatus, type Listener } from "@/lib/voice";
 
 export default function SettingsPage() {
-  const [tab, setTab] = useState<"providers" | "mcp" | "voice">("providers");
+  const [tab, setTab] = useState<"providers" | "agents" | "mcp" | "voice" | "computer">("providers");
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto max-w-4xl px-4 py-6 md:px-6 md:py-8">
@@ -19,12 +20,15 @@ export default function SettingsPage() {
           onChange={setTab}
           items={[
             { value: "providers", label: "LLM providers" },
+            { value: "agents", label: "Agents" },
             { value: "mcp", label: "MCP servers (global)" },
             { value: "voice", label: "Voice" },
+            { value: "computer", label: "This computer" },
           ]}
         />
         <div className="mt-6">
           {tab === "providers" && <Providers />}
+          {tab === "agents" && <Concurrency />}
           {tab === "mcp" && (
             <Card className="p-5">
               <div className="mb-4 text-sm text-ink-2">Global MCP servers are available to every organization. Grant tools to individual agents on each org&apos;s Team tab.</div>
@@ -32,9 +36,75 @@ export default function SettingsPage() {
             </Card>
           )}
           {tab === "voice" && <Voice />}
+          {tab === "computer" && <HostStatusCard />}
         </div>
       </div>
     </div>
+  );
+}
+
+/** How many agents may work at once, across every organization. */
+function Concurrency() {
+  const [limits, setLimits] = useState<Awaited<ReturnType<typeof api.runtimeLimits>> | null>(null);
+  const [value, setValue] = useState(8);
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    const load = () =>
+      api
+        .runtimeLimits()
+        .then((l) => {
+          if (!alive) return;
+          setLimits((prev) => {
+            if (!prev) setValue(l.maxConcurrent);
+            return l;
+          });
+        })
+        .catch(() => {});
+    void load();
+    const t = setInterval(load, 3000);
+    return () => {
+      alive = false;
+      clearInterval(t);
+    };
+  }, []);
+  const save = async () => {
+    setError(null);
+    setSaved(false);
+    try {
+      setLimits(await api.setRuntimeLimits(value));
+      setSaved(true);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  };
+  return (
+    <Card className="space-y-4 p-5 text-sm">
+      <div>
+        <div className="font-semibold">Agents working at once</div>
+        <div className="mt-1 text-ink-2">
+          The most agents that can be thinking or using tools at the same time, across all organizations. Others wait their turn (they show as{" "}
+          <b>Queued</b>). Lower it if your model server can only take a few requests at once; organizations can set a lower limit of their own in their
+          settings.
+        </div>
+      </div>
+      <div className="flex flex-wrap items-end gap-3">
+        <Field label="At most">
+          <Input type="number" className="w-28" min={1} max={limits?.max ?? 64} value={value} onChange={(e) => setValue(Math.max(1, Math.round(Number(e.target.value) || 1)))} />
+        </Field>
+        <Button variant="primary" onClick={() => void save()} disabled={!limits || value === limits.maxConcurrent}>
+          Save
+        </Button>
+        {saved && <Badge tone="ok">saved, in effect now</Badge>}
+      </div>
+      {limits && (
+        <div className="text-xs text-ink-3">
+          Right now: {limits.running} working, {limits.waiting} waiting (limit {limits.maxConcurrent}).
+        </div>
+      )}
+      <ErrorNote error={error} />
+    </Card>
   );
 }
 

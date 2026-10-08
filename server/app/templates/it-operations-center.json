@@ -1,0 +1,444 @@
+{
+  "version": 1,
+  "name": "IT Operations Center",
+  "theme": "operations",
+  "description": "A 24/7 operations team: an incident commander, SRE, infrastructure engineer, status-page comms and a postmortem analyst, in a dim control room with live dashboards. Point its workspace at your infrastructure repo or runbooks.",
+  "settings": {
+    "comm_policy": "open",
+    "max_chain_depth": 40
+  },
+  "agents": [
+    {
+      "name": "Rhea",
+      "role": "Incident commander",
+      "team": "Operations",
+      "persona": "You run incidents and keep operations calm and coordinated. When something breaks you declare an incident, set a severity, assign investigation and communication, and keep a timeline. You never fix things yourself while commanding: you coordinate.\n\nHow you lead:\n- Turn each goal into small tasks with acceptance criteria, assign them with a reviewer, and track them on the board.\n- Keep the user informed in the main channel: decisions, risks, and what you need from them.\n- Ask the user before anything irreversible or customer-facing.",
+      "tools": [
+        {
+          "name": "send_message"
+        },
+        {
+          "name": "post_message"
+        },
+        {
+          "name": "read_channel"
+        },
+        {
+          "name": "list_channels"
+        },
+        {
+          "name": "create_channel"
+        },
+        {
+          "name": "update_channel"
+        },
+        {
+          "name": "list_colleagues"
+        },
+        {
+          "name": "create_task"
+        },
+        {
+          "name": "update_task"
+        },
+        {
+          "name": "list_tasks"
+        },
+        {
+          "name": "get_task"
+        },
+        {
+          "name": "remember"
+        },
+        {
+          "name": "recall"
+        },
+        {
+          "name": "request_feature"
+        },
+        {
+          "name": "hold_meeting"
+        },
+        {
+          "name": "list_secrets"
+        },
+        {
+          "name": "read_file"
+        },
+        {
+          "name": "list_dir"
+        },
+        {
+          "name": "search_files"
+        }
+      ],
+      "avatar": {
+        "outfit": "#1f3b5b",
+        "accent": "#5cc8ff"
+      }
+    },
+    {
+      "name": "Dax",
+      "role": "Site reliability engineer",
+      "team": "Operations",
+      "persona": "You keep services healthy: you investigate alerts, read logs and dashboards, find root causes and propose the smallest safe fix. You explain what you checked and what you ruled out.\n\nHow you work:\n- Take the tasks assigned to you, ask your lead when something is unclear, and move work to review with a short summary of what you did and how you checked it.\n- Record decisions and useful facts with remember.",
+      "tools": [
+        {
+          "name": "send_message"
+        },
+        {
+          "name": "post_message"
+        },
+        {
+          "name": "read_channel"
+        },
+        {
+          "name": "list_channels"
+        },
+        {
+          "name": "create_channel"
+        },
+        {
+          "name": "update_channel"
+        },
+        {
+          "name": "list_colleagues"
+        },
+        {
+          "name": "create_task"
+        },
+        {
+          "name": "update_task"
+        },
+        {
+          "name": "list_tasks"
+        },
+        {
+          "name": "get_task"
+        },
+        {
+          "name": "remember"
+        },
+        {
+          "name": "recall"
+        },
+        {
+          "name": "request_feature"
+        },
+        {
+          "name": "hold_meeting"
+        },
+        {
+          "name": "list_secrets"
+        },
+        {
+          "name": "read_file"
+        },
+        {
+          "name": "write_file"
+        },
+        {
+          "name": "edit_file"
+        },
+        {
+          "name": "list_dir"
+        },
+        {
+          "name": "search_files"
+        },
+        {
+          "name": "web_search"
+        },
+        {
+          "name": "fetch_url"
+        },
+        {
+          "name": "run_command",
+          "approval": "ask"
+        }
+      ],
+      "avatar": {
+        "outfit": "#2d4c6e",
+        "accent": "#3ecf8e"
+      }
+    },
+    {
+      "name": "Orin",
+      "role": "Infrastructure engineer",
+      "team": "Operations",
+      "persona": "You own infrastructure as code, capacity and networks. You review changes for blast radius and rollback plans before anything ships.\n\nHow you work:\n- Take the tasks assigned to you, ask your lead when something is unclear, and move work to review with a short summary of what you did and how you checked it.\n- Record decisions and useful facts with remember.",
+      "tools": [
+        {
+          "name": "send_message"
+        },
+        {
+          "name": "post_message"
+        },
+        {
+          "name": "read_channel"
+        },
+        {
+          "name": "list_channels"
+        },
+        {
+          "name": "create_channel"
+        },
+        {
+          "name": "update_channel"
+        },
+        {
+          "name": "list_colleagues"
+        },
+        {
+          "name": "create_task"
+        },
+        {
+          "name": "update_task"
+        },
+        {
+          "name": "list_tasks"
+        },
+        {
+          "name": "get_task"
+        },
+        {
+          "name": "remember"
+        },
+        {
+          "name": "recall"
+        },
+        {
+          "name": "request_feature"
+        },
+        {
+          "name": "hold_meeting"
+        },
+        {
+          "name": "list_secrets"
+        },
+        {
+          "name": "read_file"
+        },
+        {
+          "name": "write_file"
+        },
+        {
+          "name": "edit_file"
+        },
+        {
+          "name": "list_dir"
+        },
+        {
+          "name": "search_files"
+        },
+        {
+          "name": "web_search"
+        },
+        {
+          "name": "fetch_url"
+        },
+        {
+          "name": "run_command",
+          "approval": "ask"
+        }
+      ],
+      "avatar": {
+        "outfit": "#34495e",
+        "accent": "#f5b454"
+      }
+    },
+    {
+      "name": "Lena",
+      "role": "Communications lead",
+      "team": "Operations",
+      "persona": "You keep customers and stakeholders informed during incidents: short, honest status updates on a fixed cadence, in plain language, with no speculation.\n\nHow you work:\n- Take the tasks assigned to you, ask your lead when something is unclear, and move work to review with a short summary of what you did and how you checked it.\n- Record decisions and useful facts with remember.",
+      "tools": [
+        {
+          "name": "send_message"
+        },
+        {
+          "name": "post_message"
+        },
+        {
+          "name": "read_channel"
+        },
+        {
+          "name": "list_channels"
+        },
+        {
+          "name": "create_channel"
+        },
+        {
+          "name": "update_channel"
+        },
+        {
+          "name": "list_colleagues"
+        },
+        {
+          "name": "create_task"
+        },
+        {
+          "name": "update_task"
+        },
+        {
+          "name": "list_tasks"
+        },
+        {
+          "name": "get_task"
+        },
+        {
+          "name": "remember"
+        },
+        {
+          "name": "recall"
+        },
+        {
+          "name": "request_feature"
+        },
+        {
+          "name": "hold_meeting"
+        },
+        {
+          "name": "list_secrets"
+        },
+        {
+          "name": "read_file"
+        },
+        {
+          "name": "write_file"
+        }
+      ],
+      "avatar": {
+        "outfit": "#3b3f6b",
+        "accent": "#8b7cff"
+      }
+    },
+    {
+      "name": "Quill",
+      "role": "Postmortem analyst",
+      "team": "Operations",
+      "persona": "After an incident you write the blameless postmortem: timeline, impact, root cause, what went well, and concrete follow-up tasks with owners.\n\nHow you work:\n- Take the tasks assigned to you, ask your lead when something is unclear, and move work to review with a short summary of what you did and how you checked it.\n- Record decisions and useful facts with remember.",
+      "tools": [
+        {
+          "name": "send_message"
+        },
+        {
+          "name": "post_message"
+        },
+        {
+          "name": "read_channel"
+        },
+        {
+          "name": "list_channels"
+        },
+        {
+          "name": "create_channel"
+        },
+        {
+          "name": "update_channel"
+        },
+        {
+          "name": "list_colleagues"
+        },
+        {
+          "name": "create_task"
+        },
+        {
+          "name": "update_task"
+        },
+        {
+          "name": "list_tasks"
+        },
+        {
+          "name": "get_task"
+        },
+        {
+          "name": "remember"
+        },
+        {
+          "name": "recall"
+        },
+        {
+          "name": "request_feature"
+        },
+        {
+          "name": "hold_meeting"
+        },
+        {
+          "name": "list_secrets"
+        },
+        {
+          "name": "read_file"
+        },
+        {
+          "name": "write_file"
+        },
+        {
+          "name": "edit_file"
+        },
+        {
+          "name": "list_dir"
+        },
+        {
+          "name": "search_files"
+        }
+      ],
+      "avatar": {
+        "outfit": "#4a3f5c",
+        "accent": "#c9a45c"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "from": "Rhea",
+      "to": "Dax",
+      "kind": "manages"
+    },
+    {
+      "from": "Rhea",
+      "to": "Orin",
+      "kind": "manages"
+    },
+    {
+      "from": "Rhea",
+      "to": "Lena",
+      "kind": "manages"
+    },
+    {
+      "from": "Rhea",
+      "to": "Quill",
+      "kind": "manages"
+    },
+    {
+      "from": "Dax",
+      "to": "Orin",
+      "kind": "peer"
+    }
+  ],
+  "channels": [
+    {
+      "name": "incidents",
+      "topic": "Live incidents: severity, owner, timeline",
+      "notify": "all",
+      "members": [
+        "Rhea",
+        "Dax",
+        "Orin",
+        "Lena",
+        "Quill",
+        "user"
+      ]
+    },
+    {
+      "name": "status",
+      "topic": "Customer-facing status updates (drafts for review)",
+      "notify": "mentions",
+      "members": [
+        "Rhea",
+        "Lena",
+        "user"
+      ]
+    }
+  ]
+}

@@ -18,16 +18,21 @@ log = logging.getLogger(__name__)
 
 # Import side effect: registers built-in tools.
 from app import plugins  # noqa: E402
-from app.services import spatial  # noqa: E402
+from app.services import life, spatial  # noqa: E402
 from app.tools import attachments as file_tools  # noqa: E402
 from app.tools import (  # noqa: E402,F401
     browser,
+    builder,
     collab,
     computer,
+    doctools,
+    kronos,
+    lifetools,
     meeting,
     meta,
     oversight,
     scheduling,
+    shadowtools,
     stagetools,
     web,
     whiteboard,
@@ -62,6 +67,10 @@ class EffectiveTool:
 class ResolvedTools:
     tools: dict[str, EffectiveTool]
     warnings: list[str]
+
+
+# Tools the org-wide "shell commands without asking" switch covers.
+SHELL_TOOLS = ("run_command", "computer_shell")
 
 
 async def resolve_tools(org: Org, agent: Agent) -> ResolvedTools:
@@ -106,8 +115,11 @@ async def resolve_tools(org: Org, agent: Agent) -> ResolvedTools:
             continue
         if spec.supervisor_only and not agent.is_supervisor:
             continue
-        tools[name] = EffectiveTool(name, spec.description, spec.parameters,
-                                    approval or spec.default_approval, spec=spec)
+        effective = approval or spec.default_approval
+        if name in SHELL_TOOLS and effective == "ask" and \
+                (org.settings or {}).get("shell_approval") == "auto":
+            effective = "auto"  # the org runs shell commands without asking (deny still wins)
+        tools[name] = EffectiveTool(name, spec.description, spec.parameters, effective, spec=spec)
     # Everyone can keep a calendar (reminders, cron) and read the files they were given.
     for name in (*scheduling.AMBIENT, *file_tools.AMBIENT):
         spec = base.builtin(name)
@@ -123,6 +135,13 @@ async def resolve_tools(org: Org, agent: Agent) -> ResolvedTools:
     # Everyone has a body in a physical space: presence tools come with it.
     if spatial.world_enabled(org) and not agent.is_supervisor:
         for name in world.AMBIENT:
+            spec = base.builtin(name)
+            if spec is not None and name not in tools and name not in denied:
+                tools[name] = EffectiveTool(name, spec.description, spec.parameters, "auto",
+                                            spec=spec)
+    # In a living world, everyone has needs and wants to look after.
+    if life.enabled(org) and (agent.life or {}).get("needs") and not agent.is_supervisor:
+        for name in lifetools.AMBIENT:
             spec = base.builtin(name)
             if spec is not None and name not in tools and name not in denied:
                 tools[name] = EffectiveTool(name, spec.description, spec.parameters, "auto",

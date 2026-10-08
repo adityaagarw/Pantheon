@@ -6,12 +6,34 @@
 
 import type { Agent } from "@/lib/types";
 import { CATALOG, itemBounds, toWorld } from "./catalog";
+import { themedLayout } from "./layouts";
 import { footprint } from "./models";
 
-export type RoomType = "meeting" | "lounge" | "kitchen" | "team" | "focus" | "reception" | "custom";
+export type RoomType =
+  | "meeting"
+  | "lounge"
+  | "kitchen"
+  | "team"
+  | "focus"
+  | "reception"
+  | "home"
+  | "bedroom"
+  | "washroom"
+  | "garden"
+  | "custom";
 export type WallKind = "none" | "glass" | "solid";
 export type Side = "n" | "s" | "e" | "w";
-export type FloorStyle = "oak" | "walnut" | "concrete" | "carpet" | "tile" | "grass" | "asphalt";
+export type FloorStyle =
+  | "oak"
+  | "walnut"
+  | "concrete"
+  | "polished"
+  | "slate"
+  | "epoxy"
+  | "carpet"
+  | "tile"
+  | "grass"
+  | "asphalt";
 
 export interface PlacedItem {
   id: string;
@@ -22,6 +44,11 @@ export interface PlacedItem {
   y?: number;
   agentId?: string | null;
   boardId?: string | null; // whiteboards: which board it shows (default: the org's first)
+  /** Set by world-building agents: spin (turns/s), bob (m), pulse (scale), swing (degrees),
+   * or clip (an animation inside the model). */
+  anim?: { spin?: number; bob?: number; pulse?: number; swing?: number; clip?: string };
+  /** Who placed it, when an agent did. */
+  by?: string;
 }
 
 export interface Room {
@@ -45,6 +72,10 @@ export interface OfficeDesign {
   rooms: Room[];
   /** false = scenes: agents without a workstation get a spot in their team's room, not a new desk. */
   autoDesks?: boolean;
+  /** The look of the space (see themes.ts); default "classic". */
+  theme?: string;
+  /** An open world (outdoors): no office walls around it, and it grows as residents build. */
+  open?: boolean;
 }
 
 export interface Rect {
@@ -100,12 +131,19 @@ export const ROOM_COLORS: Record<RoomType, string> = {
   team: "#c7d3c0",
   focus: "#c8bfd8",
   reception: "#dfd2c0",
+  home: "#e2cfb2",
+  bedroom: "#d8c6d9",
+  washroom: "#bfd9de",
+  garden: "#a9c98f",
   custom: "#d0d0d0",
 };
 
 // --- default generation -------------------------------------------------------------
 
-export function generateDesign(agents: Pick<Agent, "id" | "team" | "createdAt">[]): OfficeDesign {
+/** A furnished office for these people, laid out in the theme's style (classic by default). */
+export function generateDesign(agents: Pick<Agent, "id" | "team" | "createdAt">[], theme?: string): OfficeDesign {
+  const themed = themedLayout(agents, theme);
+  if (themed) return themed;
   const items: PlacedItem[] = [];
   const rooms: Room[] = [];
   const add = (kind: string, x: number, z: number, rot = 0, extra: Partial<PlacedItem> = {}) =>

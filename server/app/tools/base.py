@@ -187,7 +187,9 @@ WORKER_TOOLSET: list[dict[str, str]] = DEFAULT_TOOLSET + [
         "browser_open", "browser_read", "browser_click", "browser_type", "browser_press",
         "browser_scroll", "browser_back", "stage_show", "stage_docs", "stage_check",
         "stage_list", "whiteboard_list", "whiteboard_read", "whiteboard_draw",
-        "whiteboard_erase", "whiteboard_new")),
+        "whiteboard_erase", "whiteboard_new", "doc_list", "sheet_new", "sheet_read",
+        "sheet_write", "pdf_open", "pdf_read", "pdf_show", "notebook_new", "notebook_read",
+        "notebook_add_cell", "notebook_edit_cell", "notebook_run")),
 ]
 
 

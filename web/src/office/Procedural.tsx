@@ -23,7 +23,15 @@ export const ProceduralModel = memo(function ProceduralModel({ parts, shadows = 
           ) : (
             <cylinderGeometry args={[0.5, 0.5, 1, 20]} />
           )}
-          <meshStandardMaterial color={p.color} roughness={0.7} />
+          <meshStandardMaterial
+            color={p.color}
+            roughness={p.opacity !== undefined && p.opacity < 1 ? 0.08 : 0.7}
+            emissive={p.emissive ?? "#000000"}
+            emissiveIntensity={p.emissive ? 1.4 : 0}
+            transparent={p.opacity !== undefined && p.opacity < 1}
+            opacity={p.opacity ?? 1}
+            depthWrite={!(p.opacity !== undefined && p.opacity < 1)}
+          />
         </mesh>
       ))}
     </>

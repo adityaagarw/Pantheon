@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@excalidraw/excalidraw": "^0.18.1",
+    "@fortune-sheet/react": "^1.0.4",
     "@react-three/drei": "^10.7.8",
     "@react-three/fiber": "^9.7.0",
     "@xyflow/react": "^12.11.6",
@@ -21,6 +22,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-markdown": "^10.1.0",
+    "react-pdf": "^11.0.0",
     "three": "^0.186.0",
     "zustand": "^5.0.15"
   },

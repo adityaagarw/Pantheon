@@ -15,6 +15,7 @@ const TABS = [
   { href: "/comms", label: "Comms" },
   { href: "/sessions", label: "Sessions" },
   { href: "/memory", label: "Memory" },
+  { href: "/shadow", label: "Shadow" },
   { href: "/team", label: "Team" },
   { href: "/files", label: "Files" },
   { href: "/settings", label: "Settings" },

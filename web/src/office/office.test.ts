@@ -109,3 +109,35 @@ describe("physical presence", () => {
     expect(x > 2 && x < 10 && z > 2 && z < 10).toBe(true);
   });
 });
+
+describe("themed offices", () => {
+  const themes = ["corporate", "tech", "operations", "industrial", "lab", "station"];
+  for (const theme of themes) {
+    for (const n of [2, 7, 14]) {
+      it(`${theme} with ${n} people: desks, a meeting room, inside the walls, nothing overlapping, all reachable`, () => {
+        const people = agents(n);
+        const d = generateDesign(people, theme);
+        expect(d.theme).toBe(theme);
+        const office = resolveDesign(d, people);
+        expect(office.desks.map((x) => x.agentId).sort()).toEqual(people.map((a) => a.id).sort());
+        expect(office.autoDesks).toBe(0);
+        expect(office.meetingRooms.length).toBeGreaterThanOrEqual(1);
+        for (const it of d.items) {
+          const b = itemBounds(it);
+          expect(b.x >= 0 && b.z >= 0 && b.x + b.w <= d.width + 0.01 && b.z + b.d <= d.depth + 0.01, `${it.kind} outside the office`).toBe(true);
+        }
+        const blocking = d.items.filter((i) => CATALOG[i.kind]?.blocking && !i.y);
+        for (let a = 0; a < blocking.length; a++)
+          for (let b = a + 1; b < blocking.length; b++) {
+            const A = itemBounds(blocking[a]);
+            const B = itemBounds(blocking[b]);
+            const shrink = (r: typeof A) => ({ x: r.x + 0.06, z: r.z + 0.06, w: r.w - 0.12, d: r.d - 0.12 });
+            expect(overlap(shrink(A), shrink(B)), `${blocking[a].kind} vs ${blocking[b].kind}`).toBe(false);
+          }
+        const g = buildGrid(office);
+        const seat = office.meetingRooms[0].seats[0].pos;
+        for (const desk of office.desks) expect(findPath(g, desk.seat, seat), `desk ${desk.itemId} to the meeting room`).not.toBeNull();
+      });
+    }
+  }
+});

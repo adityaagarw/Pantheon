@@ -125,6 +125,13 @@ async def _run_action(row: CustomTool, args: dict[str, Any], ctx: ToolContext) -
     await bus.publish("world.action", {"action": row.name, "text": text,
                                        "targetId": target.id if target else None},
                       org_id=ctx.org.id, agent_id=me.id)
+    if gesture := cfg.get("gesture"):
+        from app.tools.world import GESTURES
+
+        if gesture in GESTURES:
+            await bus.publish("agent.emote", {"emote": GESTURES[gesture],
+                                              "at": target.name if target else ""},
+                              org_id=ctx.org.id, agent_id=me.id)
     told: set[str] = {me.id}
     if target is not None:
         told.add(target.id)

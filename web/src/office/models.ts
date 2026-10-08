@@ -27,7 +27,16 @@ export function registerModel(key: string, m: RuntimeModel): void {
   RUNTIME[key] = m;
 }
 
-const scaleOf = (model: string) => RUNTIME[model]?.scale ?? S;
+/** Kenney kits use different units; these make each kit life-sized next to the furniture. */
+const KIT_SCALE: Record<string, number> = { factory: 1, space: 0.6, city: 6, cars: 1.6, nature: 3.5 };
+
+/** Every model in a kit folder (e.g. "nature"), by name. */
+export const kitModels = (dir: string): string[] =>
+  Object.keys(META)
+    .filter((k) => k.startsWith(`${dir}/`))
+    .map((k) => k.slice(dir.length + 1));
+
+export const scaleOf = (model: string) => RUNTIME[model]?.scale ?? KIT_SCALE[model.split("/")[0]] ?? S;
 
 export interface Footprint {
   w: number; // meters along local x

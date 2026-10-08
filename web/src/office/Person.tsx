@@ -1,8 +1,8 @@
 "use client";
 
 /**
- * An agent's rigged, animated character (Kenney "Mini Characters", CC0 — or
- * the RobotExpressive robot). Each agent gets its own skeleton clone; the
+ * An agent's animated character: Kenney's Mini Characters, Blocky Characters,
+ * Cube Pets and Mini Dungeon (all CC0), or the RobotExpressive robot. Each agent gets its own skeleton clone; the
  * position, facing and animation are driven every frame from its Motion.
  */
 
@@ -14,7 +14,7 @@ import { clone as cloneSkinned } from "three/addons/utils/SkeletonUtils.js";
 import type { Motion } from "./brain";
 import { S } from "./models";
 
-import { characterFor, HUMANS, type CharacterKey } from "./characters";
+import { ANIMALS, BLOCKY, characterFor, FANTASY, HUMANS, type CharacterKey } from "./characters";
 
 export { characterFor };
 
@@ -33,8 +33,19 @@ const KENNEY: Omit<Rig, "url"> = {
   sitLift: 0.3,
   tint: false,
 };
+// Animals have no sit or wave: they idle on the chair and dance to say hello.
+const PET: Omit<Rig, "url"> = {
+  scale: "fit",
+  height: 1.0,
+  clips: { idle: "idle", walk: "walk", sit: "idle", wave: "dance", yes: "gesture-positive", no: "gesture-negative", thumbs: "gesture-positive" },
+  sitLift: 0.42,
+  tint: false,
+};
 const RIGS: Record<CharacterKey, Rig> = {
   ...Object.fromEntries(HUMANS.map((h) => [h, { ...KENNEY, url: `/models/people/character-${h}.glb` }])),
+  ...Object.fromEntries(BLOCKY.map((k) => [k, { ...KENNEY, scale: "fit", height: 1.3, url: `/models/blocky/character-${k.slice(7)}.glb` }])),
+  ...Object.fromEntries(ANIMALS.map((k) => [k, { ...PET, url: `/models/pets/animal-${k.slice(4)}.glb` }])),
+  ...Object.fromEntries(FANTASY.map((k) => [k, { ...KENNEY, url: `/models/dungeon/character-${k.slice(8)}.glb` }])),
   robot: {
     url: "/models/robot.glb",
     scale: "fit",
@@ -171,7 +182,8 @@ export function Person({
       want = motion.pose === "sit" ? c.sit : c.idle;
     }
     play(want);
-    const sitting = !motion.moving && current.current === c.sit;
+    // On the chair: sitting, and not mid-emote (an animal's "sit" is its idle, so check the pose too).
+    const sitting = !motion.moving && motion.pose === "sit" && current.current === c.sit;
     lifted.current += ((sitting ? rig.sitLift : 0) - lifted.current) * Math.min(1, dt * 8);
     g.position.set(motion.pos[0], lifted.current, motion.pos[1]);
     g.rotation.y = motion.heading;

@@ -42,7 +42,7 @@ export const useOrg = create<Store>((set, get) => ({
   refresh: async () => {
     const id = get().orgId;
     if (!id) return;
-    const [snap, tasks, channels, approvals, meetings, history, world, stagePages, boards] = await Promise.all([
+    const [snap, tasks, channels, approvals, meetings, history, world, stagePages, boards, docs] = await Promise.all([
       api.org(id),
       api.tasks(id),
       api.channels(id),
@@ -52,6 +52,7 @@ export const useOrg = create<Store>((set, get) => ({
       api.world(id).catch(() => null),
       api.stagePages(id).catch(() => []),
       api.whiteboards(id).catch(() => []),
+      api.stageDocs(id).catch(() => []),
     ]);
     const base: Partial<OrgState> = {
       agents: Object.fromEntries(snap.agents.map((a) => [a.id, a])),
@@ -62,6 +63,7 @@ export const useOrg = create<Store>((set, get) => ({
       objects: Object.fromEntries((world?.objects ?? []).map((o) => [o.id, o])),
       stagePages: Object.fromEntries(stagePages.map((pg) => [pg.id, pg])),
       whiteboards: Object.fromEntries(boards.map((b) => [b.id, b])),
+      docs: Object.fromEntries(docs.map((d) => [d.id, d])),
     };
     // Rebuild the activity feed from recent history (only the feed: live
     // status comes from the snapshot, which is authoritative).

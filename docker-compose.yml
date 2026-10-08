@@ -102,6 +102,7 @@ services:
     ports:
       - "127.0.0.1:${PANTHEON_DESKTOP_PORT:-6901}:6901"   # noVNC (live view); on this machine only
       - "127.0.0.1:${PANTHEON_COMPUTER_PORT:-8711}:8000"   # computer-server API, for a backend running outside Docker
+      - "127.0.0.1:${PANTHEON_KERNEL_PORT:-8712}:8890"     # Stage notebook kernel, likewise
     restart: unless-stopped
 
   # HTTPS for phones/tablets (the microphone needs a secure page): https://<this-pc>:3711

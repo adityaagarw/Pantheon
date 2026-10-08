@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body { font: 13px system-ui, -apple-system, "Segoe UI", sans-serif; width: 300px; margin: 0; padding: 14px; color: #1d2230; }
+      h1 { font-size: 14px; margin: 0 0 10px; }
+      label { display: block; margin: 10px 0 4px; font-weight: 600; font-size: 12px; }
+      input, textarea { width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid #c8cdd8; border-radius: 6px; font: inherit; }
+      #code { text-transform: uppercase; letter-spacing: 3px; font-family: ui-monospace, monospace; font-size: 15px; }
+      button { margin-top: 12px; width: 100%; padding: 8px; border: 0; border-radius: 6px; background: #6d5dfc; color: white; font: inherit; font-weight: 600; cursor: pointer; }
+      button.stop { background: #d33; }
+      .muted { color: #6b7385; font-size: 11.5px; line-height: 1.45; margin-top: 8px; }
+      .rec { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+      .dot { width: 9px; height: 9px; border-radius: 50%; background: #d33; }
+      .error { color: #c22; margin-top: 8px; }
+      .waiting { border: 1px solid #c9c2ff; background: #f3f1ff; border-radius: 8px; padding: 10px; margin-bottom: 6px; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <h1>Pantheon Shadow</h1>
+    <div id="idle">
+      <div id="waiting" class="waiting" hidden>
+        <div class="muted" style="margin-top: 0">Ready to record</div>
+        <div><b id="waiting-title"></b><span id="waiting-agent"></span></div>
+        <button id="waiting-start">Start recording</button>
+      </div>
+      <label for="code">Recording code</label>
+      <input id="code" maxlength="6" placeholder="ABC123" autocomplete="off" />
+      <div class="muted">Start a recording on an organization's <b>Shadow</b> tab in Pantheon and pick “My browser” to get a code.</div>
+      <label for="exclude">Don't record on these sites</label>
+      <textarea id="exclude" rows="2" placeholder="mybank.com, mail.google.com"></textarea>
+      <label for="backend">Pantheon address</label>
+      <input id="backend" value="http://localhost:8710" />
+      <button id="start">Start recording</button>
+      <div id="error" class="error" hidden></div>
+    </div>
+    <div id="busy" hidden>
+      <div class="rec"><span class="dot"></span> Recording: <span id="title"></span></div>
+      <div class="muted">Do the work as you normally would. Pages, clicks and form values are sent to Pantheon; passwords, card numbers and codes never are.</div>
+      <button id="stop" class="stop">Stop recording</button>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>

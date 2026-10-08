@@ -1,0 +1,430 @@
+{
+  "version": 1,
+  "name": "Manufacturing Operations",
+  "theme": "industrial",
+  "description": "A plant operations team: a plant manager, production planner, quality engineer, maintenance planner and supply-chain coordinator who plan production, chase defects and keep machines and materials flowing.",
+  "settings": {
+    "comm_policy": "open",
+    "max_chain_depth": 40
+  },
+  "agents": [
+    {
+      "name": "Greta",
+      "role": "Plant manager",
+      "team": "Plant",
+      "persona": "You own safety, output and cost. You set the weekly plan, unblock the team and escalate anything risky to the user.\n\nHow you lead:\n- Turn each goal into small tasks with acceptance criteria, assign them with a reviewer, and track them on the board.\n- Keep the user informed in the main channel: decisions, risks, and what you need from them.\n- Ask the user before anything irreversible or customer-facing.",
+      "tools": [
+        {
+          "name": "send_message"
+        },
+        {
+          "name": "post_message"
+        },
+        {
+          "name": "read_channel"
+        },
+        {
+          "name": "list_channels"
+        },
+        {
+          "name": "create_channel"
+        },
+        {
+          "name": "update_channel"
+        },
+        {
+          "name": "list_colleagues"
+        },
+        {
+          "name": "create_task"
+        },
+        {
+          "name": "update_task"
+        },
+        {
+          "name": "list_tasks"
+        },
+        {
+          "name": "get_task"
+        },
+        {
+          "name": "remember"
+        },
+        {
+          "name": "recall"
+        },
+        {
+          "name": "request_feature"
+        },
+        {
+          "name": "hold_meeting"
+        },
+        {
+          "name": "list_secrets"
+        },
+        {
+          "name": "read_file"
+        },
+        {
+          "name": "list_dir"
+        },
+        {
+          "name": "search_files"
+        }
+      ],
+      "avatar": {
+        "outfit": "#3a3a2c",
+        "accent": "#e0b23a"
+      }
+    },
+    {
+      "name": "Hugo",
+      "role": "Production planner",
+      "team": "Plant",
+      "persona": "You turn demand into a feasible schedule: capacity, changeovers and material availability, with the trade-offs stated.\n\nHow you work:\n- Take the tasks assigned to you, ask your lead when something is unclear, and move work to review with a short summary of what you did and how you checked it.\n- Record decisions and useful facts with remember.",
+      "tools": [
+        {
+          "name": "send_message"
+        },
+        {
+          "name": "post_message"
+        },
+        {
+          "name": "read_channel"
+        },
+        {
+          "name": "list_channels"
+        },
+        {
+          "name": "create_channel"
+        },
+        {
+          "name": "update_channel"
+        },
+        {
+          "name": "list_colleagues"
+        },
+        {
+          "name": "create_task"
+        },
+        {
+          "name": "update_task"
+        },
+        {
+          "name": "list_tasks"
+        },
+        {
+          "name": "get_task"
+        },
+        {
+          "name": "remember"
+        },
+        {
+          "name": "recall"
+        },
+        {
+          "name": "request_feature"
+        },
+        {
+          "name": "hold_meeting"
+        },
+        {
+          "name": "list_secrets"
+        },
+        {
+          "name": "read_file"
+        },
+        {
+          "name": "write_file"
+        },
+        {
+          "name": "edit_file"
+        },
+        {
+          "name": "list_dir"
+        },
+        {
+          "name": "search_files"
+        }
+      ],
+      "avatar": {
+        "outfit": "#44442f",
+        "accent": "#5cc8ff"
+      }
+    },
+    {
+      "name": "Wen",
+      "role": "Quality engineer",
+      "team": "Plant",
+      "persona": "You chase defects to root cause (5 whys, fishbone), define containment and corrective actions, and verify they worked.\n\nHow you work:\n- Take the tasks assigned to you, ask your lead when something is unclear, and move work to review with a short summary of what you did and how you checked it.\n- Record decisions and useful facts with remember.",
+      "tools": [
+        {
+          "name": "send_message"
+        },
+        {
+          "name": "post_message"
+        },
+        {
+          "name": "read_channel"
+        },
+        {
+          "name": "list_channels"
+        },
+        {
+          "name": "create_channel"
+        },
+        {
+          "name": "update_channel"
+        },
+        {
+          "name": "list_colleagues"
+        },
+        {
+          "name": "create_task"
+        },
+        {
+          "name": "update_task"
+        },
+        {
+          "name": "list_tasks"
+        },
+        {
+          "name": "get_task"
+        },
+        {
+          "name": "remember"
+        },
+        {
+          "name": "recall"
+        },
+        {
+          "name": "request_feature"
+        },
+        {
+          "name": "hold_meeting"
+        },
+        {
+          "name": "list_secrets"
+        },
+        {
+          "name": "read_file"
+        },
+        {
+          "name": "write_file"
+        },
+        {
+          "name": "edit_file"
+        },
+        {
+          "name": "list_dir"
+        },
+        {
+          "name": "search_files"
+        },
+        {
+          "name": "web_search"
+        },
+        {
+          "name": "fetch_url"
+        }
+      ],
+      "avatar": {
+        "outfit": "#4d4d33",
+        "accent": "#f2667a"
+      }
+    },
+    {
+      "name": "Bram",
+      "role": "Maintenance planner",
+      "team": "Plant",
+      "persona": "You plan preventive maintenance, track machine health and schedule repairs to minimise downtime.\n\nHow you work:\n- Take the tasks assigned to you, ask your lead when something is unclear, and move work to review with a short summary of what you did and how you checked it.\n- Record decisions and useful facts with remember.",
+      "tools": [
+        {
+          "name": "send_message"
+        },
+        {
+          "name": "post_message"
+        },
+        {
+          "name": "read_channel"
+        },
+        {
+          "name": "list_channels"
+        },
+        {
+          "name": "create_channel"
+        },
+        {
+          "name": "update_channel"
+        },
+        {
+          "name": "list_colleagues"
+        },
+        {
+          "name": "create_task"
+        },
+        {
+          "name": "update_task"
+        },
+        {
+          "name": "list_tasks"
+        },
+        {
+          "name": "get_task"
+        },
+        {
+          "name": "remember"
+        },
+        {
+          "name": "recall"
+        },
+        {
+          "name": "request_feature"
+        },
+        {
+          "name": "hold_meeting"
+        },
+        {
+          "name": "list_secrets"
+        },
+        {
+          "name": "read_file"
+        },
+        {
+          "name": "write_file"
+        },
+        {
+          "name": "edit_file"
+        },
+        {
+          "name": "list_dir"
+        },
+        {
+          "name": "search_files"
+        }
+      ],
+      "avatar": {
+        "outfit": "#565637",
+        "accent": "#3ecf8e"
+      }
+    },
+    {
+      "name": "Lucia",
+      "role": "Supply chain coordinator",
+      "team": "Plant",
+      "persona": "You manage suppliers and materials: lead times, shortages and alternatives, flagged early.\n\nHow you work:\n- Take the tasks assigned to you, ask your lead when something is unclear, and move work to review with a short summary of what you did and how you checked it.\n- Record decisions and useful facts with remember.",
+      "tools": [
+        {
+          "name": "send_message"
+        },
+        {
+          "name": "post_message"
+        },
+        {
+          "name": "read_channel"
+        },
+        {
+          "name": "list_channels"
+        },
+        {
+          "name": "create_channel"
+        },
+        {
+          "name": "update_channel"
+        },
+        {
+          "name": "list_colleagues"
+        },
+        {
+          "name": "create_task"
+        },
+        {
+          "name": "update_task"
+        },
+        {
+          "name": "list_tasks"
+        },
+        {
+          "name": "get_task"
+        },
+        {
+          "name": "remember"
+        },
+        {
+          "name": "recall"
+        },
+        {
+          "name": "request_feature"
+        },
+        {
+          "name": "hold_meeting"
+        },
+        {
+          "name": "list_secrets"
+        },
+        {
+          "name": "read_file"
+        },
+        {
+          "name": "write_file"
+        },
+        {
+          "name": "edit_file"
+        },
+        {
+          "name": "list_dir"
+        },
+        {
+          "name": "search_files"
+        },
+        {
+          "name": "web_search"
+        },
+        {
+          "name": "fetch_url"
+        }
+      ],
+      "avatar": {
+        "outfit": "#5f5f3b",
+        "accent": "#8b7cff"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "from": "Greta",
+      "to": "Hugo",
+      "kind": "manages"
+    },
+    {
+      "from": "Greta",
+      "to": "Wen",
+      "kind": "manages"
+    },
+    {
+      "from": "Greta",
+      "to": "Bram",
+      "kind": "manages"
+    },
+    {
+      "from": "Greta",
+      "to": "Lucia",
+      "kind": "manages"
+    }
+  ],
+  "channels": [
+    {
+      "name": "floor",
+      "topic": "Production status, issues and changes",
+      "notify": "all",
+      "members": [
+        "Greta",
+        "Hugo",
+        "Wen",
+        "Bram",
+        "Lucia",
+        "user"
+      ]
+    }
+  ]
+}

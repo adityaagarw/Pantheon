@@ -183,6 +183,14 @@ def attention_prompt(agent_id: str) -> str:
         text = (f"# The user is with you on the Stage\nThey're looking at the whiteboard "
                 f"'{a.get('title') or 'the board'}' with you; you can add to it with the "
                 "whiteboard tools.")
+    elif kind in ("sheet", "pdf", "notebook"):
+        what = {"sheet": "spreadsheet", "pdf": "PDF", "notebook": "notebook"}[kind]
+        tools = {"sheet": "sheet_read and sheet_write", "pdf": "pdf_read and pdf_show",
+                 "notebook": "notebook_read, notebook_add_cell and notebook_run"}[kind]
+        text = (f"# The user is with you on the Stage\nThey have the {what} "
+                f"'{a.get('title')}' ({a.get('docId')}) open")
+        text += f": {a['text']}." if a.get("text") else "."
+        text += f" Work on it with {tools}; they see your changes live."
     else:
         text = (f"# The user is with you on the Stage\nThey have your page '{a['title']}' "
                 f"(page {a['pageId']}) open. Where the lesson is: \"{a['text']}\".")

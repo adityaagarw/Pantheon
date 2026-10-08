@@ -4,7 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Badge, Button, cx, ErrorNote, Field, Input, Select } from "@/components/ui";
 import type { Agent } from "@/lib/types";
 import { useAssetVersion } from "./assets";
-import { CATALOG, CATEGORIES, type Category } from "./catalog";
+import { CATALOG, CATEGORIES, type CatalogEntry, type Category } from "./catalog";
+import { proceduralThumb } from "./proceduralThumb";
+import { THEME_IDS, THEMES, type ThemeId } from "./themes";
 import { generateDesign, newId, type FloorStyle, type OfficeDesign, type RoomType, type Side, type WallKind } from "./design";
 import { patchItem, patchRoom, useDesigner } from "./designerStore";
 
@@ -15,6 +17,10 @@ const ROOM_TYPES: { value: RoomType; label: string; hint: string }[] = [
   { value: "team", label: "Team area", hint: "Agents whose team matches the name sit here" },
   { value: "focus", label: "Focus room", hint: "Decorative" },
   { value: "reception", label: "Reception", hint: "Decorative" },
+  { value: "home", label: "Home", hint: "A house or living room" },
+  { value: "bedroom", label: "Bedroom", hint: "Decorative" },
+  { value: "washroom", label: "Washroom", hint: "Decorative" },
+  { value: "garden", label: "Garden", hint: "Outdoors: a garden, a camp, a park" },
   { value: "custom", label: "Custom", hint: "Decorative" },
 ];
 
@@ -33,6 +39,8 @@ export function DesignerToolbar({
 }) {
   const draft = useDesigner((s) => s.draft)!;
   const tool = useDesigner((s) => s.tool);
+  // After picking a theme: rebuild the layout in its style, or keep the furniture?
+  const [offer, setOffer] = useState<string | null>(null);
   const dirty = useDesigner((s) => s.dirty);
   const canUndo = useDesigner((s) => s.history.length > 0);
   const canRedo = useDesigner((s) => s.future.length > 0);
@@ -54,10 +62,29 @@ export function DesignerToolbar({
         ↷
       </Button>
       <span className="mx-1 h-5 w-px bg-line-2" />
+      <Select
+        className="h-7 w-36 text-xs"
+        title="Theme: the look of the whole space"
+        value={draft.theme ?? "classic"}
+        onChange={(e) => {
+          const t = THEMES[e.target.value as ThemeId];
+          update((d) => ({ ...d, theme: t.id, floor: t.floor }));
+          setOffer(t.id);
+        }}
+      >
+        {THEME_IDS.map((id) => (
+          <option key={id} value={id} title={THEMES[id].description}>
+            {THEMES[id].label}
+          </option>
+        ))}
+      </Select>
       <Select className="h-7 w-28 text-xs" value={draft.floor} onChange={(e) => update((d) => ({ ...d, floor: e.target.value as FloorStyle }))}>
         <option value="oak">Oak floor</option>
         <option value="walnut">Walnut floor</option>
         <option value="concrete">Concrete</option>
+        <option value="polished">Polished concrete</option>
+        <option value="slate">Slate</option>
+        <option value="epoxy">Epoxy (industrial)</option>
         <option value="carpet">Carpet</option>
         <option value="tile">Tile</option>
         <option value="grass">Grass</option>
@@ -71,9 +98,20 @@ export function DesignerToolbar({
         D
         <Input className="h-7 w-16 text-xs" type="number" min={10} max={120} value={draft.depth} onChange={(e) => update((d) => ({ ...d, depth: clampNum(e.target.value, 10, 120) }))} />
       </label>
-      <Button size="sm" variant="ghost" onClick={() => update(() => generateDesign(agents))} title="Replace with a generated office for the current team">
+      <Button size="sm" variant="ghost" onClick={() => update((d) => generateDesign(agents, d.theme))} title="Replace with a generated office in this theme's style">
         ⟲ Regenerate
       </Button>
+      {offer && (
+        <span className="flex items-center gap-1.5 rounded-md bg-accent/15 px-2 py-1 text-xs">
+          Rebuild the office in the {THEMES[offer as ThemeId]?.label ?? offer} style?
+          <Button size="sm" variant="primary" onClick={() => (update(() => generateDesign(agents, offer)), setOffer(null))}>
+            Rebuild
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setOffer(null)}>
+            Just the look
+          </Button>
+        </span>
+      )}
       <div className="ml-auto flex items-center gap-2">
         <ErrorNote error={error} />
         {dirty && <Badge tone="warn">unsaved</Badge>}
@@ -127,12 +165,7 @@ export function CatalogPanel() {
             )}
             title={e.label}
           >
-            {e.thumb ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={e.thumb} alt="" className="h-14 w-14 object-contain" loading="lazy" />
-            ) : (
-              <span className="flex h-14 w-14 items-center justify-center rounded bg-black/5 text-2xl">{e.procedural ? "◆" : "▣"}</span>
-            )}
+            <PaletteThumb entry={e} />
             <span className="mt-1 line-clamp-2 text-[10.5px] leading-tight text-ink-2">{e.label}</span>
           </button>
         ))}
@@ -269,6 +302,16 @@ export function PropertiesPanel({ agents }: { agents: Agent[] }) {
         <p className="pt-2 text-ink-3">Select something to edit it, pick furniture from the catalog, or draw a room.</p>
       </div>
     </Panel>
+  );
+}
+
+function PaletteThumb({ entry }: { entry: CatalogEntry }) {
+  const src = entry.thumb || (entry.procedural ? proceduralThumb(entry.key, entry.procedural) : null);
+  return src ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={src} alt="" className="h-14 w-14 object-contain" loading="lazy" />
+  ) : (
+    <span className="flex h-14 w-14 items-center justify-center rounded bg-black/5 text-2xl">{entry.procedural ? "◆" : "▣"}</span>
   );
 }
 

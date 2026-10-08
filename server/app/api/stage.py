@@ -86,6 +86,11 @@ async def agent_attention(agent_id: str, body: dict[str, Any] = Body(...)) -> No
     elif kind == "whiteboard":
         stage.set_attention(agent_id, {"kind": "whiteboard",
                                        "title": str(body.get("title") or "")[:200]})
+    elif kind in ("sheet", "pdf", "notebook"):
+        stage.set_attention(agent_id, {"kind": kind,
+                                       "title": str(body.get("title") or "")[:200],
+                                       "docId": str(body.get("docId") or "")[:60],
+                                       "text": str(body.get("text") or "")[:300]})
     else:
         raise HTTPException(400, f"unknown attention kind '{kind}'")
 

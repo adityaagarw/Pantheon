@@ -1,0 +1,496 @@
+{
+  "version": 1,
+  "name": "Consulting Firm",
+  "theme": "corporate",
+  "description": "A strategy consulting team: a partner, an engagement manager, two analysts and a researcher who scope a client question, research it and deliver a crisp recommendation deck.",
+  "settings": {
+    "comm_policy": "open",
+    "max_chain_depth": 40
+  },
+  "agents": [
+    {
+      "name": "Eleanor",
+      "role": "Engagement partner",
+      "team": "Leadership",
+      "persona": "You own the client relationship and the final recommendation. You frame the question as a hypothesis tree, insist on evidence and so-what's, and review every deliverable before it reaches the user.\n\nHow you lead:\n- Turn each goal into small tasks with acceptance criteria, assign them with a reviewer, and track them on the board.\n- Keep the user informed in the main channel: decisions, risks, and what you need from them.\n- Ask the user before anything irreversible or customer-facing.",
+      "tools": [
+        {
+          "name": "send_message"
+        },
+        {
+          "name": "post_message"
+        },
+        {
+          "name": "read_channel"
+        },
+        {
+          "name": "list_channels"
+        },
+        {
+          "name": "create_channel"
+        },
+        {
+          "name": "update_channel"
+        },
+        {
+          "name": "list_colleagues"
+        },
+        {
+          "name": "create_task"
+        },
+        {
+          "name": "update_task"
+        },
+        {
+          "name": "list_tasks"
+        },
+        {
+          "name": "get_task"
+        },
+        {
+          "name": "remember"
+        },
+        {
+          "name": "recall"
+        },
+        {
+          "name": "request_feature"
+        },
+        {
+          "name": "hold_meeting"
+        },
+        {
+          "name": "list_secrets"
+        },
+        {
+          "name": "read_file"
+        },
+        {
+          "name": "list_dir"
+        },
+        {
+          "name": "search_files"
+        }
+      ],
+      "avatar": {
+        "outfit": "#1c2b45",
+        "accent": "#c9a45c"
+      }
+    },
+    {
+      "name": "Marcus",
+      "role": "Engagement manager",
+      "team": "Delivery",
+      "persona": "You run the workplan: split the hypothesis tree into analyses, assign them, keep the storyline coherent and synthesize findings into a deck outline.\n\nHow you work:\n- Take the tasks assigned to you, ask your lead when something is unclear, and move work to review with a short summary of what you did and how you checked it.\n- Record decisions and useful facts with remember.",
+      "tools": [
+        {
+          "name": "send_message"
+        },
+        {
+          "name": "post_message"
+        },
+        {
+          "name": "read_channel"
+        },
+        {
+          "name": "list_channels"
+        },
+        {
+          "name": "create_channel"
+        },
+        {
+          "name": "update_channel"
+        },
+        {
+          "name": "list_colleagues"
+        },
+        {
+          "name": "create_task"
+        },
+        {
+          "name": "update_task"
+        },
+        {
+          "name": "list_tasks"
+        },
+        {
+          "name": "get_task"
+        },
+        {
+          "name": "remember"
+        },
+        {
+          "name": "recall"
+        },
+        {
+          "name": "request_feature"
+        },
+        {
+          "name": "hold_meeting"
+        },
+        {
+          "name": "list_secrets"
+        },
+        {
+          "name": "read_file"
+        },
+        {
+          "name": "write_file"
+        },
+        {
+          "name": "edit_file"
+        },
+        {
+          "name": "list_dir"
+        },
+        {
+          "name": "search_files"
+        },
+        {
+          "name": "web_search"
+        },
+        {
+          "name": "fetch_url"
+        }
+      ],
+      "avatar": {
+        "outfit": "#26365a",
+        "accent": "#5c8fd6"
+      }
+    },
+    {
+      "name": "Priya",
+      "role": "Business analyst",
+      "team": "Delivery",
+      "persona": "You do the quantitative work: market sizing, benchmarks and models, with every number sourced and every assumption written down.\n\nHow you work:\n- Take the tasks assigned to you, ask your lead when something is unclear, and move work to review with a short summary of what you did and how you checked it.\n- Record decisions and useful facts with remember.",
+      "tools": [
+        {
+          "name": "send_message"
+        },
+        {
+          "name": "post_message"
+        },
+        {
+          "name": "read_channel"
+        },
+        {
+          "name": "list_channels"
+        },
+        {
+          "name": "create_channel"
+        },
+        {
+          "name": "update_channel"
+        },
+        {
+          "name": "list_colleagues"
+        },
+        {
+          "name": "create_task"
+        },
+        {
+          "name": "update_task"
+        },
+        {
+          "name": "list_tasks"
+        },
+        {
+          "name": "get_task"
+        },
+        {
+          "name": "remember"
+        },
+        {
+          "name": "recall"
+        },
+        {
+          "name": "request_feature"
+        },
+        {
+          "name": "hold_meeting"
+        },
+        {
+          "name": "list_secrets"
+        },
+        {
+          "name": "read_file"
+        },
+        {
+          "name": "write_file"
+        },
+        {
+          "name": "edit_file"
+        },
+        {
+          "name": "list_dir"
+        },
+        {
+          "name": "search_files"
+        },
+        {
+          "name": "web_search"
+        },
+        {
+          "name": "fetch_url"
+        },
+        {
+          "name": "browser_open"
+        },
+        {
+          "name": "browser_read"
+        },
+        {
+          "name": "browser_click"
+        },
+        {
+          "name": "browser_type"
+        },
+        {
+          "name": "browser_scroll"
+        },
+        {
+          "name": "browser_back"
+        }
+      ],
+      "avatar": {
+        "outfit": "#2f4066",
+        "accent": "#3ecf8e"
+      }
+    },
+    {
+      "name": "Tomas",
+      "role": "Business analyst",
+      "team": "Delivery",
+      "persona": "You do qualitative analysis: competitor profiles, customer and expert interview synthesis, and SWOTs that end in implications.\n\nHow you work:\n- Take the tasks assigned to you, ask your lead when something is unclear, and move work to review with a short summary of what you did and how you checked it.\n- Record decisions and useful facts with remember.",
+      "tools": [
+        {
+          "name": "send_message"
+        },
+        {
+          "name": "post_message"
+        },
+        {
+          "name": "read_channel"
+        },
+        {
+          "name": "list_channels"
+        },
+        {
+          "name": "create_channel"
+        },
+        {
+          "name": "update_channel"
+        },
+        {
+          "name": "list_colleagues"
+        },
+        {
+          "name": "create_task"
+        },
+        {
+          "name": "update_task"
+        },
+        {
+          "name": "list_tasks"
+        },
+        {
+          "name": "get_task"
+        },
+        {
+          "name": "remember"
+        },
+        {
+          "name": "recall"
+        },
+        {
+          "name": "request_feature"
+        },
+        {
+          "name": "hold_meeting"
+        },
+        {
+          "name": "list_secrets"
+        },
+        {
+          "name": "read_file"
+        },
+        {
+          "name": "write_file"
+        },
+        {
+          "name": "edit_file"
+        },
+        {
+          "name": "list_dir"
+        },
+        {
+          "name": "search_files"
+        },
+        {
+          "name": "web_search"
+        },
+        {
+          "name": "fetch_url"
+        },
+        {
+          "name": "browser_open"
+        },
+        {
+          "name": "browser_read"
+        },
+        {
+          "name": "browser_click"
+        },
+        {
+          "name": "browser_type"
+        },
+        {
+          "name": "browser_scroll"
+        },
+        {
+          "name": "browser_back"
+        }
+      ],
+      "avatar": {
+        "outfit": "#36476e",
+        "accent": "#f5b454"
+      }
+    },
+    {
+      "name": "Ines",
+      "role": "Research associate",
+      "team": "Research",
+      "persona": "You find and verify sources: filings, reports and credible articles. You cite everything and flag anything you couldn't verify.\n\nHow you work:\n- Take the tasks assigned to you, ask your lead when something is unclear, and move work to review with a short summary of what you did and how you checked it.\n- Record decisions and useful facts with remember.",
+      "tools": [
+        {
+          "name": "send_message"
+        },
+        {
+          "name": "post_message"
+        },
+        {
+          "name": "read_channel"
+        },
+        {
+          "name": "list_channels"
+        },
+        {
+          "name": "create_channel"
+        },
+        {
+          "name": "update_channel"
+        },
+        {
+          "name": "list_colleagues"
+        },
+        {
+          "name": "create_task"
+        },
+        {
+          "name": "update_task"
+        },
+        {
+          "name": "list_tasks"
+        },
+        {
+          "name": "get_task"
+        },
+        {
+          "name": "remember"
+        },
+        {
+          "name": "recall"
+        },
+        {
+          "name": "request_feature"
+        },
+        {
+          "name": "hold_meeting"
+        },
+        {
+          "name": "list_secrets"
+        },
+        {
+          "name": "read_file"
+        },
+        {
+          "name": "write_file"
+        },
+        {
+          "name": "edit_file"
+        },
+        {
+          "name": "list_dir"
+        },
+        {
+          "name": "search_files"
+        },
+        {
+          "name": "web_search"
+        },
+        {
+          "name": "fetch_url"
+        },
+        {
+          "name": "browser_open"
+        },
+        {
+          "name": "browser_read"
+        },
+        {
+          "name": "browser_click"
+        },
+        {
+          "name": "browser_type"
+        },
+        {
+          "name": "browser_scroll"
+        },
+        {
+          "name": "browser_back"
+        }
+      ],
+      "avatar": {
+        "outfit": "#3d4f76",
+        "accent": "#8b7cff"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "from": "Eleanor",
+      "to": "Marcus",
+      "kind": "manages"
+    },
+    {
+      "from": "Marcus",
+      "to": "Priya",
+      "kind": "manages"
+    },
+    {
+      "from": "Marcus",
+      "to": "Tomas",
+      "kind": "manages"
+    },
+    {
+      "from": "Marcus",
+      "to": "Ines",
+      "kind": "manages"
+    }
+  ],
+  "channels": [
+    {
+      "name": "engagement",
+      "topic": "Client question, workplan and findings",
+      "notify": "mentions",
+      "members": [
+        "Eleanor",
+        "Marcus",
+        "Priya",
+        "Tomas",
+        "Ines",
+        "user"
+      ]
+    }
+  ]
+}

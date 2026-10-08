@@ -13,6 +13,7 @@ import type {
   RuntimeStatus,
   Task,
   StagePageInfo,
+  StageDocEvent,
   WhiteboardInfo,
   WorldObject,
 } from "@/lib/types";
@@ -70,6 +71,8 @@ export interface OrgState {
   objects: Record<string, WorldObject>;
   stagePages: Record<string, StagePageInfo>;
   whiteboards: Record<string, WhiteboardInfo>;
+  /** Stage documents; each carries the last change event for open views to apply. */
+  docs: Record<string, StageDocEvent>;
   browsers: Record<string, { url: string; title: string; at: number }>;
   computerAt: number; // last computer action (for the live view)
   beams: Beam[];
@@ -93,6 +96,7 @@ export const emptyState = (): OrgState => ({
   objects: {},
   stagePages: {},
   whiteboards: {},
+  docs: {},
   browsers: {},
   computerAt: 0,
   beams: [],
@@ -411,6 +415,19 @@ export function reduce(s: OrgState, e: PantheonEvent, now = Date.now()): OrgStat
       if (b.updatedBy && b.updatedBy !== "user" && (!prev || prev.pendingCount < b.pendingCount))
         return pushFeed(out, { id: fid, ts: e.ts, agentId: aid, kind: "whiteboard", text: `${b.updatedBy} drew on “${b.title}”`, ref: b.id });
       return out;
+    }
+    case "stage_doc.updated": {
+      const d = p as unknown as StageDocEvent;
+      const prev = s.docs[d.id];
+      const out = { ...s, docs: { ...s.docs, [d.id]: d } };
+      if (!prev && d.updatedBy !== "user")
+        return pushFeed(out, { id: fid, ts: e.ts, agentId: aid, kind: "stage", text: `${d.updatedBy} opened “${d.title}” on the Stage`, ref: d.id });
+      return out;
+    }
+    case "stage_doc.deleted": {
+      const docs = { ...s.docs };
+      delete docs[String(p.id)];
+      return { ...s, docs };
     }
     case "attachment.created":
     case "attachment.updated":

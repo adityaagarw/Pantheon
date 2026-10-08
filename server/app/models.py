@@ -127,10 +127,13 @@ class Agent(Base):
     retry_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     is_supervisor: Mapped[bool] = mapped_column(Boolean, default=False)
     # Built-in meta agents in the system org: "zeus" (supervisor) | "argus" (overseer)
+    # | "kronos" (engineer on the host)
     meta_role: Mapped[str | None] = mapped_column(String, nullable=True)
     # Where the agent chose to be in the org's space, e.g. {"kind": "room", "room": "Lounge"};
     # None = its default spot (its desk, meetings, breaks).
     location: Mapped[JsonDict | None] = mapped_column(JSON, nullable=True)
+    # Needs, traits and wants, in organizations where life is on (app/services/life.py).
+    life: Mapped[JsonDict] = mapped_column(JSON, default=dict, server_default="{}")
     created_at: Mapped[datetime] = _ts()
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
@@ -749,3 +752,75 @@ class SecretUse(Base):
     tool: Mapped[str] = mapped_column(String)
     target: Mapped[str] = mapped_column(String, default="")  # host, or "shell"
     created_at: Mapped[datetime] = _ts()
+
+
+class ShadowSession(Base):
+    """A recording of the user doing their work, for an agent to learn from.
+
+    Sources: the sandbox desktop, the browser extension, or the recorder app on the
+    user's own computer. Clients post events with the session's short code."""
+
+    __tablename__ = "shadow_sessions"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: new_id("shd"))
+    org_id: Mapped[str] = mapped_column(ForeignKey("orgs.id", ondelete="CASCADE"), index=True)
+    agent_id: Mapped[str] = mapped_column(ForeignKey("agents.id", ondelete="CASCADE"), index=True)
+    title: Mapped[str] = mapped_column(String)
+    note: Mapped[str] = mapped_column(Text, default="")  # the user's words: what this work is for
+    source: Mapped[str] = mapped_column(String)  # sandbox | browser | desktop
+    status: Mapped[str] = mapped_column(String, default="recording")  # recording|stopped|learning|learned
+    code: Mapped[str] = mapped_column(String, index=True)
+    event_count: Mapped[int] = mapped_column(Integer, default=0)
+    started_at: Mapped[datetime] = _ts()
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class ShadowEvent(Base):
+    """One thing that happened in a recording: a click, a page, a window, typing, a screenshot."""
+
+    __tablename__ = "shadow_events"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: new_id("sev"))
+    session_id: Mapped[str] = mapped_column(
+        ForeignKey("shadow_sessions.id", ondelete="CASCADE"), index=True)
+    t: Mapped[float] = mapped_column(Float, default=0.0)  # seconds since the recording started
+    kind: Mapped[str] = mapped_column(String)  # click | input | navigate | window | typing | screen | note
+    data: Mapped[dict] = mapped_column(JSON, default=dict)
+    image: Mapped[str | None] = mapped_column(String, nullable=True)  # file under data/shadow/<session>/
+    created_at: Mapped[datetime] = _ts()
+
+
+class Playbook(Base):
+    """How an agent does a piece of work it learned (from a recording, or from the user)."""
+
+    __tablename__ = "playbooks"
+    __table_args__ = (UniqueConstraint("agent_id", "title"),)
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: new_id("pbk"))
+    org_id: Mapped[str] = mapped_column(ForeignKey("orgs.id", ondelete="CASCADE"), index=True)
+    agent_id: Mapped[str] = mapped_column(ForeignKey("agents.id", ondelete="CASCADE"), index=True)
+    session_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    title: Mapped[str] = mapped_column(String)
+    content: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = _ts()
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class StageDoc(Base):
+    """A document on the Stage that the user and agents work on together: a spreadsheet,
+    a PDF (with the page in view and highlights) or a notebook (cells and outputs)."""
+
+    __tablename__ = "stage_docs"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: new_id("doc"))
+    org_id: Mapped[str] = mapped_column(ForeignKey("orgs.id", ondelete="CASCADE"), index=True)
+    kind: Mapped[str] = mapped_column(String)  # sheet | pdf | notebook
+    title: Mapped[str] = mapped_column(String)
+    data: Mapped[JsonDict] = mapped_column(JSON, default=dict)
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    created_by: Mapped[str] = mapped_column(String, default="user")  # "user" or an agent id
+    updated_by: Mapped[str] = mapped_column(String, default="user")  # a display name
+    created_at: Mapped[datetime] = _ts()
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )

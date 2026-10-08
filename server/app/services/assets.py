@@ -68,10 +68,17 @@ def validate_parts(parts: Any) -> list[dict[str, Any]]:
         color = str(p.get("color") or "#9aa0a6")
         if not HEX.match(color):
             raise AssetError(f"part {i}: color must be #rrggbb")
-        out.append({"shape": shape, "size": _vec(p.get("size"), 3, f"part {i} size", 0.001, 30),
-                    "pos": _vec(p.get("pos", [0, 0, 0]), 3, f"part {i} pos"),
-                    "rot": _vec(p.get("rot", [0, 0, 0]), 3, f"part {i} rot", -7, 7),
-                    "color": color})
+        part = {"shape": shape, "size": _vec(p.get("size"), 3, f"part {i} size", 0.001, 30),
+                "pos": _vec(p.get("pos", [0, 0, 0]), 3, f"part {i} pos"),
+                "rot": _vec(p.get("rot", [0, 0, 0]), 3, f"part {i} rot", -7, 7),
+                "color": color}
+        if p.get("emissive"):  # glows: screens, lamps, signs
+            if not HEX.match(str(p["emissive"])):
+                raise AssetError(f"part {i}: emissive must be #rrggbb")
+            part["emissive"] = str(p["emissive"])
+        if p.get("opacity") is not None:  # below 1: glass
+            part["opacity"] = max(0.05, min(float(p["opacity"]), 1.0))
+        out.append(part)
     return out
 
 
@@ -231,11 +238,43 @@ async def import_glb(url: str, label: str, *, size_m: float | None = None,
                      height_m: float | None = None, category: str = "Props",
                      carryable: bool = False, license_: str = "", description: str = "",
                      created_by: str = "user") -> Asset:
+    return await create_glb(await download(url), label, size_m=size_m, height_m=height_m,
+                            category=category, carryable=carryable, license_=license_,
+                            description=description, created_by=created_by, source_url=url)
+
+
+async def create_glb(data: bytes, label: str, *, size_m: float | None = None,
+                     height_m: float | None = None, category: str = "Props",
+                     carryable: bool = False, license_: str = "", description: str = "",
+                     created_by: str = "user", source_url: str = "") -> Asset:
+    """Store a .glb model as an asset, scaled to a real-world size."""
+    if data[:4] != b"glTF":
+        raise AssetError("that isn't a .glb model")
+    if len(data) > settings.max_asset_bytes:
+        raise AssetError(f"file is larger than {settings.max_asset_bytes // 1_000_000} MB")
+    bounds = glb_bounds(data)
+    scale, size = fit(bounds, size_m, height_m)
+    aid = await _unique_id(label)
+    settings.assets_path.mkdir(parents=True, exist_ok=True)
+    (settings.assets_path / f"{aid}.glb").write_bytes(data)
+    asset = Asset(id=aid, label=label.strip()[:80] or aid, category=category[:40] or "Props",
+                  kind="glb", file=f"{aid}.glb", spec={"bounds": bounds}, size=size, scale=scale,
+                  carryable=carryable, blocking=not carryable, description=description,
+                  source_url=source_url, license=license_, created_by=created_by)
+    async with SessionLocal() as session:
+        session.add(asset)
+        await session.commit()
+    await bus.publish("asset.created", to_dict(asset))
+    return asset
+
+
+async def download(url: str) -> bytes:
+    """Fetch a file (a model or a zip of models), within the asset size limit."""
     if not re.match(r"^https?://", url):
         raise AssetError("url must be http(s)")
-    limit = settings.max_asset_bytes
+    limit = settings.max_asset_bytes * 4  # zips hold many models
     try:
-        async with httpx.AsyncClient(timeout=60, follow_redirects=True,
+        async with httpx.AsyncClient(timeout=120, follow_redirects=True,
                                      headers={"User-Agent": "Pantheon/2"}) as client:
             async with client.stream("GET", url) as res:
                 if res.status_code >= 400:
@@ -248,21 +287,90 @@ async def import_glb(url: str, label: str, *, size_m: float | None = None,
                     chunks.append(chunk)
     except httpx.HTTPError as e:
         raise AssetError(f"download failed: {e}") from None
-    data = b"".join(chunks)
-    bounds = glb_bounds(data)
-    scale, size = fit(bounds, size_m, height_m)
-    aid = await _unique_id(label)
-    settings.assets_path.mkdir(parents=True, exist_ok=True)
-    (settings.assets_path / f"{aid}.glb").write_bytes(data)
-    asset = Asset(id=aid, label=label.strip()[:80] or aid, category=category[:40] or "Props",
-                  kind="glb", file=f"{aid}.glb", spec={"bounds": bounds}, size=size, scale=scale,
-                  carryable=carryable, blocking=not carryable, description=description,
-                  source_url=url, license=license_, created_by=created_by)
-    async with SessionLocal() as session:
-        session.add(asset)
-        await session.commit()
-    await bus.publish("asset.created", to_dict(asset))
-    return asset
+    return b"".join(chunks)
+
+
+def _glb_parts(data: bytes) -> tuple[dict[str, Any], bytes]:
+    if data[:4] != b"glTF":
+        raise AssetError("that isn't a .glb model")
+    json_len = struct.unpack_from("<I", data, 12)[0]
+    gltf = json.loads(data[20:20 + json_len])
+    rest = 20 + json_len
+    binary = b""
+    if rest + 8 <= len(data):
+        bin_len = struct.unpack_from("<I", data, rest)[0]
+        binary = data[rest + 8:rest + 8 + bin_len]
+    return gltf, binary
+
+
+def _glb_build(gltf: dict[str, Any], binary: bytes) -> bytes:
+    body = json.dumps(gltf, separators=(",", ":")).encode()
+    body += b" " * (-len(body) % 4)
+    binary += b"\0" * (-len(binary) % 4)
+    chunks = struct.pack("<I4s", len(body), b"JSON") + body
+    if binary:
+        chunks += struct.pack("<I4s", len(binary), b"BIN\0") + binary
+    return struct.pack("<4sII", b"glTF", 2, 12 + len(chunks)) + chunks
+
+
+def embed_textures(data: bytes, read) -> bytes:
+    """Pack textures a model loads from separate files (`read(uri)` gives their bytes) into
+    the .glb itself, so it works on its own."""
+    gltf, binary = _glb_parts(data)
+    images = gltf.get("images") or []
+    if not any("uri" in im and not str(im["uri"]).startswith("data:") for im in images):
+        return data
+    buffer = bytearray(binary)
+    views = gltf.setdefault("bufferViews", [])
+    for im in images:
+        uri = str(im.get("uri") or "")
+        if not uri or uri.startswith("data:"):
+            continue
+        raw = read(uri)
+        if raw is None:
+            raise AssetError(f"the model needs {uri}, which isn't there")
+        buffer += b"\0" * (-len(buffer) % 4)
+        views.append({"buffer": 0, "byteOffset": len(buffer), "byteLength": len(raw)})
+        buffer += raw
+        im.pop("uri")
+        im["bufferView"] = len(views) - 1
+        im["mimeType"] = "image/png" if uri.lower().endswith(".png") else "image/jpeg"
+    if gltf.get("buffers"):
+        gltf["buffers"][0]["byteLength"] = len(buffer)
+    else:
+        gltf["buffers"] = [{"byteLength": len(buffer)}]
+    return _glb_build(gltf, bytes(buffer))
+
+
+def glb_from_zip(data: bytes, member: str | None) -> bytes:
+    """One model out of a zip of models (e.g. a Kenney kit), with its textures packed in.
+    Without `member`, or with one that isn't there, the error lists what's inside."""
+    import io
+    import posixpath
+    import zipfile
+
+    try:
+        z = zipfile.ZipFile(io.BytesIO(data))
+    except zipfile.BadZipFile:
+        raise AssetError("that isn't a zip or a .glb") from None
+    glbs = [n for n in z.namelist() if n.lower().endswith(".glb")]
+    if not glbs:
+        raise AssetError("the zip has no .glb models")
+    match = None
+    if member:
+        want = member.lower().removesuffix(".glb")
+        match = next((n for n in glbs if posixpath.basename(n).lower().removesuffix(".glb") == want), None)
+    if match is None:
+        names = sorted({posixpath.basename(n).removesuffix(".glb") for n in glbs})
+        raise AssetError(f"say which model (file) to take: {', '.join(names[:150])}"
+                         + (f" (and {len(names) - 150} more)" if len(names) > 150 else ""))
+    folder = posixpath.dirname(match)
+    names = set(z.namelist())
+
+    def read(uri: str) -> bytes | None:
+        path = posixpath.normpath(posixpath.join(folder, uri))
+        return z.read(path) if path in names else None
+    return embed_textures(z.read(match), read)
 
 
 async def delete_asset(aid: str) -> None:

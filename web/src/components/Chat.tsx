@@ -314,6 +314,7 @@ export function Composer({
   onLiveState,
   preferInterruptible,
   attach,
+  draftKey,
 }: {
   onSend: (text: string, attachments?: string[]) => Promise<void> | void;
   /** Lets the user attach documents and images (uploaded to this agent's library, or the org's). */
@@ -330,8 +331,34 @@ export function Composer({
   onLiveState?: (s: LiveState | null) => void;
   /** Live talk lets the user talk over the agent by default (teach-along). */
   preferInterruptible?: boolean;
+  /** Where an unsent draft is kept; defaults to one per conversation (agent, channel...). */
+  draftKey?: string;
 }) {
-  const [text, setText] = useState("");
+  const key = draftKey ?? `${live?.agentId ?? attach?.agentId ?? ""}|${attach?.orgId ?? live?.orgId ?? ""}|${placeholder ?? ""}`;
+  const [text, setTextState] = useState(() => loadDraft(key));
+  const [shownKey, setShownKey] = useState(key);
+  if (shownKey !== key) {
+    // Another conversation: show its draft.
+    setShownKey(key);
+    setTextState(loadDraft(key));
+  }
+  const setText = (v: string) => {
+    setTextState(v);
+    saveDraft(key, v);
+  };
+  const [expanded, setExpanded] = useState(false);
+  const box = useRef<HTMLTextAreaElement>(null);
+  useLayoutEffect(() => {
+    // Grow with the text (up to half the screen); the expand button gives more room.
+    const el = box.current;
+    if (!el) return;
+    if (expanded) {
+      el.style.height = ""; // let the expanded size apply
+      return;
+    }
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight + 2, window.innerHeight * 0.5)}px`;
+  }, [text, expanded]);
   const [busy, setBusy] = useState(false);
   const [rec, setRec] = useState<"idle" | "recording" | "transcribing">("idle");
   const [err, setErr] = useState<string | null>(null);
@@ -473,8 +500,9 @@ export function Composer({
       )}
       <div className="flex items-end gap-2">
         <Textarea
+          ref={box}
           rows={1}
-          className="max-h-40 min-h-9 resize-none"
+          className={cx("min-h-9", expanded ? "h-[55vh] resize-none" : "max-h-[50vh] resize-y")}
           value={text}
           disabled={disabled}
           placeholder={placeholder ?? "Message…"}
@@ -494,6 +522,19 @@ export function Composer({
             }
           }}
         />
+        <button
+          title={expanded ? "Shrink the message box" : "Expand the message box"}
+          aria-label={expanded ? "Shrink message box" : "Expand message box"}
+          onClick={() => {
+            setExpanded((v) => !v);
+            box.current?.focus();
+          }}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-line-2 bg-panel-2 text-ink-2 transition-colors hover:text-ink cursor-pointer"
+        >
+          <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            {expanded ? <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7" /> : <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />}
+          </svg>
+        </button>
         {attach && (
           <>
             <button
@@ -566,4 +607,24 @@ export function useAutoSpeak(messages: Message[], enabled: boolean): void {
       if (enabled && m.senderType === "agent") speak(m.content, m.senderId);
     }
   }, [messages, enabled]);
+}
+
+/* Unsent drafts survive switching conversations, pages and reloads (this browser only). */
+const DRAFT_PREFIX = "pantheon.draft:";
+
+function loadDraft(key: string): string {
+  try {
+    return localStorage.getItem(DRAFT_PREFIX + key) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function saveDraft(key: string, text: string): void {
+  try {
+    if (text) localStorage.setItem(DRAFT_PREFIX + key, text);
+    else localStorage.removeItem(DRAFT_PREFIX + key);
+  } catch {
+    /* private mode or storage blocked: drafts just don't persist */
+  }
 }

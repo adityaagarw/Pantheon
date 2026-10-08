@@ -1,5 +1,6 @@
 "use client";
 
+import { themeOf } from "@/office/themes";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -55,11 +56,13 @@ export default function OfficePage() {
   const membership = agents.map((a) => `${a.id}:${a.team}`).join("|");
   const saved = org?.layout?.office;
   const extras = org?.layout?.extras;
-  const design: OfficeDesign = useMemo(
-    () => withExtras(isDesign(saved) ? saved : generateDesign(agents), extras),
+  const orgTheme = typeof org?.layout?.theme === "string" ? org.layout.theme : undefined;
+  const design: OfficeDesign = useMemo(() => {
+    const base = isDesign(saved) ? saved : generateDesign(agents, orgTheme);
+    const themed = base.theme || !orgTheme ? base : { ...base, theme: orgTheme, floor: themeOf(orgTheme).floor };
+    return withExtras(themed, extras);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [saved, membership, extras, assetVersion],
-  );
+  }, [saved, membership, extras, assetVersion, orgTheme]);
   const activeMeeting = Object.values(meetings)[0];
 
   if (!orgId || !org) return null;
@@ -102,10 +105,11 @@ export default function OfficePage() {
     <div className="relative flex h-full flex-col md:flex-row">
       <div
         className={cx(
-          "relative min-w-0 shrink-0 bg-[#dfe5ec] md:h-auto md:flex-1",
+          "relative min-w-0 shrink-0 md:h-auto md:flex-1",
           designing ? "flex-1" : selected ? "h-[32%]" : "h-[46%]",
         )}
       >
+        <div className="absolute inset-0" style={{ background: themeOf((designing && draft ? draft : design).theme).sky }} />
         <OfficeCanvas
           design={designing && draft ? draft : design}
           editing={designing}

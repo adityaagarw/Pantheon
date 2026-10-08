@@ -1,0 +1,60 @@
+name: pantheon-host
+
+# Builds the Pantheon Host app (no Python needed) for Windows, macOS and Linux.
+# Every run keeps the builds as artifacts; a version tag (v1.2.3) attaches them to its release.
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+    paths: ["host/**", ".github/workflows/host.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write  # attach builds to releases
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: PantheonHost-windows.zip
+          - os: macos-latest
+            artifact: PantheonHost-macos.zip
+          - os: ubuntu-latest
+            artifact: PantheonHost-linux.zip
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build
+        run: |
+          python -m pip install pyinstaller pystray pillow
+          python host/build.py
+      - name: Test the build starts
+        if: runner.os == 'Linux'
+        run: ./host/dist/PantheonHost list
+      - name: Package
+        shell: bash
+        run: |
+          cd host/dist
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            ditto -c -k --keepParent PantheonHost.app "../../${{ matrix.artifact }}"
+          elif [ "$RUNNER_OS" = "Windows" ]; then
+            7z a "../../${{ matrix.artifact }}" PantheonHost.exe
+          else
+            zip "../../${{ matrix.artifact }}" PantheonHost
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}
+      - name: Attach to the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.artifact }}

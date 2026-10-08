@@ -11,6 +11,7 @@ export const STATUS_META: Record<RuntimeStatus, { label: string; tone: Tone; dot
   error: { label: "Error", tone: "bad", dot: "bg-bad" },
   retrying: { label: "Retrying", tone: "warn", dot: "bg-warn" },
   cooling_down: { label: "Cooling down", tone: "info", dot: "bg-info" },
+  queued: { label: "Queued", tone: "neutral", dot: "bg-info" },
 };
 
 export function StatusDot({ status, className }: { status: RuntimeStatus; className?: string }) {

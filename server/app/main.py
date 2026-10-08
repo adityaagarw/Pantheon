@@ -18,12 +18,15 @@ from app.api import (
     attachments,
     comms,
     extend,
+    host,
     meetings,
     memory,
     observe,
     orgs,
     secrets,
+    shadow,
     stage,
+    stagedocs,
     voice,
     whiteboards,
     work,
@@ -92,6 +95,12 @@ async def lifespan(app: FastAPI):
         log.info("closed %d meeting(s) a restart had interrupted", swept)
     secrets_svc.install_log_filter()
     await ensure_supervisor()
+    from app.services import host as host_svc
+
+    host_svc.token()  # Pantheon Host reads it from data/host.token
+    from app.services import shadow as shadow_svc
+
+    await shadow_svc.resume_recorders()
     await runtime.start()
     watcher = asyncio.create_task(oversight.run_forever(), name="argus-watches")
     from app.services import memory as memory_svc
@@ -129,7 +138,7 @@ async def domain_error(request: Request, exc: Exception) -> JSONResponse:
 
 for r in (orgs.router, comms.router, meetings.router, work.router, observe.router, admin.router,
           voice.router, world.router, extend.router, stage.router, memory.router, whiteboards.router,
-          attachments.router, secrets.router,
+          attachments.router, secrets.router, host.router, shadow.router, stagedocs.router,
           ws.router):
     app.include_router(r)
 

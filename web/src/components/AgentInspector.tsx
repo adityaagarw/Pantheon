@@ -5,7 +5,7 @@ import { useShallow } from "zustand/react/shallow";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
-import type { AgentSchedule, Message } from "@/lib/types";
+import type { AgentLife, AgentSchedule, Message } from "@/lib/types";
 import { useOrg } from "@/store/org";
 import { liveFor } from "@/store/reduce";
 import { AgentAvatar, StatusBadge } from "./agent";
@@ -13,7 +13,7 @@ import { Composer, LiveThinking, MessageList, useAutoSpeak } from "./Chat";
 import { ContextControls } from "./ContextControls";
 import { AgentFiles } from "./Files";
 import { ApprovalCard } from "./InboxDrawer";
-import { Badge, Button, Toggle } from "./ui";
+import { Badge, Button, cx, Toggle } from "./ui";
 
 export function dmKey(a: string, b: string): string {
   const [x, y] = [a, b].sort();
@@ -116,6 +116,8 @@ export function AgentInspector({ agentId, onClose }: { agentId: string; onClose:
         </div>
       </div>
 
+      {agent.life && <LifePanel life={agent.life} />}
+
       {approvals.length > 0 && (
         <div className="space-y-2 border-b border-line p-4">
           {approvals.map((a) => (
@@ -208,6 +210,53 @@ function Schedules({ agentId }: { agentId: string }) {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+const MOOD: Record<AgentLife["mood"], { label: string; tone: "ok" | "info" | "neutral" | "warn" | "bad" }> = {
+  great: { label: "😄 great", tone: "ok" },
+  good: { label: "🙂 good", tone: "ok" },
+  okay: { label: "😐 okay", tone: "neutral" },
+  low: { label: "😟 low", tone: "warn" },
+  miserable: { label: "😣 miserable", tone: "bad" },
+};
+
+/** A resident's needs, mood and wants (organizations where life is on). */
+function LifePanel({ life }: { life: AgentLife }) {
+  const mood = MOOD[life.mood] ?? MOOD.okay;
+  return (
+    <div className="space-y-2 border-b border-line p-4 text-xs">
+      <div className="flex items-center gap-2">
+        <span className="font-semibold text-ink">Life</span>
+        <Badge tone={mood.tone}>{mood.label}</Badge>
+        {life.doing && <span className="truncate text-ink-3">· {life.doing}</span>}
+      </div>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+        {Object.entries(life.needs).map(([name, v]) => (
+          <div key={name}>
+            <div className="flex justify-between text-ink-3">
+              <span className="capitalize">{name}</span>
+              <span>{v}</span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-line">
+              <div className={cx("h-full rounded-full", v < 25 ? "bg-bad" : v < 50 ? "bg-warn" : "bg-ok")} style={{ width: `${v}%` }} />
+            </div>
+          </div>
+        ))}
+      </div>
+      {life.traits.length > 0 && <div className="text-ink-3">{life.traits.join(" · ")}</div>}
+      {life.wants.length > 0 && (
+        <div>
+          <div className="text-ink-3">Wants</div>
+          <ul className="list-disc pl-4 text-ink-2">
+            {life.wants.map((w) => (
+              <li key={w.id}>{w.text}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {life.done.length > 0 && <div className="text-ink-3">Made happen: {life.done.map((d) => d.text).join("; ")}</div>}
     </div>
   );
 }

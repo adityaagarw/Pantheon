@@ -14,7 +14,7 @@ from app.core.db import SessionLocal
 from app.events import bus
 from app.llm import effort as effort_mod
 from app.models import Agent, Board, Channel, McpServer, Org, Provider, Relationship
-from app.services import tasks
+from app.services import life, tasks
 from app.services.comms import channel_to_dict as comms_channel_dict
 from app.services.permissions import validate_task_policy
 from app.tools import base as tools_base
@@ -27,7 +27,13 @@ DEFAULT_ORG_SETTINGS: dict[str, Any] = {
     "daily_token_budget": 0,
     "task_policy": {},
     "meetings": {},
+    "shell_approval": "ask",  # "auto": shell commands run without asking (per-agent deny wins)
+    "max_concurrent": 0,  # agents of this org working at once; 0: only the global limit
 }
+
+
+# Environment themes the office can use (rendered by web/src/office/themes.ts).
+THEMES = ("classic", "corporate", "tech", "operations", "industrial", "lab", "station")
 
 
 class OrgError(ValueError):
@@ -53,7 +59,7 @@ def agent_to_dict(a: Agent) -> dict[str, Any]:
             "runtimeDetail": a.runtime_detail, "consecutiveFailures": a.consecutive_failures,
             "retryAt": a.retry_at.isoformat() if a.retry_at else None,
             "isSupervisor": a.is_supervisor, "metaRole": a.meta_role,
-            "location": a.location,
+            "location": a.location, "life": life.snapshot(a.life),
             "createdAt": a.created_at.isoformat() if a.created_at else None}
 
 
@@ -237,6 +243,14 @@ async def update_org(org_id: str, patch: dict[str, Any]) -> Org:
             merged = {**(org.settings or {}), **patch["settings"]}
             if merged.get("comm_policy") not in ("open", "structured"):
                 raise OrgError("comm_policy must be open or structured")
+            if merged.get("shell_approval", "ask") not in ("ask", "auto"):
+                raise OrgError("shell_approval must be ask or auto")
+            if "max_concurrent" in patch["settings"]:
+                n = patch["settings"]["max_concurrent"]
+                if n is not None and (not isinstance(n, int) or isinstance(n, bool)
+                                      or not 0 <= n <= 64):
+                    raise OrgError("max_concurrent must be a whole number from 0 (no limit) to 64")
+                merged["max_concurrent"] = n or 0
             if "task_policy" in patch["settings"]:
                 try:
                     merged["task_policy"] = validate_task_policy(patch["settings"]["task_policy"])
@@ -251,6 +265,10 @@ async def update_org(org_id: str, patch: dict[str, Any]) -> Org:
             org.layout = patch["layout"]
         await session.commit()
     await bus.publish("org.updated", org_to_dict(org), org_id=org.id)
+    if "settings" in patch and "max_concurrent" in (patch.get("settings") or {}):
+        from app.agents.runtime import runtime
+
+        await runtime.slots.set_org_limit(org.id, (org.settings or {}).get("max_concurrent"))
     if org.status == "running":
         from app.agents import signals
 
@@ -318,6 +336,7 @@ async def create_agent(org_id: str, data: dict[str, Any]) -> Agent:
             avatar={**default_avatar(name + org_id), **(data.get("avatar") or {})},
             status=data.get("status", "active"), is_supervisor=bool(data.get("is_supervisor")),
             meta_role=data.get("meta_role") or None,
+            life=life.new_life(data["life"], name + org_id) if isinstance(data.get("life"), dict) else {},
         )
         if agent.status not in AGENT_STATUSES:
             raise OrgError(f"status must be one of {AGENT_STATUSES}")
@@ -635,6 +654,8 @@ async def _export_space(org_id: str, names: dict[str, str]) -> dict[str, Any]:
         out["office"] = office
     if layout.get("extras"):
         out["extras"] = [{k: v for k, v in e.items() if k != "id"} for e in layout["extras"]]
+    if layout.get("theme"):
+        out["theme"] = layout["theme"]
     if objects:
         out["objects"] = [
             {"name": o.name, "asset": o.asset, "description": o.description, "state": o.state}
@@ -666,6 +687,8 @@ async def _import_space(org_id: str, definition: dict[str, Any]) -> None:
             layout["office"] = office
         if isinstance(extras := definition.get("extras"), list):
             layout["extras"] = [{"id": f"ex_{i}", **e} for i, e in enumerate(extras)]
+        if isinstance(theme := definition.get("theme"), str) and theme in THEMES:
+            layout["theme"] = theme
         org.layout = layout
         for spec in definition.get("objects") or []:
             holder = ids.get(str(spec.get("holder", "")).lower()) if spec.get("holder") else None
@@ -700,6 +723,13 @@ async def import_org(definition: dict[str, Any], *, name: str | None = None,
             await comms.create_channel(org.id, c["name"], c.get("members") or [],
                                        topic=c.get("topic", ""), notify=c.get("notify", "all"))
         await _import_space(org.id, definition)
+        for act in definition.get("activities") or []:
+            from app.services import activities
+
+            await activities.create(org.id, act["title"], act.get("instructions", ""),
+                                    participants=act.get("participants") or [],
+                                    room=act.get("room"), schedule=act.get("schedule"),
+                                    created_by="template")
     except Exception:
         await delete_org(org.id)
         raise

@@ -8,7 +8,7 @@ import { api } from "@/lib/api";
 import { ContextControls } from "@/components/ContextControls";
 import { AgentFiles } from "@/components/Files";
 import type { Agent, CatalogTool, McpServer, Provider, TaskPolicy, ToolEntry } from "@/lib/types";
-import { CHARACTERS, characterFor, characterThumb } from "@/office/characters";
+import { CHARACTER_GROUPS, characterFor, characterLabel, characterThumb } from "@/office/characters";
 import { useOrg } from "@/store/org";
 
 type Tab = "profile" | "model" | "tools" | "files" | "permissions" | "workspace" | "look";
@@ -402,24 +402,31 @@ function LookTab({ draft, set }: { draft: Agent; set: SetFn }) {
     <div className="grid gap-4">
       <div>
         <div className="mb-2 text-xs font-medium text-ink-2">Character in the office</div>
-        <div className="grid grid-cols-5 gap-2">
-          {CHARACTERS.map((k) => (
-            <button
-              key={k}
-              onClick={() => set("avatar", { ...av, character: k })}
-              className={cx(
-                "flex aspect-square items-center justify-center rounded-lg border bg-white/90 transition-colors cursor-pointer",
-                current === k ? "border-accent ring-2 ring-accent/50" : "border-line-2 hover:border-ink-3",
-              )}
-              title={k}
-            >
-              {k === "robot" ? (
-                <span className="text-3xl">🤖</span>
-              ) : (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={characterThumb(k)} alt={k} className="h-full w-full object-contain p-1" />
-              )}
-            </button>
+        <div className="max-h-80 space-y-3 overflow-y-auto pr-1">
+          {CHARACTER_GROUPS.map((g) => (
+            <div key={g.label}>
+              <div className="mb-1 text-[11px] uppercase tracking-wider text-ink-3">{g.label}</div>
+              <div className="grid grid-cols-6 gap-1.5">
+                {g.keys.map((k) => (
+                  <button
+                    key={k}
+                    onClick={() => set("avatar", { ...av, character: k })}
+                    className={cx(
+                      "flex aspect-square items-center justify-center rounded-lg border bg-white/90 transition-colors cursor-pointer",
+                      current === k ? "border-accent ring-2 ring-accent/50" : "border-line-2 hover:border-ink-3",
+                    )}
+                    title={characterLabel(k)}
+                  >
+                    {k === "robot" ? (
+                      <span className="text-3xl">🤖</span>
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={characterThumb(k)} alt={characterLabel(k)} className="h-full w-full object-contain p-1" loading="lazy" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </div>

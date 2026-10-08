@@ -19,6 +19,7 @@ const KIND_STYLE: Record<string, { icon: string; color: string }> = {
   error: { icon: "⛔", color: "text-bad" },
   retrying: { icon: "↻", color: "text-warn" },
   cooling_down: { icon: "❄", color: "text-info" },
+  queued: { icon: "⏱", color: "text-ink-3" },
   warning: { icon: "⚠", color: "text-warn" },
   feature: { icon: "✦", color: "text-accent" },
   notice: { icon: "•", color: "text-ink-3" },

@@ -248,6 +248,22 @@ async def list_approvals(org_id: str, status: str | None = "pending") -> list[di
         return [approval_to_dict(a) for a in rows]
 
 
+@router.post("/orgs/{org_id}/approvals/approve-all")
+async def approve_all(org_id: str, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
+    """Approve every pending request in the org (or just one agent's, with ``agentId``)."""
+    async with SessionLocal() as session:
+        stmt = select(Approval.id).where(Approval.org_id == org_id, Approval.status == "pending")
+        if body.get("agentId"):
+            stmt = stmt.where(Approval.agent_id == body["agentId"])
+        ids = (await session.execute(stmt.order_by(Approval.created_at))).scalars().all()
+    for approval_id in ids:
+        try:
+            await runtime.decide(approval_id, True, body.get("note", "approved with Approve all"))
+        except KeyError:
+            continue
+    return {"approved": len(ids)}
+
+
 @router.post("/approvals/{approval_id}")
 async def decide_approval(approval_id: str, body: dict[str, Any] = Body(...)) -> dict[str, Any]:
     try:
@@ -323,6 +339,29 @@ async def update_feature_request(fr_id: str, body: dict[str, Any] = Body(...)) -
     return fr_to_dict(fr)
 
 
+# --- how many agents work at once --------------------------------------------------------------
+
+
+@router.get("/runtime/limits")
+async def runtime_limits() -> dict[str, Any]:
+    from app.agents.runtime import MAX_CONCURRENT, runtime
+
+    s = runtime.slots.status()
+    return {"maxConcurrent": s["limit"], "running": s["running"], "waiting": s["waiting"],
+            "max": MAX_CONCURRENT}
+
+
+@router.put("/runtime/limits")
+async def set_runtime_limits(body: dict[str, Any] = Body(...)) -> dict[str, Any]:
+    from app.agents.runtime import runtime
+
+    n = body.get("maxConcurrent")
+    if not isinstance(n, int) or isinstance(n, bool) or n < 1:
+        raise HTTPException(400, "maxConcurrent must be a whole number, at least 1")
+    await runtime.set_limit(n)
+    return await runtime_limits()
+
+
 # --- supervisor ---------------------------------------------------------------------------------
 
 
@@ -350,7 +389,7 @@ async def get_supervisor() -> dict[str, Any]:
 
 @router.get("/meta/{role}")
 async def get_meta_agent(role: str) -> dict[str, Any]:
-    """The built-in meta agents: zeus (supervisor) and argus (overseer)."""
+    """The built-in meta agents: zeus (supervisor), argus (overseer), kronos (engineer)."""
     return await _meta(role)
 
 

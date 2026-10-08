@@ -11,7 +11,7 @@ import { StatusBadge } from "./agent";
 import { useDmMessages } from "./AgentInspector";
 import { Composer, LiveThinking, MessageList, useAutoSpeak } from "./Chat";
 import { ContextControls } from "./ContextControls";
-import { ApprovalCard } from "./InboxDrawer";
+import { ApprovalCard, ApproveAllButton } from "./InboxDrawer";
 import { ModelSettings } from "./team/AgentEditor";
 import { Button, ErrorNote, Modal, Toggle } from "./ui";
 import type { Agent } from "@/lib/types";
@@ -82,6 +82,11 @@ export function MetaChat({
       <ContextControls agentId={agentId} name={name} className="border-b border-line px-4 py-2 md:px-5" />
       {approvals.length > 0 && (
         <div className="space-y-2 border-b border-line p-4">
+          {approvals.length > 1 && (
+            <div className="flex justify-end">
+              <ApproveAllButton orgId={SYSTEM_ORG} agentId={agentId} count={approvals.length} />
+            </div>
+          )}
           {approvals.map((a) => (
             <ApprovalCard key={a.id} approval={a} />
           ))}

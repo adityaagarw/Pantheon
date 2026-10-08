@@ -8,11 +8,15 @@ import type { Task, WhiteboardInfo } from "@/lib/types";
 import { CATALOG } from "./catalog";
 import { ROOM_COLORS, roomWalls, type FloorStyle, type OfficeDesign, type PlacedItem, type Room } from "./design";
 import { FurnitureLayer } from "./Furniture";
+import { themeOf, type Theme } from "./themes";
 
 const FLOOR_COLORS: Record<FloorStyle, [string, string]> = {
   oak: ["#c8a57a", "#b8925f"],
   walnut: ["#8a6546", "#735236"],
   concrete: ["#c9c7c2", "#bdbab4"],
+  polished: ["#d9dadd", "#cfd1d5"],
+  slate: ["#4a5260", "#434a57"],
+  epoxy: ["#8f9a8c", "#869183"],
   carpet: ["#9aa3ad", "#8e98a2"],
   tile: ["#e3e1dc", "#d4d1ca"],
   grass: ["#7fa35a", "#729650"],
@@ -63,19 +67,19 @@ function plankTexture(style: FloorStyle, w: number, d: number): THREE.CanvasText
   return t;
 }
 
-function signTexture(text: string): THREE.CanvasTexture {
+function signTexture(text: string, theme: Theme): THREE.CanvasTexture {
   const c = document.createElement("canvas");
   c.width = 1024;
   c.height = 256;
   const g = c.getContext("2d")!;
-  g.fillStyle = "#1f2733";
+  g.fillStyle = theme.sign.bg;
   g.beginPath();
   g.roundRect(8, 8, 1008, 240, 36);
   g.fill();
-  g.strokeStyle = "#c9a45c";
+  g.strokeStyle = theme.sign.rule;
   g.lineWidth = 10;
   g.stroke();
-  g.fillStyle = "#f3eee4";
+  g.fillStyle = theme.sign.fg;
   g.font = "700 110px system-ui, -apple-system, Segoe UI, sans-serif";
   g.textAlign = "center";
   g.textBaseline = "middle";
@@ -92,19 +96,19 @@ function signTexture(text: string): THREE.CanvasTexture {
   return t;
 }
 
-export function Lighting({ width, depth }: { width: number; depth: number }) {
+export function Lighting({ width, depth, theme = themeOf(null) }: { width: number; depth: number; theme?: Theme }) {
   const cx = width / 2;
   const cz = depth / 2;
   const span = Math.max(width, depth);
   return (
     <>
-      <color attach="background" args={["#dfe5ec"]} />
-      <hemisphereLight args={["#ffffff", "#b9a88f", 1.15]} />
-      <ambientLight intensity={0.25} />
+      <color attach="background" args={[theme.sky]} />
+      <hemisphereLight args={theme.hemi} />
+      <ambientLight intensity={theme.ambient} />
       <directionalLight
         position={[cx - span * 0.35, span * 0.9, cz + span * 0.55]}
-        color="#fff3df"
-        intensity={2.1}
+        color={theme.sun[0]}
+        intensity={theme.sun[1]}
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-span * 0.8}
@@ -140,8 +144,10 @@ export const OfficeShell = memo(function OfficeShell({
   onFloorClick?: (x: number, z: number) => void;
 }) {
   const { width, depth } = design;
+  const theme = themeOf(design.theme);
   const tex = useMemo(() => plankTexture(design.floor, width, depth), [design.floor, width, depth]);
-  const ext = useMemo(() => exteriorItems(width, depth), [width, depth]);
+  const open = !!design.open;
+  const ext = useMemo(() => (open ? [] : exteriorItems(width, depth)), [open, width, depth]);
   return (
     <group>
       <mesh
@@ -153,27 +159,31 @@ export const OfficeShell = memo(function OfficeShell({
         <planeGeometry args={[width, depth]} />
         <meshStandardMaterial map={tex} roughness={0.85} />
       </mesh>
-      {/* Low skirting on the open (camera-facing) sides. */}
-      <mesh position={[width / 2, 0.08, depth]} receiveShadow castShadow>
-        <boxGeometry args={[width + 0.1, 0.16, 0.1]} />
-        <meshStandardMaterial color="#e9e4dc" />
-      </mesh>
-      <mesh position={[width, 0.08, depth / 2]} receiveShadow castShadow>
-        <boxGeometry args={[0.1, 0.16, depth + 0.1]} />
-        <meshStandardMaterial color="#e9e4dc" />
-      </mesh>
+      {/* Low skirting on the open (camera-facing) sides; an open world has none. */}
+      {!open && (
+        <>
+          <mesh position={[width / 2, 0.08, depth]} receiveShadow castShadow>
+            <boxGeometry args={[width + 0.1, 0.16, 0.1]} />
+            <meshStandardMaterial color={theme.id === "classic" ? "#e9e4dc" : theme.trim} />
+          </mesh>
+          <mesh position={[width, 0.08, depth / 2]} receiveShadow castShadow>
+            <boxGeometry args={[0.1, 0.16, depth + 0.1]} />
+            <meshStandardMaterial color={theme.id === "classic" ? "#e9e4dc" : theme.trim} />
+          </mesh>
+        </>
+      )}
       <FurnitureLayer items={ext} shadows={false} />
       {design.rooms.map((r) => (
-        <RoomView key={r.id} room={r} />
+        <RoomView key={r.id} room={r} theme={theme} />
       ))}
     </group>
   );
 });
 
-function RoomView({ room }: { room: Room }) {
+function RoomView({ room, theme }: { room: Room; theme: Theme }) {
   const walls = useMemo(() => (room.walls === "none" ? [] : roomWalls(room)), [room]);
-  const sign = useMemo(() => (room.type !== "team" ? signTexture(room.name) : null), [room.name, room.type]);
-  const color = ROOM_COLORS[room.type];
+  const sign = useMemo(() => (room.type !== "team" ? signTexture(room.name, theme) : null), [room.name, room.type, theme]);
+  const color = theme.rooms?.[room.type] ?? ROOM_COLORS[room.type];
   const signPos = useMemo((): { pos: [number, number, number]; rot: number } => {
     const cx = room.x + room.w / 2;
     const cz = room.z + room.d / 2;
@@ -207,15 +217,15 @@ function RoomView({ room }: { room: Room }) {
           <mesh position={[w.x + w.w / 2, w.kind === "glass" ? 1.2 : 1.25, w.z + w.d / 2]} castShadow={w.kind === "solid"} receiveShadow>
             <boxGeometry args={[w.w, w.kind === "glass" ? 2.4 : 2.5, w.d]} />
             {w.kind === "glass" ? (
-              <meshStandardMaterial color="#bcd7ee" transparent opacity={0.22} roughness={0.05} metalness={0.1} depthWrite={false} />
+              <meshStandardMaterial color={theme.glass} transparent opacity={0.22} roughness={0.05} metalness={0.1} depthWrite={false} />
             ) : (
-              <meshStandardMaterial color="#eef0f2" roughness={0.9} />
+              <meshStandardMaterial color={theme.wall} roughness={0.9} />
             )}
           </mesh>
           {w.kind === "glass" && (
             <mesh position={[w.x + w.w / 2, 2.42, w.z + w.d / 2]}>
               <boxGeometry args={[w.w + 0.02, 0.05, w.d + 0.02]} />
-              <meshStandardMaterial color="#c3cad4" metalness={0.5} roughness={0.35} />
+              <meshStandardMaterial color={theme.trim} metalness={0.5} roughness={0.35} />
             </mesh>
           )}
         </group>

@@ -92,7 +92,22 @@ export default function OrgSettingsPage() {
             <Field label="Daily token budget" hint="0 = unlimited; the org pauses when reached">
               <Input type="number" value={s.daily_token_budget} onChange={(e) => setS({ daily_token_budget: Number(e.target.value) })} />
             </Field>
+            <Field label="Agents working at once" hint="In this organization; 0 = only the global limit (Settings > Agents)">
+              <Input type="number" min={0} max={64} value={s.max_concurrent ?? 0} onChange={(e) => setS({ max_concurrent: Math.max(0, Math.min(64, Math.round(Number(e.target.value) || 0))) })} />
+            </Field>
+            <Field label="Shell commands" hint="run_command and computer_shell, for every agent">
+              <Select value={s.shell_approval ?? "ask"} onChange={(e) => setS({ shell_approval: e.target.value as "ask" | "auto" })}>
+                <option value="ask">Ask me before each command</option>
+                <option value="auto">Run without asking</option>
+              </Select>
+            </Field>
           </div>
+          {s.shell_approval === "auto" && (
+            <div className="mt-3 rounded-md border border-warn/30 bg-warn/10 px-3 py-2 text-xs text-warn">
+              Agents can run any command in their workspace without your approval. Agents whose shell tools are set to &quot;deny&quot; on the Team tab still
+              can&apos;t.
+            </div>
+          )}
         </Card>
 
         <Card className="p-5">

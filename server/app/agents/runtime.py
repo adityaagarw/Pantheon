@@ -4,8 +4,9 @@ Lifecycle of work:
 1. A message creates ``deliveries`` rows (one per recipient) and wakes the
    recipient.
 2. The dispatcher starts a worker for any agent with due deliveries or an
-   unfinished turn (bounded by a global concurrency semaphore; one worker
-   per agent, ever).
+   unfinished turn (one worker per agent, ever). Workers take a slot first:
+   at most N agents work at once overall, set in Settings, and optionally fewer
+   per organization; the rest show as "queued" until a slot frees up.
 3. The worker claims the deliveries (``FOR UPDATE SKIP LOCKED``), appends them
    to the agent's thread in ONE checkpoint, marks them done, then runs the
    graph to quiescence.
@@ -34,6 +35,7 @@ from app.agents import signals
 from app.agents.checkpointer import SqlCheckpointSaver
 from app.agents.graph import COMPACT_AT, build_graph, thread_config
 from app.agents.llm import text_of
+from app.agents.slots import Slots
 from app.core.config import settings
 from app.core.db import SessionLocal
 from app.core.ids import new_id, utcnow
@@ -46,6 +48,7 @@ from app.models import (
     Delivery,
     Message,
     Org,
+    Setting,
     Turn,
     UserInboxItem,
 )
@@ -56,6 +59,8 @@ log = logging.getLogger(__name__)
 
 MAX_BATCH = 50
 TURNS_PER_ACTIVATION = 3  # yield to other agents after this many turns
+RUNTIME_KEY = "runtime"  # settings row: {"max_concurrent": n}
+MAX_CONCURRENT = 64
 DEFAULT_TURNS_PER_HOUR = 120
 BACKOFF = [5, 20, 60, 180, 600]
 
@@ -71,7 +76,7 @@ class Runtime:
         self._wake = asyncio.Event()
         self._ready: set[str] = set()
         self._workers: dict[str, asyncio.Task] = {}
-        self._sem = asyncio.Semaphore(settings.max_concurrent_turns)
+        self.slots = Slots(settings.max_concurrent_turns)
         self._dispatcher: asyncio.Task | None = None
         self._stop_requested: set[str] = set()
         self._resume_values: dict[str, dict[str, Any]] = {}
@@ -82,6 +87,7 @@ class Runtime:
 
     async def start(self) -> None:
         signals.set_waker(self.wake)
+        await self._load_limits()
         await self._recover()
         self._dispatcher = asyncio.create_task(self._dispatch_loop(), name="pantheon-dispatcher")
         self.started = True
@@ -108,8 +114,9 @@ class Runtime:
                                   .values(status="pending", lease_until=None))
             rows = (await session.execute(select(Turn.agent_id).where(
                 Turn.status == "running"))).scalars().all()
-            await session.execute(update(Agent).where(Agent.runtime_status == "working")
-                                  .values(runtime_status="idle", runtime_detail=""))
+            await session.execute(update(Agent).where(
+                Agent.runtime_status.in_(("working", "queued")))
+                .values(runtime_status="idle", runtime_detail=""))
             await session.commit()
         for agent_id in set(rows):
             self._ready.add(agent_id)
@@ -159,9 +166,68 @@ class Runtime:
             ).values(status="pending", lease_until=None))
             await session.commit()
 
+    # --- how many work at once -----------------------------------------------------
+
+    async def _load_limits(self) -> None:
+        """The global limit saved in Settings, and each organization's own limit."""
+        async with SessionLocal() as session:
+            row = await session.get(Setting, RUNTIME_KEY)
+            orgs_ = (await session.execute(select(Org.id, Org.settings))).all()
+        if row and isinstance(row.value, dict) and row.value.get("max_concurrent"):
+            await self.slots.set_limit(int(row.value["max_concurrent"]))
+        for org_id, org_settings in orgs_:
+            await self.slots.set_org_limit(org_id, (org_settings or {}).get("max_concurrent"))
+
+    async def set_limit(self, limit: int) -> None:
+        limit = max(1, min(int(limit), MAX_CONCURRENT))
+        async with SessionLocal() as session:
+            row = await session.get(Setting, RUNTIME_KEY)
+            value = {**(row.value if row and isinstance(row.value, dict) else {}),
+                     "max_concurrent": limit}
+            if row is None:
+                session.add(Setting(key=RUNTIME_KEY, value=value))
+            else:
+                row.value = value
+            await session.commit()
+        await self.slots.set_limit(limit)
+
+    async def _queue(self, agent_id: str, org_id: str) -> bool:
+        """Show an idle agent as queued while it waits for a slot."""
+        s = self.slots.status()
+        detail = f"waiting for a free slot ({s['running']} of {s['limit']} agents are working)"
+        async with SessionLocal() as session:
+            done = (await session.execute(update(Agent).where(
+                Agent.id == agent_id, Agent.runtime_status == "idle").values(
+                runtime_status="queued", runtime_detail=detail))).rowcount
+            await session.commit()
+        if done:
+            await bus.publish("agent.status", {"status": "queued", "detail": detail},
+                              org_id=org_id, agent_id=agent_id)
+        return bool(done)
+
+    async def _unqueue(self, agent_id: str, org_id: str) -> None:
+        async with SessionLocal() as session:
+            done = (await session.execute(update(Agent).where(
+                Agent.id == agent_id, Agent.runtime_status == "queued").values(
+                runtime_status="idle", runtime_detail=""))).rowcount
+            await session.commit()
+        if done:
+            await bus.publish("agent.status", {"status": "idle", "detail": ""},
+                              org_id=org_id, agent_id=agent_id)
+
+    async def _org_of(self, agent_id: str) -> str | None:
+        async with SessionLocal() as session:
+            return await session.scalar(select(Agent.org_id).where(Agent.id == agent_id))
+
     async def _worker(self, agent_id: str) -> None:
         try:
-            async with self._sem:
+            org_id = await self._org_of(agent_id)
+            if org_id is None:
+                return
+            queued = self.slots.would_wait(org_id) and await self._queue(agent_id, org_id)
+            async with self.slots.hold(agent_id, org_id):
+                if queued:
+                    await self._unqueue(agent_id, org_id)
                 for _ in range(TURNS_PER_ACTIVATION):
                     if not await self._activate(agent_id):
                         break
@@ -551,7 +617,10 @@ class Runtime:
 
     def _launch_resume(self, agent_id: str, values: dict[str, Any]) -> None:
         async def go() -> None:
-            async with self._sem:
+            org_id = await self._org_of(agent_id)
+            if org_id is None:
+                return
+            async with self.slots.hold(agent_id, org_id):
                 async with SessionLocal() as session:
                     agent = await session.get(Agent, agent_id)
                     org = await session.get(Org, agent.org_id) if agent else None

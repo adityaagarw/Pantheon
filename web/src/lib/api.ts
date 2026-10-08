@@ -12,6 +12,16 @@ import type {
   Agent,
   Approval,
   ArgusWatch,
+  HostStatus,
+  NotebookCell,
+  SheetCell,
+  StageDoc,
+  StageDocInfo,
+  StageDocKind,
+  Playbook,
+  ShadowEvent,
+  ShadowSession,
+  ShadowSource,
   Artifact,
   AssetInfo,
   PluginInfo,
@@ -162,6 +172,7 @@ export const api = {
   approvals: (orgId: string, status = "pending") => get<Approval[]>(`/orgs/${orgId}/approvals${q({ status })}`),
   decide: (id: string, approved: boolean, note = "", always = false) =>
     post<Approval>(`/approvals/${id}`, { approved, note, always }),
+  approveAll: (orgId: string, agentId?: string) => post<{ approved: number }>(`/orgs/${orgId}/approvals/approve-all`, agentId ? { agentId } : {}),
   featureRequests: (orgId?: string) => get<FeatureRequest[]>(`/feature-requests${q({ org_id: orgId })}`),
   createFeatureRequest: (b: { orgId?: string; title: string; description?: string }) =>
     post<FeatureRequest>("/feature-requests", b),
@@ -190,6 +201,23 @@ export const api = {
   supervisor: () => get<{ orgId: string; agent: Agent; channel: Channel; dmKey: string }>("/supervisor"),
   messageThinking: (id: string) =>
     get<{ turnId: string | null; steps: { reasoning: string; text: string; tools: string[]; at: string | null }[] }>(`/messages/${id}/thinking`),
+  stageDocs: (orgId: string) => get<StageDocInfo[]>(`/orgs/${orgId}/docs`),
+  createStageDoc: (orgId: string, b: { kind: StageDocKind; title?: string; attachmentId?: string }) =>
+    post<StageDoc>(`/orgs/${orgId}/docs`, b),
+  stageDoc: (id: string) => get<StageDoc>(`/docs/${id}`),
+  renameStageDoc: (id: string, title: string) => patch<StageDocInfo>(`/docs/${id}`, { title }),
+  deleteStageDoc: (id: string) => del(`/docs/${id}`),
+  stageDocExportUrl: (id: string) => `/api/v1/docs/${id}/export`,
+  saveSheetCells: (id: string, changes: Record<string, Record<string, SheetCell | null>>, sheetNames?: string[]) =>
+    req<{ version: number }>("PUT", `/docs/${id}/cells`, { changes, sheetNames }),
+  pdfView: (id: string, b: { page?: number; highlight?: string; note?: string; clear?: boolean }) => post<StageDoc>(`/docs/${id}/pdf`, b),
+  addNotebookCell: (id: string, b: { source?: string; type?: "code" | "markdown"; after?: string }) => post<NotebookCell>(`/docs/${id}/cells`, b),
+  editNotebookCell: (id: string, cellId: string, b: { source?: string; type?: "code" | "markdown"; to?: number }) =>
+    patch<NotebookCell>(`/docs/${id}/cells/${cellId}`, b),
+  deleteNotebookCell: (id: string, cellId: string) => del(`/docs/${id}/cells/${cellId}`),
+  runNotebookCell: (id: string, cellId: string) => post<{ started: boolean }>(`/docs/${id}/cells/${cellId}/run`),
+  runNotebook: (id: string) => post<{ started: boolean }>(`/docs/${id}/run-all`),
+  notebookKernel: (id: string, action: "interrupt" | "restart") => post<{ ok: boolean }>(`/docs/${id}/kernel/${action}`),
   whiteboards: (orgId: string) => get<WhiteboardInfo[]>(`/orgs/${orgId}/whiteboards`),
   createWhiteboard: (orgId: string, title: string) => post<WhiteboardInfo>(`/orgs/${orgId}/whiteboards`, { title }),
   whiteboard: (id: string) => get<WhiteboardScene>(`/whiteboards/${id}`),
@@ -240,7 +268,23 @@ export const api = {
   updateActivity: (id: string, b: Partial<Activity>) => patch<Activity>(`/activities/${id}`, b),
   deleteActivity: (id: string) => del(`/activities/${id}`),
   runActivity: (id: string) => post<{ notified: string[] }>(`/activities/${id}/run`),
-  metaAgent: (role: "zeus" | "argus") => get<{ orgId: string; agent: Agent; channel: Channel; dmKey: string }>(`/meta/${role}`),
+  metaAgent: (role: "zeus" | "argus" | "kronos") => get<{ orgId: string; agent: Agent; channel: Channel; dmKey: string }>(`/meta/${role}`),
+  shadowSessions: (orgId: string) => get<ShadowSession[]>(`/orgs/${orgId}/shadow`),
+  startShadow: (orgId: string, b: { agentId: string; title: string; source: ShadowSource; note?: string }) =>
+    post<ShadowSession>(`/orgs/${orgId}/shadow`, b),
+  shadowSession: (id: string) => get<ShadowSession & { events: ShadowEvent[] }>(`/shadow/${id}`),
+  stopShadow: (id: string) => post<ShadowSession>(`/shadow/${id}/stop`),
+  learnShadow: (id: string) => post<ShadowSession>(`/shadow/${id}/learn`),
+  deleteShadow: (id: string) => del(`/shadow/${id}`),
+  playbooks: (orgId: string, agentId?: string) => get<Playbook[]>(`/orgs/${orgId}/playbooks${agentId ? `?agentId=${agentId}` : ""}`),
+  updatePlaybook: (id: string, b: { title?: string; content?: string }) => patch<Playbook>(`/playbooks/${id}`, b),
+  deletePlaybook: (id: string) => del(`/playbooks/${id}`),
+  runtimeLimits: () => get<{ maxConcurrent: number; running: number; waiting: number; max: number }>("/runtime/limits"),
+  setRuntimeLimits: (maxConcurrent: number) =>
+    req<{ maxConcurrent: number; running: number; waiting: number; max: number }>("PUT", "/runtime/limits", { maxConcurrent }),
+  hostStatus: () => get<HostStatus>("/host/status"),
+  hostPickFolder: () => post<{ message: string }>("/host/folders/pick"),
+  hostRemoveFolder: (path: string) => post<{ message: string }>("/host/folders/remove", { path }),
   argusWatches: () => get<ArgusWatch[]>("/argus/watches"),
   setArgusWatch: (orgId: string, b: { everyMinutes: number; focus: string }) => req<ArgusWatch>("PUT", `/argus/watches/${orgId}`, b),
   removeArgusWatch: (orgId: string) => del(`/argus/watches/${orgId}`),
@@ -275,7 +319,8 @@ export const api = {
 export type AttentionView =
   | { kind: "page"; pageId: string; title: string; text: string; held: boolean }
   | { kind: "browser"; title: string; url: string }
-  | { kind: "whiteboard"; title: string };
+  | { kind: "whiteboard"; title: string }
+  | { kind: "sheet" | "pdf" | "notebook"; docId: string; title: string; text: string };
 
 export interface SecretInput {
   description: string;

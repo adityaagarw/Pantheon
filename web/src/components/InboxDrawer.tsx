@@ -54,7 +54,10 @@ export function InboxButton({ orgId }: { orgId: string }) {
         </div>
         <div className="space-y-5 p-5">
           <section>
-            <div className="mb-2 text-xs font-medium uppercase tracking-wider text-ink-3">Waiting for your approval</div>
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-medium uppercase tracking-wider text-ink-3">Waiting for your approval</span>
+              {approvals.length > 1 && <ApproveAllButton orgId={orgId} count={approvals.length} />}
+            </div>
             {approvals.length === 0 ? (
               <div className="text-sm text-ink-3">Nothing to approve.</div>
             ) : (
@@ -110,6 +113,28 @@ function InboxRow({ item, orgId, onNavigate }: { item: InboxItem; orgId: string;
         <div className={cx("mt-1 text-sm text-ink-2", item.kind === "alert" ? "line-clamp-4 whitespace-pre-wrap" : "line-clamp-2")}>{item.title}</div>
       </div>
     </Link>
+  );
+}
+
+/** Approve every pending request at once (for an org, or one agent with ``agentId``). */
+export function ApproveAllButton({ orgId, count, agentId }: { orgId: string; count: number; agentId?: string }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <Button
+      size="sm"
+      variant="ok"
+      loading={busy}
+      onClick={async () => {
+        setBusy(true);
+        try {
+          await api.approveAll(orgId, agentId);
+        } finally {
+          setBusy(false);
+        }
+      }}
+    >
+      Approve all ({count})
+    </Button>
   );
 }
 

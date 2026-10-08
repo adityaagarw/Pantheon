@@ -17,6 +17,13 @@ These files are part of the Pantheon source tree.
 | KaTeX 0.16.22 (incl. its fonts) | `server/app/stage/vendor/katex/` | MIT | [katex.org](https://katex.org), license at `vendor/katex/LICENSE` |
 | *Mini Characters* 3D models | `web/public/models/people/`, `web/public/thumbs/` | CC0 1.0 | [Kenney](https://kenney.nl) |
 | *Furniture Kit* 3D models | `web/public/models/furniture/`, `web/public/thumbs/` | CC0 1.0 | [Kenney](https://kenney.nl) |
+| *Factory Kit* 3D models | `web/public/models/factory/`, `web/public/thumbs/factory/` | CC0 1.0 | [Kenney](https://kenney.nl) |
+| *Modular Space Kit* 3D models | `web/public/models/space/`, `web/public/thumbs/space/` | CC0 1.0 | [Kenney](https://kenney.nl) |
+| *City Kit Commercial* 3D models | `web/public/models/city/`, `web/public/thumbs/city/` | CC0 1.0 | [Kenney](https://kenney.nl) |
+| *Car Kit* 3D models | `web/public/models/cars/`, `web/public/thumbs/cars/` | CC0 1.0 | [Kenney](https://kenney.nl) |
+| *Cube Pets* 3D models | `web/public/models/pets/`, `web/public/thumbs/pets/` | CC0 1.0 | [Kenney](https://kenney.nl) |
+| *Blocky Characters* 3D models | `web/public/models/blocky/`, `web/public/thumbs/blocky/` | CC0 1.0 | [Kenney](https://kenney.nl) |
+| *Mini Dungeon* 3D models | `web/public/models/dungeon/`, `web/public/thumbs/dungeon/` | CC0 1.0 | [Kenney](https://kenney.nl) |
 | *RobotExpressive* | `web/public/models/robot.glb` | CC0 1.0 | Tomás Laulhé ([Quaternius](https://quaternius.com)), modified by Don McCurdy |
 
 The 3D asset credits are also in `web/public/models/LICENSE.txt`.
@@ -175,7 +182,7 @@ reusing the voice elsewhere.
 | [xxhash](https://github.com/ifduyue/python-xxhash) | 4.0.1 | BSD-2-Clause |
 | [zstandard](https://github.com/indygreg/python-zstandard) | 0.25.0 | BSD-3-Clause |
 
-## npm packages (frontend runtime, 414)
+## npm packages (frontend runtime, 439)
 
 Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the list reflects the machine it was generated on.
 
@@ -204,6 +211,10 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | [@floating-ui/dom](https://github.com/floating-ui/floating-ui) | 1.8.0 | MIT |
 | [@floating-ui/react-dom](https://github.com/floating-ui/floating-ui) | 2.1.9 | MIT |
 | [@floating-ui/utils](https://github.com/floating-ui/floating-ui) | 0.2.12 | MIT |
+| [@formulajs/formulajs](https://github.com/git@github.com:formulajs/formulajs) | 2.9.3 | MIT |
+| [@fortune-sheet/core](https://github.com/ruilisi/fortune-sheet) | 1.0.4 | MIT |
+| @fortune-sheet/formula-parser | 0.2.13 | MIT |
+| [@fortune-sheet/react](https://github.com/ruilisi/fortune-sheet) | 1.0.4 | MIT |
 | [@iconify/types](https://github.com/iconify/iconify) | 2.0.0 | MIT |
 | [@iconify/utils](https://github.com/iconify/iconify) | 3.1.7 | MIT |
 | [@img/colour](https://github.com/lovell/colour) | 1.1.0 | MIT |
@@ -213,6 +224,8 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | [@mermaid-js/parser](https://github.com/mermaid-js/mermaid) | 0.6.3 | MIT |
 | [@mermaid-js/parser](https://github.com/mermaid-js/mermaid) | 1.2.1 | MIT |
 | @monogrid/gainmap-js | 3.4.0 | MIT |
+| [@napi-rs/canvas](https://github.com/Brooooooklyn/canvas) | 1.0.10 | MIT |
+| [@napi-rs/canvas-win32-x64-msvc](https://github.com/Brooooooklyn/canvas) | 1.0.10 | MIT |
 | [@napi-rs/wasm-runtime](https://github.com/napi-rs/napi-rs) | 1.2.4 | MIT |
 | [@next/env](https://github.com/vercel/next.js) | 16.3.5 | MIT |
 | [@next/swc-win32-x64-msvc](https://github.com/vercel/next.js) | 16.3.5 | MIT |
@@ -302,6 +315,7 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | [@types/react](https://github.com/DefinitelyTyped/DefinitelyTyped) | 19.3.0 | MIT |
 | [@types/react-dom](https://github.com/DefinitelyTyped/DefinitelyTyped) | 19.3.0 | MIT |
 | [@types/react-reconciler](https://github.com/DefinitelyTyped/DefinitelyTyped) | 0.28.9 | MIT |
+| [@types/regenerator-runtime](https://github.com/DefinitelyTyped/DefinitelyTyped) | 0.13.8 | MIT |
 | [@types/stats.js](https://github.com/DefinitelyTyped/DefinitelyTyped) | 0.17.4 | MIT |
 | [@types/three](https://github.com/DefinitelyTyped/DefinitelyTyped) | 0.186.0 | MIT |
 | [@types/trusted-types](https://github.com/DefinitelyTyped/DefinitelyTyped) | 2.0.7 | MIT |
@@ -319,6 +333,7 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | [bail](https://github.com/wooorm/bail) | 2.0.2 | MIT |
 | base64-js | 1.5.1 | MIT |
 | [baseline-browser-mapping](https://github.com/web-platform-dx/baseline-browser-mapping) | 2.11.24 | Apache-2.0 |
+| bessel | 1.0.2 | Apache-2.0 |
 | [bidi-js](https://github.com/lojjic/bidi-js) | 1.1.0 | MIT |
 | [binary-extensions](https://github.com/sindresorhus/binary-extensions) | 2.3.0 | MIT |
 | [braces](https://github.com/micromatch/braces) | 3.0.3 | MIT |
@@ -339,6 +354,7 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | [classcat](https://github.com/jorgebucaran/classcat) | 5.0.5 | MIT |
 | [client-only](https://reactjs.org/) | 0.0.1 | MIT |
 | [clsx](https://github.com/lukeed/clsx) | 1.1.1 | MIT |
+| [clsx](https://github.com/lukeed/clsx) | 2.1.1 | MIT |
 | [comma-separated-tokens](https://github.com/wooorm/comma-separated-tokens) | 2.0.3 | MIT |
 | [commander](https://github.com/tj/commander.js) | 7.2.0 | MIT |
 | [commander](https://github.com/tj/commander.js) | 8.3.0 | MIT |
@@ -421,6 +437,7 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | ieee754 | 1.2.1 | BSD-3-Clause |
 | [image-blob-reduce](https://github.com/nodeca/image-blob-reduce) | 3.0.1 | MIT |
 | immediate | 3.0.6 | MIT |
+| [immer](https://github.com/immerjs/immer) | 9.0.21 | MIT |
 | immutable | 4.3.9 | MIT |
 | immutable | 5.1.9 | MIT |
 | [import-meta-resolve](https://github.com/wooorm/import-meta-resolve) | 4.2.0 | MIT |
@@ -442,17 +459,23 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | [its-fine](https://github.com/pmndrs/its-fine) | 2.0.0 | MIT |
 | [jotai](https://github.com/pmndrs/jotai) | 2.11.0 | MIT |
 | [jotai-scope](https://github.com/jotaijs/jotai-scope) | 0.7.2 | MIT |
+| [js-tokens](https://github.com/lydell/js-tokens) | 4.0.0 | MIT |
+| [jstat](http://github.com/jstat/jstat) | 1.9.6 | MIT |
 | [katex](https://github.com/KaTeX/KaTeX) | 0.16.47 | MIT |
 | [khroma](https://github.com/fabiospampinato/khroma) | 2.1.0 | MIT |
 | [langium](https://github.com/eclipse-langium/langium) | 3.3.1 | MIT |
 | [layout-base](https://github.com/iVis-at-Bilkent/layout-base) | 1.0.2 | MIT |
 | [layout-base](https://github.com/iVis-at-Bilkent/layout-base) | 2.0.1 | MIT |
 | [lie](https://github.com/calvinmetcalf/lie) | 3.3.0 | MIT |
+| [lodash](https://github.com/lodash/lodash) | 4.18.1 | MIT |
 | [lodash-es](https://github.com/lodash/lodash) | 4.17.21 | MIT |
 | [lodash.debounce](https://github.com/lodash/lodash) | 4.0.8 | MIT |
 | [lodash.throttle](https://github.com/lodash/lodash) | 4.1.1 | MIT |
 | [longest-streak](https://github.com/wooorm/longest-streak) | 3.1.0 | MIT |
+| loose-envify | 1.4.0 | MIT |
 | maath | 0.10.8 | MIT |
+| [make-cancellable-promise](https://github.com/wojtekmaj/make-cancellable-promise) | 2.0.0 | MIT |
+| [make-event-props](https://github.com/wojtekmaj/make-event-props) | 2.0.0 | MIT |
 | marked | 16.4.2 | MIT |
 | [mdast-util-from-markdown](https://github.com/syntax-tree/mdast-util-from-markdown) | 2.0.3 | MIT |
 | [mdast-util-mdx-expression](https://github.com/syntax-tree/mdast-util-mdx-expression) | 2.0.1 | MIT |
@@ -462,6 +485,7 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | [mdast-util-to-hast](https://github.com/syntax-tree/mdast-util-to-hast) | 13.2.1 | MIT |
 | [mdast-util-to-markdown](https://github.com/syntax-tree/mdast-util-to-markdown) | 2.1.2 | MIT |
 | [mdast-util-to-string](https://github.com/syntax-tree/mdast-util-to-string) | 4.0.0 | MIT |
+| [merge-refs](https://github.com/wojtekmaj/merge-refs) | 2.0.0 | MIT |
 | [mermaid](https://github.com/mermaid-js/mermaid) | 11.17.2 | MIT |
 | [meshline](https://github.com/pmndrs/meshline#readme) | 3.3.1 | MIT |
 | [meshoptimizer](https://github.com/zeux/meshoptimizer) | 1.1.1 | MIT |
@@ -494,6 +518,7 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | [next](https://github.com/vercel/next.js) | 16.3.5 | MIT |
 | node-addon-api | 7.1.1 | MIT |
 | [normalize-path](https://github.com/jonschlinkert/normalize-path) | 3.0.0 | MIT |
+| [numeral](https://github.com/adamwdraper/Numeral-js) | 2.0.6 | MIT |
 | [object-assign](https://github.com/sindresorhus/object-assign) | 4.1.1 | MIT |
 | [open-color](https://github.com/yeun/open-color) | 1.9.1 | MIT |
 | [package-manager-detector](https://github.com/antfu-collective/package-manager-detector) | 1.8.0 | MIT |
@@ -501,6 +526,7 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | [parse-entities](https://github.com/wooorm/parse-entities) | 4.0.2 | MIT |
 | [path-data-parser](https://github.com/pshihn/path-data-parser) | 0.1.0 | MIT |
 | [path-key](https://github.com/sindresorhus/path-key) | 3.1.1 | MIT |
+| [pdfjs-dist](https://github.com/mozilla/pdf.js) | 6.3.289 | Apache-2.0 |
 | [perfect-freehand](https://github.com/steveruizok/perfect-freehand) | 1.2.0 | MIT |
 | [pica](https://github.com/nodeca/pica) | 7.1.1 | MIT |
 | [picocolors](https://github.com/alexeyraspopov/picocolors) | 1.1.1 | ISC |
@@ -522,12 +548,14 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | [react](https://github.com/react/react) | 19.2.8 | MIT |
 | [react-dom](https://github.com/react/react) | 19.2.8 | MIT |
 | [react-markdown](https://github.com/remarkjs/react-markdown) | 10.1.0 | MIT |
+| [react-pdf](https://github.com/wojtekmaj/react-pdf) | 11.0.0 | MIT |
 | [react-remove-scroll](https://github.com/theKashey/react-remove-scroll) | 2.7.2 | MIT |
 | [react-remove-scroll-bar](https://github.com/theKashey/react-remove-scroll-bar) | 2.3.8 | MIT |
 | [react-style-singleton](https://github.com/theKashey/react-style-singleton) | 2.2.3 | MIT |
 | [react-use-measure](https://github.com/pmndrs/react-use-measure) | 2.1.7 | MIT |
 | readdirp | 3.6.0 | MIT |
 | [readdirp](https://github.com/paulmillr/readdirp) | 5.1.1 | MIT |
+| [regenerator-runtime](https://github.com/facebook/regenerator/tree/main/packages/runtime) | 0.14.1 | MIT |
 | [remark-parse](https://github.com/remarkjs/remark/tree/main/packages/remark-parse) | 11.0.0 | MIT |
 | [remark-rehype](https://github.com/remarkjs/remark-rehype) | 11.1.2 | MIT |
 | [require-from-string](https://github.com/floatdrop/require-from-string) | 2.0.2 | MIT |
@@ -559,6 +587,8 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | [three](https://github.com/mrdoob/three.js) | 0.186.0 | MIT |
 | [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh) | 0.8.3 | MIT |
 | [three-stdlib](https://github.com/pmndrs/three-stdlib) | 2.36.1 | MIT |
+| [tiny-emitter](https://github.com/scottcorgan/tiny-emitter) | 2.1.0 | MIT |
+| [tiny-invariant](https://github.com/alexreardon/tiny-invariant) | 1.3.3 | MIT |
 | [tinyexec](https://github.com/tinylibs/tinyexec) | 1.3.1 | MIT |
 | [to-regex-range](https://github.com/micromatch/to-regex-range) | 5.0.1 | MIT |
 | [trim-lines](https://github.com/wooorm/trim-lines) | 3.0.1 | MIT |
@@ -580,6 +610,7 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | [use-sync-external-store](https://github.com/react/react) | 1.7.0 | MIT |
 | [utility-types](https://github.com/piotrwitek/utility-types) | 3.11.0 | MIT |
 | [uuid](https://github.com/uuidjs/uuid) | 14.0.2 | MIT |
+| [uuid](https://github.com/uuidjs/uuid) | 8.3.2 | MIT |
 | [vfile](https://github.com/vfile/vfile) | 6.0.3 | MIT |
 | [vfile-message](https://github.com/vfile/vfile-message) | 4.0.3 | MIT |
 | [vscode-jsonrpc](https://github.com/Microsoft/vscode-languageserver-node) | 8.2.0 | MIT |
@@ -588,6 +619,7 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | [vscode-languageserver-textdocument](https://github.com/Microsoft/vscode-languageserver-node) | 1.0.15 | MIT |
 | [vscode-languageserver-types](https://github.com/Microsoft/vscode-languageserver-node) | 3.17.5 | MIT |
 | [vscode-uri](https://github.com/microsoft/vscode-uri) | 3.0.8 | MIT |
+| [warning](https://github.com/BerkeleyTrue/warning) | 4.0.3 | MIT |
 | webgl-constants | 1.1.1 | MIT |
 | [webgl-sdf-generator](https://github.com/lojjic/webgl-sdf-generator) | 1.1.1 | MIT |
 | webworkify | 1.5.0 | MIT |

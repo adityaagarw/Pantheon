@@ -6,49 +6,48 @@ import { AgentAvatar } from "@/components/agent";
 import { dmKey, useDmMessages } from "@/components/AgentInspector";
 import { Composer, MessageList, useAutoSpeak } from "@/components/Chat";
 import { Badge, Button, cx, Empty, Toggle } from "@/components/ui";
-import { api, type AttentionView } from "@/lib/api";
+import { api } from "@/lib/api";
 import { timeAgo } from "@/lib/format";
 import { WhiteboardEditor } from "@/components/WhiteboardOverlay";
 import type { Agent, WhiteboardInfo } from "@/lib/types";
 import type { LiveState } from "@/lib/liveTalk";
 import { isSpeaking, onSpeakingChange, speakAndWait, stopSpeaking } from "@/lib/voice";
-import { backendHttpBase, servedDirect } from "@/lib/ws";
+import { desktopViewUrl } from "@/lib/desktop";
+import { backendHttpBase } from "@/lib/ws";
 import { useOrg } from "@/store/org";
+import { DOC_ICON, DocView, NewDocMenu, docAgent } from "@/components/stage/StageDocs";
+import { useAttention } from "@/components/stage/useAttention";
 
-type View = { kind: "page"; id: string } | { kind: "browser"; agentId: string } | { kind: "computer" } | { kind: "whiteboard"; id: string };
+type View =
+  | { kind: "page"; id: string }
+  | { kind: "browser"; agentId: string }
+  | { kind: "computer" }
+  | { kind: "whiteboard"; id: string }
+  | { kind: "doc"; id: string };
 
-/**
- * Teach-along: tell the agent that owns the current view what the user is
- * looking at (debounced). Clears it when the view goes away, so an agent the
- * user switched away from isn't told they're still with it.
- */
-function useAttention(agentId: string | null | undefined, view: AttentionView | null, deps: unknown[], delayMs = 400): void {
-  const idRef = useRef<string | null>(null);
-  const viewRef = useRef<AttentionView | null>(null);
+/** A boolean preference kept in localStorage (per device). */
+function usePref(key: string, initial: boolean): [boolean, (v: boolean) => void] {
+  const [value, setValue] = useState(initial);
   useEffect(() => {
-    idRef.current = agentId ?? null;
-    viewRef.current = view;
-  });
-  useEffect(() => {
-    if (!agentId || !view) return;
-    const t = setTimeout(() => {
-      void api.agentAttention(agentId, view).catch(() => {});
-    }, delayMs);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
-  // The server forgets after 15 minutes; keep telling it while the user is still here.
-  useEffect(() => {
-    const id = setInterval(() => {
-      if (idRef.current && viewRef.current) void api.agentAttention(idRef.current, viewRef.current).catch(() => {});
-    }, 5 * 60 * 1000);
-    return () => clearInterval(id);
-  }, []);
-  useEffect(() => {
-    return () => {
-      if (idRef.current) void api.clearAttention(idRef.current).catch(() => {});
-    };
-  }, []);
+    try {
+      const v = localStorage.getItem(key);
+      if (v !== null) setValue(v === "1");
+    } catch {
+      /* per-device preference only */
+    }
+  }, [key]);
+  const set = useCallback(
+    (v: boolean) => {
+      setValue(v);
+      try {
+        localStorage.setItem(key, v ? "1" : "0");
+      } catch {
+        /* per-device preference only */
+      }
+    },
+    [key],
+  );
+  return [value, set];
 }
 
 export default function StagePage() {
@@ -57,6 +56,7 @@ export default function StagePage() {
   const browsers = useOrg((s) => s.browsers);
   const agents = useOrg((s) => s.agents);
   const boards = useOrg(useShallow((s) => Object.values(s.whiteboards)));
+  const docs = useOrg(useShallow((s) => Object.values(s.docs).sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""))));
   const [view, setView] = useState<View | null>(null);
   const [known, setKnown] = useState<Record<string, { url: string; title: string }>>({});
 
@@ -92,6 +92,28 @@ export default function StagePage() {
   const current = view?.kind === "page" ? pages.find((p) => p.id === view.id) : undefined;
   const [listOpen, setListOpen] = useState(true);
   const [chatOpen, setChatOpen] = useState(false);
+  // Panels: the list can fold to a rail and the chat can go wide (remembered per device).
+  const [listCollapsed, setListCollapsed] = usePref("pantheon.stage.listCollapsed", false);
+  const [chatWide, setChatWide] = usePref("pantheon.stage.chatWide", false);
+  // Who the chat is with: whoever owns what's on screen, unless the user picks someone.
+  const [chatPick, setChatPick] = useState<string | null>(null);
+  const viewKey = view ? `${view.kind}:${"id" in view ? view.id : "agentId" in view ? view.agentId : ""}` : "";
+  useEffect(() => setChatPick(null), [viewKey]);
+  const workers = useMemo(() => Object.values(agents).filter((a) => !a.isSupervisor), [agents]);
+  const currentDoc = view?.kind === "doc" ? docs.find((d) => d.id === view.id) : undefined;
+  const currentBoard = view?.kind === "whiteboard" ? boards.find((b) => b.id === view.id) : undefined;
+  const ownerAgent =
+    view?.kind === "page"
+      ? current?.agentId ?? null
+      : view?.kind === "doc"
+        ? docAgent(currentDoc, agents)
+        : view?.kind === "whiteboard"
+          ? (workers.find((a) => a.name === currentBoard?.updatedBy)?.id ?? null)
+          : view?.kind === "browser"
+            ? view.agentId
+            : null;
+  const chatAgentId = chatPick ?? ownerAgent ?? workers[0]?.id ?? null;
+  const focusAgent = chatOpen ? chatAgentId : null;
   const [liveState, setLiveState] = useState<LiveState | null>(null);
   // The ref mirrors liveState synchronously so the frame's narration handler can
   // tell a barge-in (learner talking) from a TTS failure without waiting for a render.
@@ -142,7 +164,26 @@ export default function StagePage() {
 
   return (
     <div className="relative flex h-full">
-      <aside className={cx("w-full shrink-0 overflow-y-auto border-r border-line bg-panel p-3 md:block md:w-72", !listOpen && view && "hidden")}>
+      {listCollapsed && (
+        <div className="hidden w-10 shrink-0 flex-col items-center gap-2 border-r border-line bg-panel py-2 md:flex">
+          <button onClick={() => setListCollapsed(false)} className="rounded p-1 text-ink-3 hover:bg-panel-2 hover:text-ink cursor-pointer" title="Show the Stage list">
+            »
+          </button>
+          <span className="mt-2 text-[10px] uppercase tracking-widest text-ink-3 [writing-mode:vertical-rl]">Stage</span>
+        </div>
+      )}
+      <aside
+        className={cx(
+          "w-full shrink-0 overflow-y-auto border-r border-line bg-panel p-3 md:block md:w-72",
+          !listOpen && view && "hidden",
+          listCollapsed && "md:hidden",
+        )}
+      >
+        <div className="mb-2 hidden justify-end md:flex">
+          <button onClick={() => setListCollapsed(true)} className="rounded px-1.5 text-ink-3 hover:bg-panel-2 hover:text-ink cursor-pointer" title="Hide the list">
+            «
+          </button>
+        </div>
         <Section title="Lessons & scenes">
           {pages.length === 0 && (
             <div className="px-2 text-xs leading-relaxed text-ink-3">
@@ -183,6 +224,21 @@ export default function StagePage() {
             />
           ))}
         </Section>
+        <Section title="Documents" action={<NewDocMenu orgId={orgId} count={docs.length} onCreated={(id) => (setView({ kind: "doc", id }), setListOpen(false))} />}>
+          {docs.length === 0 && (
+            <div className="px-2 text-xs leading-relaxed text-ink-3">Spreadsheets, PDFs and notebooks you and the agents work on together. Use + or ask an agent.</div>
+          )}
+          {docs.map((d) => (
+            <Item
+              key={d.id}
+              active={view?.kind === "doc" && view.id === d.id}
+              onClick={() => (setView({ kind: "doc", id: d.id }), setListOpen(false))}
+              icon={<span className="w-[18px] text-center">{DOC_ICON[d.kind]}</span>}
+              label={d.title}
+              meta={d.updatedBy !== "user" ? d.updatedBy : timeAgo(d.updatedAt)}
+            />
+          ))}
+        </Section>
         <Section title="Agents' browsers">
           {Object.keys(openBrowsers).length === 0 && <div className="px-2 text-xs text-ink-3">No agent has a browser open.</div>}
           {Object.entries(openBrowsers).map(([aid, b]) => (
@@ -204,6 +260,14 @@ export default function StagePage() {
         <button onClick={() => setListOpen(true)} className="border-b border-line px-3 py-2 text-left text-sm text-ink-2 md:hidden cursor-pointer">
           ‹ Stage
         </button>
+        {view && view.kind !== "page" && workers.length > 0 && (
+          <div className="flex items-center gap-2 border-b border-line bg-panel/80 px-3 py-1 text-xs text-ink-3">
+            <span>{chatAgentId && agents[chatAgentId] ? `Working with ${agents[chatAgentId].name}` : "Working on the Stage"}</span>
+            <Button size="sm" className="ml-auto" variant={chatOpen ? "primary" : "ghost"} onClick={() => setChatOpen((o) => !o)}>
+              💬 {chatOpen ? "Hide chat" : "Talk"}
+            </Button>
+          </div>
+        )}
         {!view ? (
           <Empty title="The Stage" icon="🎬">
             Agents put interactive lessons, animations and 3D scenes here — and you can watch their browsers and the computer they use.
@@ -229,25 +293,55 @@ export default function StagePage() {
         ) : view.kind === "computer" ? (
           <ComputerView />
         ) : view.kind === "whiteboard" ? (
-          <WhiteboardView boardId={view.id} board={boards.find((b) => b.id === view.id)} agents={agents} />
+          <WhiteboardView boardId={view.id} board={currentBoard} agents={agents} focusAgentId={focusAgent} />
+        ) : view.kind === "doc" && currentDoc ? (
+          <DocView key={view.id} doc={currentDoc} agents={agents} chatAgentId={focusAgent} onDeleted={() => setView(null)} />
         ) : (
           <Empty title="That page was removed" />
         )}
       </section>
-      {view?.kind === "page" && current?.agentId && chatOpen && (
-        <aside className="absolute inset-y-0 right-0 z-20 flex w-full flex-col border-l border-line bg-panel md:static md:w-[360px] md:shrink-0">
-          <LessonChat
-            key={current.agentId}
-            orgId={orgId}
-            agentId={current.agentId}
-            agentName={agents[current.agentId]?.name}
-            onLiveState={handleLiveState}
-            onAsk={pauseLesson}
-            onAnswered={() => setAwait(false)}
-            headphones={headphones}
-            onHeadphones={changeHeadphones}
-            onClose={() => setChatOpen(false)}
-          />
+      {chatOpen && view && chatAgentId && (view.kind !== "page" || current?.agentId) && (
+        <aside
+          className={cx(
+            "absolute inset-y-0 right-0 z-20 flex w-full flex-col border-l border-line bg-panel md:static md:shrink-0",
+            chatWide ? "md:w-[560px]" : "md:w-[360px]",
+          )}
+        >
+          {view.kind === "page" && current?.agentId ? (
+            <LessonChat
+              key={current.agentId}
+              orgId={orgId}
+              agentId={current.agentId}
+              agentName={agents[current.agentId]?.name}
+              onLiveState={handleLiveState}
+              onAsk={pauseLesson}
+              onAnswered={() => setAwait(false)}
+              headphones={headphones}
+              onHeadphones={changeHeadphones}
+              onClose={() => setChatOpen(false)}
+              wide={chatWide}
+              onWide={setChatWide}
+            />
+          ) : (
+            <LessonChat
+              key={chatAgentId}
+              orgId={orgId}
+              agentId={chatAgentId}
+              agentName={agents[chatAgentId]?.name}
+              onLiveState={handleLiveState}
+              onAsk={async () => {}}
+              onAnswered={() => {}}
+              headphones={headphones}
+              onHeadphones={changeHeadphones}
+              onClose={() => setChatOpen(false)}
+              wide={chatWide}
+              onWide={setChatWide}
+              role="Working with you"
+              choices={workers}
+              onPick={setChatPick}
+              empty="Talk while you both work: they see what you're looking at, and their changes show up live. Type, or tap Live and just talk."
+            />
+          )}
         </aside>
       )}
     </div>
@@ -461,10 +555,24 @@ function LessonChat({
   headphones,
   onHeadphones,
   onClose,
+  wide,
+  onWide,
+  role = "Your teacher",
+  choices,
+  onPick,
+  empty,
 }: {
   orgId: string;
   agentId: string;
   agentName?: string;
+  wide: boolean;
+  onWide: (wide: boolean) => void;
+  /** Shown in the header: "Your teacher", or "Working with you" off lessons. */
+  role?: string;
+  /** Agents the user can switch the chat to. */
+  choices?: Agent[];
+  onPick?: (agentId: string) => void;
+  empty?: React.ReactNode;
   onLiveState: (s: LiveState | null) => void;
   /** The learner is asking something: pause the lesson (and tell the teacher). */
   onAsk: () => Promise<void>;
@@ -558,8 +666,26 @@ function LessonChat({
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 border-b border-line px-4 py-2">
         <AgentAvatar agent={agents[agentId]} size={20} />
-        <span className="truncate text-sm font-semibold">{agentName ?? "Teacher"}</span>
-        <span className="ml-auto text-[11px] text-ink-3">Your teacher</span>
+        {choices && onPick ? (
+          <select
+            value={agentId}
+            onChange={(e) => onPick(e.target.value)}
+            className="min-w-0 truncate rounded border border-line bg-panel-2 px-1.5 py-0.5 text-sm font-semibold"
+            title="Talk to someone else"
+          >
+            {choices.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <span className="truncate text-sm font-semibold">{agentName ?? "Teacher"}</span>
+        )}
+        <span className="ml-auto text-[11px] text-ink-3">{role}</span>
+        <button onClick={() => onWide(!wide)} className="hidden text-ink-3 hover:text-ink md:block cursor-pointer" title={wide ? "Narrower" : "Wider"}>
+          {wide ? "⇥" : "⇤"}
+        </button>
         <button onClick={onClose} className="text-ink-3 hover:text-ink cursor-pointer" aria-label="Close chat">
           ✕
         </button>
@@ -576,14 +702,18 @@ function LessonChat({
         agents={agents}
         compact
         empty={
+          empty ? (
+            <div className="py-8 text-center text-sm text-ink-3">{empty}</div>
+          ) : (
           <div className="py-8 text-center text-sm text-ink-3">
             Ask your teacher a question — type it, or tap <b>Live</b> and ask out loud. The lesson pauses while you ask and picks up again once they&apos;ve answered.
             {headphones ? " With headphones you can just start talking over the lesson." : " On speakers, tap ✋ Ask first, then speak."}
           </div>
+          )
         }
       />
       <Composer
-        placeholder={`Ask ${agentName ?? "your teacher"}…`}
+        placeholder={`${empty ? "Message" : "Ask"} ${agentName ?? "your teacher"}…`}
         attach={{ orgId, agentId }}
         onSend={async (t, files) => {
           await beginAsk(); // pause and notify the teacher before the question is sent
@@ -628,11 +758,22 @@ function BrowserView({ agentId, info, name }: { agentId: string; info?: { url: s
 }
 
 /** A shared board on the Stage: the agent that last drew on it knows you're looking. */
-function WhiteboardView({ boardId, board, agents }: { boardId: string; board: WhiteboardInfo | undefined; agents: Record<string, Agent> }) {
-  const teacherId = useMemo(() => {
+function WhiteboardView({
+  boardId,
+  board,
+  agents,
+  focusAgentId,
+}: {
+  boardId: string;
+  board: WhiteboardInfo | undefined;
+  agents: Record<string, Agent>;
+  focusAgentId?: string | null;
+}) {
+  const drewIt = useMemo(() => {
     if (!board || board.updatedBy === "user") return null;
     return Object.values(agents).find((a) => a.name === board.updatedBy)?.id ?? null;
   }, [board, agents]);
+  const teacherId = focusAgentId ?? drewIt;
   useAttention(teacherId, teacherId && board ? { kind: "whiteboard", title: board.title } : null, [teacherId, board?.title]);
   return (
     <div className="min-h-0 flex-1 bg-white">
@@ -648,10 +789,7 @@ function ComputerView() {
   useEffect(() => {
     api.computer().then(setStatus).catch(() => setStatus({ ok: false, error: "unreachable", inUseBy: null }));
   }, [at]);
-  const { protocol, hostname } = window.location;
-  const direct = servedDirect();
-  const base = direct ? `${protocol}//${hostname}:${process.env.NEXT_PUBLIC_PANTHEON_DESKTOP_PORT ?? "6901"}` : "/desktop";
-  const url = `${base}/vnc.html?autoconnect=1&resize=scale&reconnect=true&view_only=${control ? 0 : 1}${direct ? "" : "&path=desktop/websockify"}`;
+  const url = desktopViewUrl(control);
   return (
     <div className="flex h-full flex-col">
       <div className="flex flex-wrap items-center gap-2 border-b border-line bg-panel px-4 py-2 text-sm">

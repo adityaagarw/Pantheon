@@ -71,6 +71,9 @@ class Settings(BaseSettings):
     computer_url: str = "http://127.0.0.1:8711"
     computer_api_key: str = ""
     computer_container: str = ""
+    # Stage notebooks run in a kernel inside the sandbox desktop. Empty: the desktop's
+    # host on port 8890 (in Docker), or 127.0.0.1:8712 when the computer is reached locally.
+    notebook_kernel_url: str = ""
     # How long an agent keeps the desktop after its last action (others wait).
     computer_lease_seconds: int = 120
     # Where the backend's own browser reaches Stage pages (for stage_check).

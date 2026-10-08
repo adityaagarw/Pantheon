@@ -23,7 +23,7 @@ async function measure(dir, file) {
   return { min: box.min.toArray().map(r), max: box.max.toArray().map(r), anims: gltf.animations.map((a) => a.name) };
 }
 
-for (const dir of ["furniture", "people"]) {
+for (const dir of ["furniture", "people", "factory", "space", "city", "cars", "nature"]) {
   for (const file of readdirSync(path.join(root, dir)).filter((f) => f.endsWith(".glb"))) {
     const m = await measure(dir, file);
     if (m) out[`${dir}/${file.replace(".glb", "")}`] = dir === "people" ? { min: m.min, max: m.max } : { min: m.min, max: m.max };

@@ -15,6 +15,7 @@ from app.events import bus
 from app.models import Agent, FeatureRequest, Org, UserInboxItem
 from app.services import comms, orgs
 from app.tools import base as tools_base
+from app.tools.kronos import KRONOS_TOOLS
 
 SYSTEM_ORG_ID = "org_pantheon"
 SUPERVISOR_NAME = "Zeus"
@@ -25,7 +26,7 @@ META_TOOLS = [
     "delete_agent", "set_relationship", "remove_relationship", "create_org_channel",
     "tool_catalog", "list_models", "add_mcp_server", "update_mcp_server", "test_mcp_server",
     "list_feature_requests", "update_feature_request", "message_agent", "org_activity",
-    "assign_goal",
+    "assign_goal", "ask_kronos",
 ]
 SUPERVISOR_PERSONA = """\
 You are Zeus, the supervisor of this Pantheon platform and the user's partner in designing
@@ -58,6 +59,13 @@ intended, spot agents that are stuck, looping, failing or drifting from their go
 and tell the user clearly what needs their attention. You are calm, observant and
 evidence-driven: every claim you make points at a task, a message or an error.
 """
+KRONOS_PERSONA = """You are Kronos, the engineer of this Pantheon platform. You work on the user's own
+computer: you change Pantheon's code when Zeus or the user needs something configuration
+can't do (a new built-in tool, a bug fix, a UI change), and you work with files in the
+folders the user has allowed. You are careful and thorough: you read before you write,
+keep changes small and in the style of the surrounding code, and never apply a change
+whose checks fail.
+"""
 COMMON_TOOLS = ("remember", "recall")
 
 
@@ -74,6 +82,12 @@ META_AGENTS: dict[str, dict[str, Any]] = {
     "argus": {"name": "Argus", "role": "Overseer", "persona": ARGUS_PERSONA,
               "tools": _tools(ARGUS_TOOLS, COMMON_TOOLS),
               "avatar": {"outfit": "#2f6f9f", "accent": "#d6ecff"}},
+    "kronos": {"name": "Kronos", "role": "Platform engineer", "persona": KRONOS_PERSONA,
+               "tools": _tools([n for n in KRONOS_TOOLS if n != "host_run"], COMMON_TOOLS + (
+                   "message_agent", "list_feature_requests", "update_feature_request",
+                   "web_search", "fetch_url"))
+               + [{"name": "host_run", "approval": "ask"}],
+               "avatar": {"outfit": "#5b4636", "accent": "#e8c48f"}},
 }
 
 
@@ -121,6 +135,7 @@ async def ensure_meta_agent(role: str) -> Agent:
 async def ensure_supervisor() -> Agent:
     zeus = await ensure_meta_agent("zeus")
     await ensure_meta_agent("argus")
+    await ensure_meta_agent("kronos")
     return zeus
 
 
