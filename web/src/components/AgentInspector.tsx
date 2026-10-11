@@ -178,7 +178,8 @@ export function AgentInspector({ agentId, onClose }: { agentId: string; onClose:
       />
       <Composer
         placeholder={`Message ${agent.name}…`}
-        onSend={(t, files) => api.send(orgId, { to: agentId, content: t, attachments: files }).then(() => undefined)}
+        onSend={(t, files, o) => api.send(orgId, { to: agentId, content: t, attachments: files, steer: o?.steer }).then(() => undefined)}
+        working={live.status === "working" ? { name: agent.name } : null}
         attach={{ orgId, agentId }}
         live={{ orgId, agentId, agentName: agent.name }}
         onLiveChange={setLiveOn}

@@ -92,6 +92,12 @@ const q = (params: Record<string, string | number | boolean | undefined | null>)
 export const api = {
   // orgs
   orgs: () => get<Org[]>("/orgs"),
+  benchTasks: () => get<{ tasks: BenchTask[]; workflows: BenchWorkflow[] }>("/bench/tasks"),
+  benchRuns: (orgId?: string) => get<BenchRun[]>(`/bench/runs${q({ org_id: orgId })}`),
+  startBenchRun: (b: { orgId: string; tasks: string[]; workflow: string; repeat: number; jobs: number; timeoutMinutes?: number; lead?: string }) =>
+    post<BenchRun>("/bench/runs", b),
+  cancelBenchRun: (id: string) => post<BenchRun>(`/bench/runs/${id}/cancel`),
+  deleteBenchRun: (id: string) => del(`/bench/runs/${id}`),
   createOrg: (b: { name?: string; description?: string; workspace?: string; template?: string }) =>
     post<Org>("/orgs", b),
   org: (id: string) => get<OrgSnapshot>(`/orgs/${id}`),
@@ -111,6 +117,8 @@ export const api = {
   stopAgent: (id: string) => post<{ stopped: boolean }>(`/agents/${id}/stop`),
   retryAgent: (id: string) => post(`/agents/${id}/retry`),
   resetAgentMemory: (id: string) => post(`/agents/${id}/reset-memory`),
+  clearAgentChat: (id: string) => post<{ ok: boolean; removed: number }>(`/agents/${id}/clear-chat`),
+  resetMetaAgent: (role: "zeus" | "argus" | "kronos", forget = false) => post(`/meta/${role}/reset`, { forget }),
   compactAgent: (id: string) => post<{ removed: number; summary: string }>(`/agents/${id}/compact`),
   agentThread: (id: string) =>
     get<{ next: string[]; context: { tokens: number; window?: number; compactAt?: number }; summary: string; turnId: string | null; steps: number; messages: import("./types").WireMessage[] }>(
@@ -130,7 +138,7 @@ export const api = {
   deleteChannel: (id: string) => del(`/channels/${id}`),
   channelMessages: (id: string, before?: string) =>
     get<Message[]>(`/channels/${id}/messages${q({ limit: 200, before })}`),
-  send: (orgId: string, b: { to?: string; channel?: string; content: string; attachments?: string[] }) =>
+  send: (orgId: string, b: { to?: string; channel?: string; content: string; attachments?: string[]; steer?: boolean }) =>
     post<Message>(`/orgs/${orgId}/messages`, b),
   orgMessages: (orgId: string, params: { agent_id?: string; task_id?: string; limit?: number } = {}) =>
     get<Message[]>(`/orgs/${orgId}/messages${q(params)}`),
@@ -285,6 +293,9 @@ export const api = {
   hostStatus: () => get<HostStatus>("/host/status"),
   hostPickFolder: () => post<{ message: string }>("/host/folders/pick"),
   hostRemoveFolder: (path: string) => post<{ message: string }>("/host/folders/remove", { path }),
+  /** Pantheon Host asks the user for a folder on their computer and makes it the org's workspace. */
+  hostPickWorkspace: (orgId: string, force = false) =>
+    post<{ workspace: string; hostPath: string; restart: boolean }>("/host/workspace", { orgId, force }),
   argusWatches: () => get<ArgusWatch[]>("/argus/watches"),
   setArgusWatch: (orgId: string, b: { everyMinutes: number; focus: string }) => req<ArgusWatch>("PUT", `/argus/watches/${orgId}`, b),
   removeArgusWatch: (orgId: string) => del(`/argus/watches/${orgId}`),
@@ -383,4 +394,65 @@ export interface MeetingRecord {
   taskIds: string[];
   createdAt: string | null;
   endedAt: string | null;
+}
+
+// --- benchmarks (SwarmBench) ---------------------------------------------------------------
+
+export interface BenchTask {
+  id: string;
+  title: string;
+  category: string;
+  difficulty: string;
+  workflow: string;
+  summary: string;
+  minutes: number;
+}
+
+export interface BenchWorkflow {
+  name: string;
+  summary: string;
+  roles: string[];
+}
+
+export interface BenchMetrics {
+  input_tokens?: number;
+  output_tokens?: number;
+  cost_usd?: number;
+  turns?: number;
+  tool_calls?: number;
+  messages?: number;
+  agents?: number;
+  agents_active?: number;
+  wall_seconds?: number;
+}
+
+export interface BenchResult {
+  task_id: string;
+  task_key: string;
+  title: string;
+  category: string;
+  workflow: string | null;
+  score: number;
+  weights: Record<string, number>;
+  parts: Record<string, ({ score: number; passed?: number; total?: number } & Record<string, unknown>) | null>;
+  run: { status: string; detail: string; timed_out: boolean; wall_seconds: number };
+  metrics: BenchMetrics;
+}
+
+export interface BenchRun {
+  id: string;
+  orgId: string | null;
+  orgName: string;
+  status: "running" | "done" | "cancelled" | "failed";
+  config: { tasks: string[]; workflow: string; repeat: number; jobs: number; timeoutMinutes?: number | null; lead?: string | null };
+  results: BenchResult[];
+  detail: string;
+  progress: {
+    done: number;
+    total: number;
+    current: { id: string; label: string; status: string; detail: string; seconds: number; cloneId: string | null; metrics: BenchMetrics }[];
+  };
+  summary: { meanScore: number | null; fullScores: number; costUsd: number; tokens: number; wallSeconds: number; timeouts: number };
+  createdAt: string | null;
+  finishedAt: string | null;
 }

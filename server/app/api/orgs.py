@@ -157,6 +157,13 @@ async def reset_agent_memory(agent_id: str) -> dict[str, Any]:
     return {"ok": True}
 
 
+@router.post("/agents/{agent_id}/clear-chat")
+async def clear_agent_chat(agent_id: str) -> dict[str, Any]:
+    """Delete the user's chat with the agent and clear its context."""
+    await _get_agent(agent_id)
+    return {"ok": True, "removed": await runtime.clear_chat(agent_id)}
+
+
 @router.post("/agents/{agent_id}/compact")
 async def compact_agent_context(agent_id: str) -> dict[str, Any]:
     await _get_agent(agent_id)

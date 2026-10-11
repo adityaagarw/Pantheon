@@ -393,6 +393,18 @@ async def get_meta_agent(role: str) -> dict[str, Any]:
     return await _meta(role)
 
 
+@router.post("/meta/{role}/reset")
+async def reset_meta_agent(role: str, body: dict[str, Any] | None = Body(None)) -> dict[str, Any]:
+    """Start Zeus, Argus or Kronos over: chat cleared, configuration back to defaults."""
+    from app.services import supervisor
+
+    try:
+        await supervisor.reset_meta_agent(role, forget=bool((body or {}).get("forget")))
+    except ValueError as e:
+        raise HTTPException(404, str(e)) from None
+    return await _meta(role)
+
+
 @router.get("/argus/watches")
 async def argus_watches() -> list[dict[str, Any]]:
     from app.services import oversight

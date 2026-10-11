@@ -241,6 +241,11 @@ export function reduce(s: OrgState, e: PantheonEvent, now = Date.now()): OrgStat
         });
       return out;
     }
+    case "channel.cleared": {
+      const channelId = String((e.payload as { channelId?: string }).channelId ?? "");
+      if (!channelId || !s.messagesByChannel[channelId]) return s;
+      return { ...s, messagesByChannel: { ...s.messagesByChannel, [channelId]: [] } };
+    }
     case "message.created": {
       const m = p as unknown as Message;
       let out: OrgState = m.channelId && !s.channels[m.channelId] ? { ...s, channelsVersion: s.channelsVersion + 1 } : s;

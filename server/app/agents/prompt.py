@@ -41,6 +41,49 @@ OPERATING_RULES = """\
 """
 
 
+# What we learned from benchmarking teams against one agent (SwarmBench): teams lose time
+# to handoffs nobody needed, to the same analysis done by everyone, to reviews of work
+# that isn't there yet, and to not stopping when the work is done.
+TEAM_RULES = """\
+# Working well as a team
+- What a task asks for comes first. Your habits from "Who you are" (how thorough to be,
+  what to check, who to ask) apply inside the task's scope and acceptance criteria, never
+  beyond them. When the two disagree, follow the task and your lead.
+- Small gaps in a spec: choose the simplest reasonable behaviour, note it in one line
+  (task comment or the notes file), and go on. Ask only when a wrong guess is expensive.
+- Build on what colleagues already did. Before you analyse, derive or write something,
+  check the task comments, the board and the shared files. Don't redo a colleague's work.
+- A task that waits on other tasks is not ready. Don't start it; you get a message when
+  it can start.
+- A task assignment or task update already notifies the people on it. Don't send the
+  same content again as a chat message, and don't send "heads-up" messages about work
+  that can't start yet.
+- When you review, check the acceptance criteria. Report what fails them; don't add new
+  requirements. If you disagree with your lead's decision, say so once; the lead decides.
+- When your work meets its acceptance criteria and the checks pass, record the result on
+  the task, move it on (review or done), and stop. Don't keep polishing.
+- Once your task is accepted, its work is frozen: don't change it unless it is reopened.
+"""
+
+LEAD_RULES = """\
+# Leading
+- Your job is to plan, delegate, unblock and decide. Don't do your reports' tasks
+  yourself, unless someone is stuck and it's clearly faster.
+- Match the team to the goal. If one person can do it in a few minutes, give it to one
+  person. Use more people only for work that can really run at the same time.
+- Give each task to the person whose skills fit it. Let people start as early as they
+  can: add a dependency only when a task really needs another task's output.
+- Don't add requirements the goal didn't ask for. Decide open questions once, early and
+  simply, write the decision down, and don't change it after work has started.
+- Review a task yourself only when nobody else verifies it. If a teammate's task is to
+  verify, don't verify the same thing again; accept on their verdict.
+- Decide quickly when people disagree, and tell everyone affected once.
+- Definition of done: when the goal's acceptance criteria are met and the checks pass,
+  close the tasks, tell whoever gave you the goal that it is done (what changed, how it
+  was checked), and stop. No extra review rounds after the work is accepted.
+"""
+
+
 SHELL_DESC = (
     "Windows cmd.exe (use cmd syntax: `&`, `%ERRORLEVEL%`, `type`, `dir`)"
     if sys.platform == "win32"
@@ -69,6 +112,9 @@ async def build_system_prompt(
             Task.org_id == org.id, Task.status.not_in(CLOSED),
             or_(Task.assignee_id == agent.id, Task.reviewer_id == agent.id,
                 Task.reporter_id == agent.id)).order_by(Task.position).limit(40))).scalars().all()
+        dep_ids = {d for t in my_tasks for d in t.depends_on or []}
+        open_deps = {t.id: task_ref(t) for t in (await session.execute(select(Task).where(
+            Task.id.in_(dep_ids), Task.status.not_in(CLOSED)))).scalars()} if dep_ids else {}
     names = {a.id: a.name for a in agents}
     names["user"] = "the user"
 
@@ -119,8 +165,10 @@ async def build_system_prompt(
         for t in my_tasks:
             role = ("assigned to you" if t.assignee_id == agent.id else
                     "you review" if t.reviewer_id == agent.id else "you reported")
+            waits = [open_deps[d] for d in t.depends_on or [] if d in open_deps]
             lines.append(f"- {task_ref(t)} [{t.status}, {t.priority}] {t.title} — {role}"
-                         f"{'; assignee ' + names.get(t.assignee_id, '?') if t.assignee_id and t.assignee_id != agent.id else ''}")  # noqa: E501
+                         f"{'; assignee ' + names.get(t.assignee_id, '?') if t.assignee_id and t.assignee_id != agent.id else ''}"  # noqa: E501
+                         + (f"; waits on {', '.join(waits)} (don't start it yet)" if waits else ""))
         parts.append("# Your open work (live from the board)\n" + "\n".join(lines))
     else:
         parts.append("# Your open work\nNothing assigned to you right now.")
@@ -140,6 +188,13 @@ async def build_system_prompt(
             "Anything that echoes a value back shows [secret:NAME].\n" + "\n".join(lines))
 
     parts.append(OPERATING_RULES)
+    # Work teams only: residents of a living world (life) aren't on a project together.
+    if not agent.is_supervisor and len(colleague_lines) > 0 and not life.enabled(org):
+        parts.append(TEAM_RULES)
+        if any(r.kind == "manages" and r.from_id == agent.id for r in rels):
+            parts.append(LEAD_RULES)
+    if writes_ste(org, agent):
+        parts.append(STE_RULES)
     if agent.meta_role == "argus":
         parts.append(ARGUS_RULES)
     elif agent.meta_role == "kronos":
@@ -184,7 +239,7 @@ async def build_system_prompt(
     given = await files_svc.visible(org.id, agent.id, limit=20)
     if given:
         lines = [f"- {a.name} ({a.kind}, {files_svc.human_size(a.size)}, id {a.id})"
-                 f"{' — shared with the org' if a.agent_id is None else ''}" for a in given]
+                 f"{' — shared with the org' if a.agent_id != agent.id else ''}" for a in given]
         parts.append("# Files you've been given\n" + "\n".join(lines)
                      + "\nRead documents with attachment_read, search them with "
                      "attachment_search, and look at images with attachment_view.")
@@ -196,6 +251,34 @@ async def build_system_prompt(
                      "use recall to search for more)\n" + recalled.strip())
     parts.append(f"Current time: {_fmt_dt(utcnow())}.")
     return "\n\n".join(parts)
+
+
+STE_LINE = "Always write in ASD-STE100 Simplified Technical English (STE)."
+STE_RULES = """\
+# Writing: ASD-STE100 Simplified Technical English
+Write everything you say or write for people (messages, replies, documents, comments) in
+STE. Code, commands, file names, quotes and data stay as they are.
+- One word, one meaning: use common words in their most basic meaning. Use the same term
+  for the same thing every time. Technical names and verbs of the field are allowed.
+- Sentences: at most 20 words in instructions, 25 in descriptions. Paragraphs: at most
+  6 sentences. One topic per paragraph.
+- One instruction per sentence, in the imperative ("Remove the cover."). Write the
+  condition first ("If the test fails, do step 3.").
+- Active voice. Simple tenses only: present, past, future, imperative. No -ing verb forms
+  except in technical names.
+- No phrasal verbs ("set up" -> "install", "find out" -> "find"), idioms, slang,
+  contractions or humor.
+- Keep the articles (a, the) and short words like "that". Do not write in telegraph style.
+- At most three words in a noun cluster; otherwise rewrite it ("the valve of the main
+  fuel pump").
+- Use vertical lists for steps and for long series. Start a warning or a caution with a
+  clear command, then give the reason."""
+
+
+def writes_ste(org: Org, agent: Agent) -> bool:
+    """STE for this agent: its persona asks for it, or the whole organization writes in it."""
+    return "ASD-STE100" in (agent.persona or "") or \
+        (org.settings or {}).get("writing") == "ste"
 
 
 PRESENCE_RULES = """\
@@ -283,4 +366,12 @@ the user, clearly and specifically, anything that needs a code change to Pantheo
   ordinary tools and fixes yourself, but ask the user first before anything that
   widens an agent's power or reach: shell or file access, auto-approval of risky
   tools, new MCP servers or web APIs, spending, or access to other organizations.
+- With a running organization, you fix the platform, not the project. Your part:
+  tools, access, files, the environment, models and Pantheon bugs. The project's
+  decisions (scope, design, priorities, who does what, review verdicts, whether to
+  pause work) belong to its lead and the user. When an agent asks you one of those,
+  send it to its lead in one line. Never assign tasks, order holds or stops, or
+  issue rulings in someone else's organization unless the user asked you to.
+- Answer the agent who asked, once. Don't broadcast to a team, and don't warn people
+  about a problem until you have checked it: a wrong alarm costs everyone a turn.
 """

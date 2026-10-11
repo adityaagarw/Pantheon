@@ -9,7 +9,8 @@ for Shadow, starting Pantheon, and trusting its certificate. One connection, no 
     python host/main.py setup              # first time: Docker, Pantheon, settings, start
     python host/main.py install            # start it when you log in (uninstall undoes it)
     python host/main.py allow "D:/Reports" # let Kronos into a folder; disallow removes it
-    python host/main.py list               # what Kronos can reach
+    python host/main.py list               # what Kronos can reach, and shared workspaces
+    python host/main.py mount "D:/code/app"  # a workspace folder for organizations (unmount)
     python host/main.py start | stop       # start or stop Pantheon's containers
     python host/main.py trust              # trust Pantheon's HTTPS certificate on this computer
     python host/main.py record ABC123      # record this computer for one recording, by code
@@ -32,7 +33,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from host import autostart, kronos_ops, paths, system, tray
+from host import autostart, kronos_ops, mounts, paths, system, tray
 from host.recorder import Recorder, connect
 
 VERSION = 2
@@ -68,7 +69,7 @@ class Host:
         self.recording_title = ""
 
     def capabilities(self) -> list[str]:
-        return ["kronos", "recorder", "folders"]
+        return ["kronos", "recorder", "folders", "workspaces"]
 
     def info(self) -> dict:
         rec = self.recorder if self.recorder and self.recorder.recording else None
@@ -122,10 +123,24 @@ class Host:
         paths.save_config(cfg)
         return f"Kronos may no longer use {p}"
 
+    def pick_workspace(self, args: dict) -> dict:
+        """A folder on this computer for an organization's workspace: the person here picks
+        it, then the backend restarts with it mounted (see host/mounts.py)."""
+        org = str(args.get("org") or "an organization")[:80]
+        path = system.ask_folder(f"Choose the workspace folder for {org}")
+        if not path:
+            raise kronos_ops.Refused("no folder chosen")
+        got = mounts.mount(path)
+        log(f"workspace for {org}: {got['hostPath']} -> {got['path']}"
+            + (" (restarting the backend)" if got["restart"] else ""))
+        return got
+
     def ops(self) -> dict:
         return {**kronos_ops.OPS, "record_start": self.record_start,
                 "record_stop": self.record_stop, "pick_folder": self.pick_folder,
-                "disallow": self.disallow, "ping": lambda args: "pong"}
+                "disallow": self.disallow, "pick_workspace": self.pick_workspace,
+                "unmount_workspace": lambda args: mounts.unmount(str(args.get("path") or "")),
+                "ping": lambda args: "pong"}
 
 
 # --- the link to Pantheon -------------------------------------------------------------------
@@ -168,7 +183,7 @@ class Link:
             if fn is None:
                 raise Refused(f"this computer's Pantheon Host doesn't know '{op}' (update it?)")
             self.result(job["id"], True, fn(job.get("args") or {}))
-            if op.startswith(("change_", "record_", "pick_", "disallow")) and op not in (
+            if op.startswith(("change_", "record_", "pick_", "disallow", "unmount_")) and op not in (
                     "change_list", "change_diff", "change_check"):
                 self.hello()  # Pantheon shows the new state right away
         except kronos_ops.Refused as e:
@@ -216,8 +231,9 @@ def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(description="Pantheon Host: connects Pantheon to this computer")
     ap.add_argument("command", nargs="?", default="run",
                     choices=["run", "setup", "install", "uninstall", "allow", "disallow", "list",
-                             "start", "stop", "trust", "record"])
-    ap.add_argument("arg", nargs="?", help="a folder (allow/disallow) or a recording code (record)")
+                             "mount", "unmount", "start", "stop", "trust", "record"])
+    ap.add_argument("arg", nargs="?",
+                    help="a folder (allow/disallow/mount/unmount) or a recording code (record)")
     ap.add_argument("--backend", help=f"Pantheon's address (default {paths.DEFAULT_BACKEND})")
     ap.add_argument("--every", type=float, default=15, help="record: seconds between idle screenshots")
     ap.add_argument("--exclude", default="", help="record: window-title words never to screenshot")
@@ -247,10 +263,27 @@ def main(argv: list[str] | None = None) -> None:
         print(f"{'Allowed' if a.command == 'allow' else 'Removed'}: {p}")
         print("Pantheon Host picks this up right away; Pantheon shows it within a minute.")
         return
+    if a.command in ("mount", "unmount"):
+        if not a.arg:
+            sys.exit(f"usage: python host/main.py {a.command} <folder>")
+        try:
+            if a.command == "unmount":
+                print(mounts.unmount(a.arg))
+                return
+            got = mounts.mount(a.arg, restart=False)
+        except kronos_ops.Refused as e:
+            sys.exit(str(e))
+        print(f"Shared: {got['hostPath']}\nIn Pantheon it is {got['path']}: use that as an "
+              "organization's workspace (Settings of the organization).")
+        if got["path"].startswith(mounts.CONTAINER_ROOT):
+            print("Restart Pantheon's backend to see it: docker compose up -d --no-deps backend")
+        return
     if a.command == "list":
         print(f"Pantheon repo (read; code changes in worktrees): {paths.REPO}")
         for r in cfg.get("allowed", []):
             print(f"Allowed: {r}")
+        for h, c in mounts.mounts().items():
+            print(f"Workspace folder: {h} (in Pantheon: {c})")
         print(f"Settings: {paths.CONFIG}")
         return
     if a.command == "record":

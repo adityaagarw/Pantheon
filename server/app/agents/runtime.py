@@ -739,7 +739,12 @@ class Runtime:
             await comms.post(agent.org_id, comms.Sender.system(), text, channel=channel,
                              kind=kind, deliver=False)
 
-    async def reset_memory(self, agent_id: str) -> None:
+    async def clear_chat(self, agent_id: str) -> int:
+        """Clear the user's chat with the agent: the messages in it, and the agent's context."""
+        await self.reset_memory(agent_id, mark=False)
+        return await comms.clear_dm(agent_id)
+
+    async def reset_memory(self, agent_id: str, *, mark: bool = True) -> None:
         """Clear the agent's context: its working thread and summary.
 
         Long-term memories (``remember``), tasks, messages and history stay; the
@@ -764,9 +769,10 @@ class Runtime:
                               org_id=agent.org_id, agent_id=agent_id)
             await bus.publish("agent.context_cleared", {}, org_id=agent.org_id,
                               agent_id=agent_id)
-            await self._mark_in_dm(agent, f"{agent.name}'s context was cleared. Earlier "
-                                   "messages stay here for you, but the agent no longer "
-                                   "sees them.", "context_cleared")
+            if mark:
+                await self._mark_in_dm(agent, f"{agent.name}'s context was cleared. Earlier "
+                                       "messages stay here for you, but the agent no longer "
+                                       "sees them.", "context_cleared")
 
         await self._exclusive(agent_id, clear)
 

@@ -22,6 +22,7 @@ from sqlalchemy import select
 from app.core.db import SessionLocal
 from app.events import bus
 from app.models import Whiteboard
+from app.services import wbgrid
 
 SHAPES = ("rectangle", "ellipse", "diamond", "text", "arrow", "line")
 DEFAULT_SIZE = {"rectangle": (180, 80), "ellipse": (160, 90), "diamond": (170, 110)}
@@ -204,7 +205,10 @@ def describe(b: Whiteboard) -> str:
             continue
         if t == "text" and e.get("containerId"):
             continue
-        pos = f"at ({round(e.get('x', 0))}, {round(e.get('y', 0))})"
+        ex, ey = float(e.get("x", 0)), float(e.get("y", 0))
+        cells = wbgrid.range_of(ex, ey, abs(float(e.get("width") or 0)),
+                                abs(float(e.get("height") or 0)))
+        pos = f"in {cells} ({round(ex)}, {round(ey)})"
         by = (e.get("customData") or {}).get("by")
         who = f" [by {by}]" if by else ""
         if t == "text":
@@ -228,10 +232,26 @@ def describe(b: Whiteboard) -> str:
                          f"{'s' if n > 1 else ''}")
     for p in b.pending or []:
         label = (p.get("label") or {}).get("text") or p.get("text") or ""
-        lines.append(f"- (being drawn) {p.get('type')} '{label}' ({p.get('id')})")
+        where = ""
+        if p.get("type") in DEFAULT_SIZE:
+            where = " in " + wbgrid.range_of(float(p.get("x") or 0), float(p.get("y") or 0),
+                                             float(p.get("width") or 0), float(p.get("height") or 0))
+        lines.append(f"- (being drawn) {p.get('type')} '{label}'{where} ({p.get('id')})")
     if len(lines) == 1:
         lines.append("It's empty.")
+    else:
+        lines.append(f"(Cells are {wbgrid.CELL_W} x {wbgrid.CELL_H} px: columns A, B, C... from "
+                     "the left, rows 1, 2, 3... from the top.)")
     return "\n".join(lines)
+
+
+def free_cells(b: Whiteboard) -> set[tuple[int, int]]:
+    """Grid cells already covered by something on the board (or queued for it)."""
+    boxes = []
+    for e in [*_live(b), *(b.pending or [])]:
+        x, y = float(e.get("x") or 0), float(e.get("y") or 0)
+        boxes.append((x, y, x + float(e.get("width") or 0), y + float(e.get("height") or 0)))
+    return wbgrid.occupied(boxes)
 
 
 def _skeleton(shape: dict[str, Any], by: str, known: dict[str, dict[str, Any]],
@@ -269,11 +289,7 @@ def _skeleton(shape: dict[str, Any], by: str, known: dict[str, dict[str, Any]],
 
         src, dst = find(shape.get("from")), find(shape.get("to"))
         if src and dst:
-            sx, sy = src["x"] + src["width"], src["y"] + src["height"] / 2
-            dx, dy = dst["x"], dst["y"] + dst["height"] / 2
-            if dx < sx:  # target is to the left: connect bottom to top instead
-                sx, sy = src["x"] + src["width"] / 2, src["y"] + src["height"]
-                dx, dy = dst["x"] + dst["width"] / 2, dst["y"]
+            (sx, sy), (dx, dy) = _facing_edges(src, dst)
             base |= {"x": sx, "y": sy, "width": dx - sx, "height": dy - sy,
                      "start": {"id": src["id"]}, "end": {"id": dst["id"]}}
         else:
@@ -290,8 +306,23 @@ def _skeleton(shape: dict[str, Any], by: str, known: dict[str, dict[str, Any]],
     return base
 
 
+def _facing_edges(src: dict[str, Any], dst: dict[str, Any]) -> tuple[tuple[float, float],
+                                                                    tuple[float, float]]:
+    """Where a connector leaves one box and enters the other: the sides that face each other."""
+    scx, scy = src["x"] + src["width"] / 2, src["y"] + src["height"] / 2
+    dcx, dcy = dst["x"] + dst["width"] / 2, dst["y"] + dst["height"] / 2
+    if dst["x"] >= src["x"] + src["width"]:  # to the right
+        return (src["x"] + src["width"], scy), (dst["x"], dcy)
+    if dst["x"] + dst["width"] <= src["x"]:  # to the left
+        return (src["x"], scy), (dst["x"] + dst["width"], dcy)
+    if dcy >= scy:  # below
+        return (scx, src["y"] + src["height"]), (dcx, dst["y"])
+    return (scx, src["y"]), (dcx, dst["y"] + dst["height"])  # above
+
+
 def _layout(shapes: list[dict[str, Any]], origin: tuple[float, float]) -> list[dict[str, Any]]:
-    """Give unplaced boxes positions: a left-to-right flow, one column per arrow step."""
+    """Give unplaced boxes positions: a left-to-right flow on the grid, one column per arrow
+    step, starting at the first free column."""
     shapes = [dict(s) for s in shapes]
     nodes = [s for s in shapes if s.get("type") in DEFAULT_SIZE
              and s.get("x") is None and s.get("y") is None]
@@ -324,12 +355,12 @@ def _layout(shapes: list[dict[str, Any]], origin: tuple[float, float]) -> list[d
     for s in nodes:
         columns.setdefault(depth[s["id"]], []).append(s)
     tallest = max(len(c) for c in columns.values())
+    first = int(origin[0] // wbgrid.CELL_W) + (1 if origin[0] % wbgrid.CELL_W else 0)
     for col, members in columns.items():
-        w = max(float(m.get("width") or DEFAULT_SIZE[m["type"]][0]) for m in members)
-        top = origin[1] + (tallest - len(members)) * 75  # center shorter columns
+        top = (tallest - len(members)) // 2  # center shorter columns
         for i, m in enumerate(members):
-            m["x"] = origin[0] + col * (max(w, 180) + 150)
-            m["y"] = top + i * 150
+            m.update(wbgrid.box_in(wbgrid.cell_name(first + col, top + i),
+                                   m.get("width"), m.get("height")))
     return shapes
 
 
@@ -360,7 +391,29 @@ async def add_shapes(board_id: str, shapes: list[dict[str, Any]], by: str) -> li
                 known.setdefault(label, known[sid])
         right = (_bounds(live + list(b.pending or [])) or (0, 0, -80, 0))[2]
         cursor = [right + 80, 0.0]
-        shapes = _layout(shapes[:200], origin=(right + 80, 0.0))
+        taken = free_cells(b)
+        lowered = {**known, **{k.lower(): v for k, v in known.items()}}
+        placed = []
+        for shape in shapes[:200]:
+            try:
+                s = wbgrid.place(shape, lowered, taken)
+            except wbgrid.GridError as e:
+                raise WhiteboardError(str(e)) from None
+            if s.get("type") in DEFAULT_SIZE and s.get("x") is not None:
+                dw, dh = DEFAULT_SIZE[s["type"]]
+                box = {"id": str(s.setdefault("id", f"ag_{secrets.token_hex(4)}")),
+                       "x": float(s["x"]), "y": float(s["y"]),
+                       "width": float(s.get("width") or dw), "height": float(s.get("height") or dh)}
+                lowered[box["id"]] = lowered[box["id"].lower()] = box
+                if s.get("label"):
+                    lowered[str(s["label"]).strip().lower()] = box
+            placed.append(s)
+        if not taken:
+            right = -80.0
+        else:
+            right = (max(c for c, _ in taken) + 1) * wbgrid.CELL_W - 80
+        shapes = _layout(placed, origin=(right + 80, 0.0))
+        known = lowered
         out = []
         for shape in shapes[:200]:
             sk = _skeleton(shape, by, {**known, **{k.lower(): v for k, v in known.items()}},

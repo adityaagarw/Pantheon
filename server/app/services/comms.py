@@ -61,6 +61,27 @@ async def _turn_has_thinking(session: AsyncSession, turn_id: str) -> bool:
     return any(isinstance(r, dict) and r.get("reasoning") for r in responses)
 
 
+async def clear_dm(agent_id: str, other: str = USER) -> int:
+    """Delete every message in the DM between an agent and the user (or another member)."""
+    from sqlalchemy import delete as sql_delete
+
+    async with SessionLocal() as session:
+        agent = await session.get(Agent, agent_id)
+        if agent is None:
+            return 0
+        ch = (await session.execute(select(Channel).where(
+            Channel.org_id == agent.org_id, Channel.key == dm_key(agent_id, other)))).scalar_one_or_none()
+        if ch is None:
+            return 0
+        removed = (await session.execute(sql_delete(Message).where(
+            Message.channel_id == ch.id))).rowcount or 0
+        await session.commit()
+        org_id, channel_id = agent.org_id, ch.id
+    await bus.publish("channel.cleared", {"channelId": channel_id, "removed": removed},
+                      org_id=org_id, agent_id=agent_id)
+    return removed
+
+
 def dm_key(a: str, b: str) -> str:
     x, y = sorted((a, b))
     return f"dm:{x}:{y}"
@@ -370,6 +391,10 @@ async def post(
             members = []
 
         woken: list[str] = []
+        roused: list[Agent] = []
+        # What brings an agent back from standby: the user, or a task notice that wakes
+        # (one it can act on now). Colleagues' chat waits until then.
+        rouses = sender.type == "user" or (sender.type == "system" and task_id is not None)
         for rid in dict.fromkeys(members):
             if rid == USER:
                 s.add(UserInboxItem(org_id=org_id, kind="message", ref_id=msg.id,
@@ -385,6 +410,9 @@ async def post(
                            note=note))
             if status == "pending":
                 woken.append(rid)
+                if agent.status == "standby" and rouses:
+                    agent.status = "active"
+                    roused.append(agent)
             else:
                 await bus.publish(
                     "system.warning",
@@ -400,6 +428,12 @@ async def post(
             await s.close()
     await bus.publish("message.created", message_to_dict(msg), org_id=org_id,
                       agent_id=sender.id if sender.type == "agent" else None)
+    if roused:
+        from app.services.orgs import agent_to_dict
+
+        for agent in roused:
+            await bus.publish("agent.updated", agent_to_dict(agent), org_id=org_id,
+                              agent_id=agent.id)
     for rid in woken:
         signals.wake(rid)
     return msg
@@ -437,12 +471,15 @@ async def send_direct(
 async def notify(
     org_id: str, agent_ids: list[str], content: str, *, depth: int = 0,
     task_id: str | None = None, kind: str = "notification", meta: dict[str, Any] | None = None,
+    wake: bool = True,
 ) -> Message | None:
+    """A system notice to agents. ``wake=False`` records it without waking anyone (for
+    news they can't act on yet, like a task that still waits on others)."""
     targets = [a for a in agent_ids if a and a not in (USER, SYSTEM)]
     if not targets:
         return None
     return await post(org_id, Sender.system(depth), content, to_agents=targets, kind=kind,
-                      task_id=task_id, meta=meta)
+                      task_id=task_id, meta=meta, deliver=wake)
 
 
 async def channel_history(

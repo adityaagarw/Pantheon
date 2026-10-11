@@ -1,0 +1,9 @@
+2026-09-14T13:55:12.000Z DEPLOY service=payments version=1.9.0 status=started by=ci change="update bank API client"
+2026-09-14T13:57:40.000Z DEPLOY service=payments version=1.9.0 status=finished
+2026-09-14T14:00:05.000Z DEPLOY service=orders version=2.4.1 status=started by=ci change="retry inventory calls on timeout"
+2026-09-14T14:01:30.000Z DEPLOY service=orders version=2.4.1 status=finished
+2026-09-14T14:15:20.000Z ACTION service=payments action=restart by=oncall note="payments deployed just before errors"
+2026-09-14T14:17:00.000Z ACTION service=payments action=restart status=finished
+2026-09-14T14:19:00.000Z ACTION service=orders-db action=resize-pool by=oncall from=50 to=80
+2026-09-14T14:24:10.000Z ROLLBACK service=orders from=2.4.1 to=2.4.0 status=started by=oncall
+2026-09-14T14:27:00.000Z ROLLBACK service=orders from=2.4.1 to=2.4.0 status=finished

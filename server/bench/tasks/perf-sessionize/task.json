@@ -1,0 +1,14 @@
+{
+  "id": "perf-sessionize",
+  "title": "Make the nightly sessions job fast without changing output",
+  "category": "performance",
+  "difficulty": "medium",
+  "workflow": "measure-optimize-verify",
+  "summary": "Three quadratic hot spots. Exact output parity (stable ties, ordering) plus a 200k-event time budget.",
+  "time_limit_minutes": 25,
+  "protected_files": [],
+  "grade_timeout_seconds": 240,
+  "gate_tests": [
+    "SpeedTest"
+  ]
+}

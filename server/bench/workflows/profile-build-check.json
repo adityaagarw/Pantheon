@@ -1,0 +1,19 @@
+{
+  "name": "profile-build-check",
+  "summary": "For data work. Profile the dirty data first, build the pipeline, then check the numbers in an independent way.",
+  "roles": [
+    {"name": "data-analyst", "job": "Profiles the data. Finds every kind of dirty value and maps each one to a rule in the spec."},
+    {"name": "builder", "job": "Writes the pipeline and its tests."},
+    {"name": "checker", "job": "Calculates the key numbers again with a different method and compares them."}
+  ],
+  "steps": [
+    {"id": "profile", "role": "data-analyst", "do": "Read the spec and scan the data. List each kind of dirty value with examples and the rule that handles it.", "output": "worklog/DATA_PROFILE.md"},
+    {"id": "build", "role": "builder", "do": "Write the pipeline and tests for each rule.", "after": ["profile"]},
+    {"id": "check", "role": "checker", "do": "Recalculate totals and counts in a separate script. Compare with the pipeline output. Send differences back.", "after": ["build"], "output": "worklog/REVIEW.md"}
+  ],
+  "rules": [
+    "The checker must not reuse the pipeline code.",
+    "Each spec rule must have a test."
+  ],
+  "artifacts": ["worklog/DATA_PROFILE.md", "worklog/REVIEW.md"]
+}

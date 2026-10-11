@@ -176,6 +176,17 @@ async def test_agents_search_read_and_see_files_in_their_prompt(app_client):
     await wait_for(lambda: _done(ben["id"], 1), msg="ben")
     assert "handbook.md" in _out(bp, 1) and "terms.txt" not in _out(bp, 1)
 
+    # Once Ada leads Ben, what was given to her reaches him too (a lead's files are the team's).
+    r = await app_client.post(f"/api/v1/orgs/{org['id']}/relationships",
+                              json={"fromId": ada["id"], "toId": ben["id"], "kind": "manages"})
+    assert r.status_code == 201
+    bp2 = script(ben["id"], call("attachment_search", query="how long is the warranty?"),
+                 call("attachment_list"), say("ok"))
+    await dm(app_client, org["id"], "Ben", "and now?")
+    await wait_for(lambda: _done(ben["id"], 3), msg="ben again")
+    assert "24 months from delivery" in _out(bp2, 1)
+    assert "terms.txt" in _out(bp2, 2) and "(shared with the org)" in _out(bp2, 2)
+
 
 async def test_images_reach_vision_models_only_and_download_safely(app_client):
     org = await make_org(app_client)

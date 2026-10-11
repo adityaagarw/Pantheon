@@ -17,7 +17,7 @@ export function ContextControls({ agentId, name, className }: { agentId: string;
   const [usage, setUsage] = useState<Usage | null>(null);
   const [summary, setSummary] = useState("");
   const [confirm, setConfirm] = useState(false);
-  const [busy, setBusy] = useState<"compact" | "clear" | null>(null);
+  const [busy, setBusy] = useState<"compact" | "clear" | "chat" | null>(null);
   const [note, setNote] = useState<string | null>(null);
   // Refresh after each turn ends or the context changes.
   const status = useOrg((s) => s.live[agentId]?.status);
@@ -33,11 +33,14 @@ export function ContextControls({ agentId, name, className }: { agentId: string;
   }, [agentId]);
   useEffect(load, [load, status]);
 
-  const run = async (kind: "compact" | "clear") => {
+  const run = async (kind: "compact" | "clear" | "chat") => {
     setBusy(kind);
     setNote(null);
     try {
-      if (kind === "clear") {
+      if (kind === "chat") {
+        await api.clearAgentChat(agentId);
+        setNote(`Chat cleared. ${name} starts fresh on the next message.`);
+      } else if (kind === "clear") {
         await api.resetAgentMemory(agentId);
         setNote(`${name} starts fresh on the next message.`);
       } else {
@@ -80,7 +83,8 @@ export function ContextControls({ agentId, name, className }: { agentId: string;
       {confirm && (
         <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-bad/30 bg-bad/10 px-2.5 py-2">
           <span className="text-ink-2">
-            Clear {name}&apos;s context? It stops any current turn and forgets the conversation; long-term memories, tasks and message history stay.
+            Clear {name}&apos;s context? It stops any current turn and forgets the conversation; long-term memories and tasks stay. &quot;Clear chat&quot;
+            also deletes your messages with {name}.
           </span>
           <div className="ml-auto flex gap-1.5">
             <Button size="sm" variant="ghost" onClick={() => setConfirm(false)}>
@@ -88,6 +92,9 @@ export function ContextControls({ agentId, name, className }: { agentId: string;
             </Button>
             <Button size="sm" variant="danger" loading={busy === "clear"} onClick={() => run("clear")}>
               Clear context
+            </Button>
+            <Button size="sm" variant="danger" loading={busy === "chat"} onClick={() => run("chat")}>
+              Clear chat
             </Button>
           </div>
         </div>

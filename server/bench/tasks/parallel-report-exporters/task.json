@@ -1,0 +1,10 @@
+{
+  "id": "parallel-report-exporters",
+  "title": "Add four report export formats in parallel",
+  "category": "parallel-build",
+  "difficulty": "medium",
+  "workflow": "parallel-fanout",
+  "summary": "Four independent exporters (csv, markdown, html, json) with exact output specs, plus registry and CLI integration.",
+  "time_limit_minutes": 30,
+  "protected_files": ["SPEC.md"]
+}

@@ -48,13 +48,13 @@ export interface Agent {
   limits: { max_steps_per_turn?: number; max_turns_per_hour?: number };
   permissions: { tasks?: TaskPolicy };
   avatar: Avatar;
-  status: "active" | "paused" | "disabled";
+  status: "active" | "standby" | "paused" | "disabled";
   runtimeStatus: RuntimeStatus;
   runtimeDetail: string;
   consecutiveFailures: number;
   retryAt: string | null;
   isSupervisor: boolean;
-  metaRole?: "zeus" | "argus" | null;
+  metaRole?: "zeus" | "argus" | "kronos" | null;
   location?: AgentLocation | null;
   /** Needs, mood, traits and wants, in organizations where life is on. */
   life?: AgentLife | null;
@@ -388,8 +388,12 @@ export interface OrgSettings {
   daily_token_budget: number;
   /** "auto": shell commands (run_command, computer_shell) run without asking; agents set to deny still can't. */
   shell_approval?: "ask" | "auto";
+  /** "ste": every agent writes in ASD-STE100 Simplified Technical English. */
+  writing?: "plain" | "ste";
   /** Agents of this org working at once; 0: only the global limit. */
   max_concurrent?: number;
+  /** The workspace picked on the user's computer (via Pantheon Host): where it is there. */
+  workspace_host?: { path: string; hostPath: string };
   default_model?: ModelBinding;
   task_policy?: TaskPolicy;
   meetings?: MeetingSettings;

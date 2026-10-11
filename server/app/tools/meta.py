@@ -15,12 +15,21 @@ from app.services.comms import Sender
 from app.services.orgs import OrgError
 from app.tools.base import B, S, ToolContext, ToolError, arr, obj, tool
 
+# Temperature and output length are left to the user (agent editor): unset, an agent
+# uses the provider's temperature and the platform's long output limit.
 MODEL_SCHEMA = {"type": "object", "properties": {
-    "provider_id": S, "model": S, "temperature": {"type": "number"},
-    "max_tokens": {"type": "integer"}, "context_window": {"type": "integer"},
+    "provider_id": S, "model": S, "context_window": {"type": "integer"},
     "reasoning_effort": {"type": "string", "enum": ["off", "low", "medium", "high", "xhigh"],
-                         "description": "how much the model thinks; off = no thinking"},
+                         "description": "how much the model thinks; off = no thinking. Leave "
+                                        "it out (default: extra high) unless the user asks."},
 }, "additionalProperties": False}
+ZEUS_MODEL_KEYS = ("provider_id", "model", "context_window", "reasoning_effort")
+
+
+def _model_arg(data: dict) -> None:
+    """Keep only what Zeus may set on an agent's model (the schema isn't always enforced)."""
+    if isinstance(data.get("model"), dict):
+        data["model"] = {k: v for k, v in data["model"].items() if k in ZEUS_MODEL_KEYS}
 PERMISSIONS_SCHEMA = {"type": "object", "properties": {"tasks": {
     "type": "object", "additionalProperties": False, "properties": {
         "create": {"type": "boolean"},
@@ -181,6 +190,7 @@ async def update_org(args: dict, ctx: ToolContext) -> str:
 async def create_agent(args: dict, ctx: ToolContext) -> str:
     org = await _org(args["org"])
     data = {k: v for k, v in args.items() if k not in ("org", "manager", "character")}
+    _model_arg(data)
     if args.get("character"):
         data["avatar"] = {"character": args["character"]}
     agent = await orgs.create_agent(org.id, data)
@@ -198,18 +208,22 @@ async def create_agent(args: dict, ctx: ToolContext) -> str:
 
 
 @meta("update_agent", "Change an agent's name, role, team, persona, tools, model, worktree, "
-      "limits, status (active/paused/disabled) or how it looks (character). `tools` replaces "
-      "the whole list.",
+      "limits, status (active/standby/paused/disabled; standby waits until a task is ready "
+      "for it) or how it looks (character). `tools` replaces the whole list.",
       obj({"org": S, "agent": S, "name": S, "role": S, "team": S, "persona": S,
            "tools": arr(TOOL_ENTRY), "model": MODEL_SCHEMA, "worktree": S,
            "limits": {"type": "object"}, "permissions": PERMISSIONS_SCHEMA,
-           "status": {"type": "string", "enum": ["active", "paused", "disabled"]},
+           "status": {"type": "string", "enum": ["active", "standby", "paused", "disabled"]},
            "character": CHARACTER},
           ["org", "agent"]))
 async def update_agent(args: dict, ctx: ToolContext) -> str:
     org = await _org(args["org"])
     agent = await _agent(org, args["agent"])
     patch = {k: v for k, v in args.items() if k not in ("org", "agent", "character")}
+    _model_arg(patch)
+    if isinstance(patch.get("model"), dict):
+        # Keep what the user set (e.g. temperature) and change only what Zeus named.
+        patch["model"] = {**(agent.model or {}), **patch["model"]}
     if args.get("character"):
         patch["avatar"] = {"character": args["character"]}
     agent = await orgs.update_agent(agent.id, patch)

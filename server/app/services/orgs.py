@@ -20,7 +20,9 @@ from app.services.permissions import validate_task_policy
 from app.tools import base as tools_base
 
 REL_KINDS = ("manages", "peer", "advises", "custom")
-AGENT_STATUSES = ("active", "paused", "disabled")
+# standby: like paused (messages wait), but the agent comes back on its own when it has
+# work it can do: a task it can start or review, or a message from the user.
+AGENT_STATUSES = ("active", "standby", "paused", "disabled")
 DEFAULT_ORG_SETTINGS: dict[str, Any] = {
     "comm_policy": "open",
     "max_chain_depth": 40,
@@ -245,6 +247,8 @@ async def update_org(org_id: str, patch: dict[str, Any]) -> Org:
                 raise OrgError("comm_policy must be open or structured")
             if merged.get("shell_approval", "ask") not in ("ask", "auto"):
                 raise OrgError("shell_approval must be ask or auto")
+            if merged.get("writing", "plain") not in ("plain", "ste"):
+                raise OrgError("writing must be plain or ste")
             if "max_concurrent" in patch["settings"]:
                 n = patch["settings"]["max_concurrent"]
                 if n is not None and (not isinstance(n, int) or isinstance(n, bool)

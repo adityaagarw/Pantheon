@@ -824,3 +824,19 @@ class StageDoc(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+
+class BenchRun(Base):
+    """A SwarmBench run of an organization: tasks run on temporary copies of it, then graded."""
+
+    __tablename__ = "bench_runs"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: new_id("bench"))
+    org_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)  # kept if the org goes
+    org_name: Mapped[str] = mapped_column(String, default="")
+    status: Mapped[str] = mapped_column(String, default="queued")  # queued running done cancelled failed
+    config: Mapped[JsonDict] = mapped_column(JSON, default=dict)
+    results: Mapped[list] = mapped_column(JSON, default=list)
+    detail: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = _ts()
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

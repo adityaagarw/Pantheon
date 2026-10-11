@@ -101,7 +101,10 @@ async def user_message(org_id: str, body: dict[str, Any] = Body(...)) -> dict[st
         content = f"(attached {len(files)} file{'s' if len(files) > 1 else ''})"
     if not content:
         raise HTTPException(400, "content is required")
-    meta = {"attachments": [attachments.brief(a) for a in files]} if files else None
+    meta: dict[str, Any] | None = {"attachments": [attachments.brief(a) for a in files]} if files else None
+    if body.get("steer"):
+        # Read by the agent mid-turn if it's working (app/agents/steering.py).
+        meta = {**(meta or {}), "steer": True}
     if body.get("channel"):
         async with SessionLocal() as session:
             ch = await comms.find_channel(session, org_id, body["channel"])

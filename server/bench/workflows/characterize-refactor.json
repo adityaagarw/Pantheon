@@ -1,0 +1,19 @@
+{
+  "name": "characterize-refactor",
+  "summary": "For refactors of old code. Lock the current behavior with tests first, then change the structure in small steps.",
+  "roles": [
+    {"name": "characterizer", "job": "Writes tests that record what the code does now, including strange behavior."},
+    {"name": "refactorer", "job": "Changes the structure of the code in small steps. Runs the tests after each step."},
+    {"name": "reviewer", "job": "Checks that no behavior changed, except the requested changes."}
+  ],
+  "steps": [
+    {"id": "characterize", "role": "characterizer", "do": "List each rule and each strange case in the old code. Write a test for each one. All tests must pass on the OLD code.", "output": "worklog/CHARACTERIZATION.md"},
+    {"id": "refactor", "role": "refactorer", "do": "Refactor in small steps. Keep all tests green. Then add the requested new behavior with tests.", "after": ["characterize"]},
+    {"id": "review", "role": "reviewer", "do": "Compare old and new code rule by rule. Compare outputs on many generated inputs. Report any difference.", "after": ["refactor"], "output": "worklog/REVIEW.md"}
+  ],
+  "rules": [
+    "Do not change behavior and structure in the same step.",
+    "Keep strange old behavior unless the request says to change it."
+  ],
+  "artifacts": ["worklog/CHARACTERIZATION.md", "worklog/REVIEW.md"]
+}

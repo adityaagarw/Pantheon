@@ -28,7 +28,7 @@ from langchain_core.messages import (
 
 from app.core.db import SessionLocal
 from app.events import bus
-from app.llm import effort
+from app.llm import effort, limits
 from app.llm.providers import ResolvedModel
 from app.models import LlmCall
 
@@ -144,7 +144,7 @@ async def invoke(
         "provider": model.provider_type,
     }
     last_exc: BaseException | None = None
-    adapted = False
+    adapted = 0
     for attempt in range(1, MAX_ATTEMPTS + 1):
         started = time.monotonic()
         try:
@@ -182,17 +182,26 @@ async def invoke(
             await _record(org_id, agent_id, turn_id, purpose, model, request, {}, 0, 0, latency,
                           f"{type(exc).__name__}: {exc}"[:4000])
             log.warning("LLM call failed (attempt %s, transient=%s): %s", attempt, transient, exc)
-            if not transient and not adapted:
+            if not transient and adapted < 3:
                 # A server that doesn't accept this effort level: switch to the closest
                 # one it does (learned from its own error) and try again right away.
                 fixed = effort.repair(model.chat, str(exc), model.provider_id, model.model_id,
                                       model.effort)
                 if fixed is not None:
-                    adapted = True
+                    adapted += 1
                     model.chat = fixed
                     runnable = model.chat.bind_tools(tools) if tools else model.chat
                     log.info("model rejected reasoning effort %r; retrying with %r",
                              model.effort, getattr(fixed, "reasoning_effort", None))
+                    continue
+                # Or one whose output limit is lower than we asked for: ask for what fits.
+                fixed = limits.repair(model.chat, str(exc), model.provider_type)
+                if fixed is not None:
+                    adapted += 1
+                    model.chat = fixed
+                    model.max_tokens = getattr(fixed, "max_tokens", None)
+                    runnable = model.chat.bind_tools(tools) if tools else model.chat
+                    log.info("model rejected max_tokens; retrying with %r", model.max_tokens)
                     continue
             if on_attempt_error is not None:
                 await on_attempt_error(attempt, exc)

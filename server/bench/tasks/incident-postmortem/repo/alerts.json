@@ -1,0 +1,30 @@
+[
+  {
+    "name": "PaymentsLatencyHigh",
+    "service": "payments",
+    "severity": "warning",
+    "fired_at": "2026-09-14T13:57:00Z",
+    "resolved_at": "2026-09-14T13:59:30Z"
+  },
+  {
+    "name": "RedisMemoryHigh",
+    "service": "catalog-cache",
+    "severity": "warning",
+    "fired_at": "2026-09-14T14:04:30Z",
+    "resolved_at": "2026-09-14T14:12:00Z"
+  },
+  {
+    "name": "HighErrorRate",
+    "service": "api-gateway",
+    "severity": "critical",
+    "fired_at": "2026-09-14T14:06:30Z",
+    "resolved_at": "2026-09-14T14:31:30Z"
+  },
+  {
+    "name": "DBPoolSaturation",
+    "service": "orders-db",
+    "severity": "critical",
+    "fired_at": "2026-09-14T14:08:10Z",
+    "resolved_at": "2026-09-14T14:29:00Z"
+  }
+]

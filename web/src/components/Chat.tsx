@@ -315,8 +315,11 @@ export function Composer({
   preferInterruptible,
   attach,
   draftKey,
+  working,
 }: {
-  onSend: (text: string, attachments?: string[]) => Promise<void> | void;
+  onSend: (text: string, attachments?: string[], opts?: { steer: boolean }) => Promise<void> | void;
+  /** The agent is mid-turn: offer to steer it now instead of queueing for after. */
+  working?: { name: string } | null;
   /** Lets the user attach documents and images (uploaded to this agent's library, or the org's). */
   attach?: { orgId: string; agentId?: string | null };
   placeholder?: string;
@@ -347,6 +350,7 @@ export function Composer({
     saveDraft(key, v);
   };
   const [expanded, setExpanded] = useState(false);
+  const [steerOn, setSteerOn] = useState(true);
   const box = useRef<HTMLTextAreaElement>(null);
   useLayoutEffect(() => {
     // Grow with the text (up to half the screen); the expand button gives more room.
@@ -420,7 +424,7 @@ export function Composer({
     setBusy(true);
     setErr(null);
     try {
-      await onSend(v, files.map((f) => f.id));
+      await onSend(v, files.map((f) => f.id), { steer: !!working && steerOn });
       setText("");
       setFiles([]);
     } catch (e) {
@@ -478,6 +482,29 @@ export function Composer({
       }
     >
       {err && <div className="mb-2 whitespace-pre-wrap text-xs text-bad">{err}</div>}
+      {working && (
+        <div className="mb-2 flex items-center gap-2 text-xs text-ink-3">
+          <span>{working.name} is working.</span>
+          <div className="inline-flex overflow-hidden rounded-md border border-line">
+            <button
+              type="button"
+              className={cx("px-2 py-0.5 cursor-pointer", steerOn ? "bg-accent/20 text-ink" : "hover:bg-panel-2")}
+              title={`${working.name} reads it before the next step of the current work`}
+              onClick={() => setSteerOn(true)}
+            >
+              ⤷ Steer now
+            </button>
+            <button
+              type="button"
+              className={cx("border-l border-line px-2 py-0.5 cursor-pointer", !steerOn ? "bg-accent/20 text-ink" : "hover:bg-panel-2")}
+              title={`${working.name} reads it after finishing the current work`}
+              onClick={() => setSteerOn(false)}
+            >
+              Queue
+            </button>
+          </div>
+        </div>
+      )}
       {(files.length > 0 || uploading) && (
         <div className="mb-2 flex flex-wrap items-center gap-1.5">
           {files.map((f) => (

@@ -1,0 +1,10 @@
+{
+  "id": "bugfix-invoice-totals",
+  "title": "Fix wrong invoice totals from a finance ticket",
+  "category": "bugfix",
+  "difficulty": "easy",
+  "workflow": "triage-fix-verify",
+  "summary": "Five customer-visible billing bugs: tax class, discount order, rounding, empty invoice crash, negative total.",
+  "time_limit_minutes": 20,
+  "protected_files": ["ISSUE.md"]
+}

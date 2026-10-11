@@ -1,0 +1,10 @@
+{
+  "id": "refactor-legacy-pricing",
+  "title": "Refactor legacy pricing code and add a gold tier",
+  "category": "refactor",
+  "difficulty": "medium",
+  "workflow": "characterize-refactor",
+  "summary": "Restructure a deeply nested pricing function with exact behavior parity, structural limits, and one new rule.",
+  "time_limit_minutes": 30,
+  "protected_files": ["REQUEST.md"]
+}

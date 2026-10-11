@@ -4,6 +4,8 @@
 #   ./data                   Pantheon's own data (encryption key, logs)
 #   PANTHEON_WORKSPACES      the host folder your agents work in (default ./data/workspaces)
 #                            -> mounted at /workspaces inside the backend
+#   docker-compose.override.yml  other folders for organizations' workspaces (-> /host/...),
+#                            written by Pantheon Host when you pick one in an org's Settings
 #
 # Optional settings go in a .env file next to this one (see .env.example):
 #   PANTHEON_VOICE_SHARE_HOST_DIR  absolute host path of ./data/voice, so audio.cpp
@@ -36,7 +38,9 @@ services:
       dockerfile: server/Dockerfile
     environment:
       PANTHEON_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-pantheon}:${POSTGRES_PASSWORD:-pantheon}@postgres:5432/${POSTGRES_DB:-pantheon}
-      PANTHEON_WORKSPACE_ROOTS: /workspaces
+      # /host: folders on this computer that Pantheon Host shares as workspaces (it adds
+      # them to docker-compose.override.yml; an organization's Settings > Workspace).
+      PANTHEON_WORKSPACE_ROOTS: /workspaces;/host
       PANTHEON_VOICE_BASE_URL: ${PANTHEON_VOICE_BASE_URL:-http://host.docker.internal:8080}
       PANTHEON_CORS_ORIGINS: ${PANTHEON_CORS_ORIGINS:-http://localhost:${PANTHEON_WEB_PORT:-3710},http://127.0.0.1:${PANTHEON_WEB_PORT:-3710}}
       # Live talk: clips are written here and audio.cpp reads them via the host path.

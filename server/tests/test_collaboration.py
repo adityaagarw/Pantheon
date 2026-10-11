@@ -10,7 +10,7 @@ from langchain_core.messages import AIMessage
 
 from app.core.db import SessionLocal
 from app.llm import mock
-from app.models import FeatureRequest, Meeting, Memory, Message, Task, ToolCall, Turn
+from app.models import Delivery, FeatureRequest, Meeting, Memory, Message, Task, ToolCall, Turn
 from app.services.supervisor import SYSTEM_ORG_ID
 from tests.conftest import wait_for
 from tests.helpers import call, dm, last_human, make_agent, make_org, rows, say, script
@@ -49,10 +49,14 @@ async def test_task_lifecycle_notifies_the_right_people(app_client):
     await wait_for(lambda: _status_is(org["id"], 2, "done"), timeout=30, msg="T-2 done")
     assert "assigned you T-2" in last_human(dev_prompts[0])
     assert any("Please review" in last_human(p) for p in pm_prompts)
-    # Quinn was told about the assignment (with the dependency) and later unblocked.
+    # Quinn's task waited on T-2: the assignment was recorded without waking Quinn (no work
+    # on code that isn't there yet), and the first wake-up is "you can start it now".
     await wait_for(lambda: any("can start it now" in last_human(p) for p in qa_prompts),
                    timeout=30, msg="unblock notice")
-    assert "waiting on: T-2" in last_human(qa_prompts[0])
+    assert "can start it now" in last_human(qa_prompts[0])
+    quiet = await rows(Message, Message.org_id == org["id"], Message.content.contains("assigned you T-3"))
+    assert quiet and "waits on T-2" in quiet[0].content
+    assert not await rows(Delivery, Delivery.message_id == quiet[0].id)
 
     r = await app_client.get(f"/api/v1/orgs/{org['id']}/tasks")
     by_num = {t["number"]: t for t in r.json()}

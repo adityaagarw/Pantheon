@@ -120,6 +120,13 @@ async def resolve_tools(org: Org, agent: Agent) -> ResolvedTools:
                 (org.settings or {}).get("shell_approval") == "auto":
             effective = "auto"  # the org runs shell commands without asking (deny still wins)
         tools[name] = EffectiveTool(name, spec.description, spec.parameters, effective, spec=spec)
+    # Whoever may draw on whiteboards may also look at them and draw whole diagrams.
+    if "whiteboard_draw" in tools:
+        for name in ("whiteboard_view", "whiteboard_diagram"):
+            spec = base.builtin(name)
+            if spec is not None and name not in tools and name not in denied:
+                tools[name] = EffectiveTool(name, spec.description, spec.parameters,
+                                            tools["whiteboard_draw"].approval, spec=spec)
     # Everyone can keep a calendar (reminders, cron) and read the files they were given.
     for name in (*scheduling.AMBIENT, *file_tools.AMBIENT):
         spec = base.builtin(name)

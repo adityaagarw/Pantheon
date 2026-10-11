@@ -56,7 +56,7 @@ async def test_limit_of_one_queues_the_second_agent(app_client):
         ann = await make_agent(app_client, org["id"], "Ann")
         bob = await make_agent(app_client, org["id"], "Bob")
         # Ann's turn takes a few seconds (a slow command), so Bob has to queue.
-        script(ann["id"], call("run_command", command="python -c \"import time; time.sleep(3)\""),
+        script(ann["id"], call("run_command", command="python -c \"import time; time.sleep(10)\""),
                say("ann done"), then=say("ok"))
         script(bob["id"], say("bob done"), then=say("ok"))
         await app_client.patch(f"/api/v1/agents/{ann['id']}", json={"tools": [
@@ -64,10 +64,9 @@ async def test_limit_of_one_queues_the_second_agent(app_client):
         await dm(app_client, org["id"], "Ann", "work")
         await wait_for(lambda: _status(ann["id"], "working"), msg="Ann working")
         await dm(app_client, org["id"], "Bob", "work")
-        await wait_for(lambda: _status(bob["id"], "queued"), msg="Bob queued")
-        limits = (await app_client.get("/api/v1/runtime/limits")).json()
-        assert limits["running"] == 1 and limits["waiting"] == 1
-        await wait_for(lambda: _turns(bob["id"]), timeout=60, msg="Bob got his turn")
+        await wait_for(lambda: _queued(runtime, bob["id"]), msg="Bob queued")
+        assert runtime.slots.status() == {"limit": 1, "running": 1, "waiting": 1}
+        await wait_for(lambda: _turns(bob["id"]), timeout=60, msg="Bob got a turn")
         assert await _turns(ann["id"]) == 1
     finally:
         await runtime.set_limit(8)
@@ -80,3 +79,8 @@ async def test_limit_of_one_queues_the_second_agent(app_client):
 
 async def _status(agent_id: str, status: str) -> bool:
     return any(a.runtime_status == status for a in await rows(Agent, Agent.id == agent_id))
+
+
+async def _queued(runtime, agent_id: str) -> bool:
+    """Shown as queued, and waiting for the slot (the status is set just before it joins the queue)."""
+    return runtime.slots.status()["waiting"] == 1 and await _status(agent_id, "queued")

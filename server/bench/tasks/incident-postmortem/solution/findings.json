@@ -1,0 +1,14 @@
+{
+  "incident_start": "2026-09-14T14:02:00Z",
+  "detected_at": "2026-09-14T14:06:30Z",
+  "mitigated_at": "2026-09-14T14:27:00Z",
+  "recovered_at": "2026-09-14T14:28:00Z",
+  "root_cause_service": "orders",
+  "trigger_version": "2.4.1",
+  "root_cause_summary": "orders 2.4.1 added a retry for inventory timeouts. The retry path takes a second database connection and does not release the first one, so the connection leak filled the orders-db pool.",
+  "peak_error_rate_percent": 38.46,
+  "failed_requests": 722,
+  "affected_endpoints": ["/api/checkout", "/api/orders"],
+  "time_to_detect_minutes": 4.5,
+  "time_to_mitigate_minutes": 25.0
+}

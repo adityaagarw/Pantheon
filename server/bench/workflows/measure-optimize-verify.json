@@ -1,0 +1,19 @@
+{
+  "name": "measure-optimize-verify",
+  "summary": "For performance work. Measure first, change the algorithm, then prove that the output did not change.",
+  "roles": [
+    {"name": "profiler", "job": "Measures the current speed and finds the slow part."},
+    {"name": "optimizer", "job": "Changes the slow part. Prefers a better algorithm over small tricks."},
+    {"name": "verifier", "job": "Compares the new output with the old output on many random inputs. Measures again."}
+  ],
+  "steps": [
+    {"id": "measure", "role": "profiler", "do": "Measure the time at several input sizes. Find the slow part and its complexity.", "output": "worklog/PERF.md"},
+    {"id": "optimize", "role": "optimizer", "do": "Rewrite the slow part. Keep the public interface.", "after": ["measure"]},
+    {"id": "verify", "role": "verifier", "do": "Keep a copy of the old code for comparison. Compare outputs on many random inputs, including ties and edge cases. Measure again and add the numbers.", "after": ["optimize"], "output": "worklog/REVIEW.md"}
+  ],
+  "rules": [
+    "Output must be exactly the same as before, including order.",
+    "Write all timings with their input sizes."
+  ],
+  "artifacts": ["worklog/PERF.md", "worklog/REVIEW.md"]
+}

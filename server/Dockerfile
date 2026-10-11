@@ -21,7 +21,7 @@ ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     PANTHEON_DATA_DIR=/data \
     PANTHEON_FERNET_KEY_PATH=/data/secrets/pantheon.key \
-    PANTHEON_WORKSPACE_ROOTS=/workspaces
+    PANTHEON_WORKSPACE_ROOTS="/workspaces;/host"
 
 EXPOSE 8710
 # Migrations run on startup (PANTHEON_AUTO_MIGRATE=true).

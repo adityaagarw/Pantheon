@@ -1,0 +1,10 @@
+{
+  "id": "data-sales-cleanup",
+  "title": "Clean dirty sales data and build a quarterly summary",
+  "category": "data",
+  "difficulty": "medium",
+  "workflow": "profile-build-check",
+  "summary": "Mixed date formats, region aliases, currency strings, corrections and bad rows. Graded on the given file and a hidden file.",
+  "time_limit_minutes": 30,
+  "protected_files": ["SPEC.md", "data/sales_2026_q3.csv"]
+}

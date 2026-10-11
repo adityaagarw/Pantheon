@@ -32,7 +32,7 @@ def _ready(a: att.Attachment) -> None:
 
 
 @ftool("attachment_list", "The files you've been given: uploaded documents and images (your own "
-       "library plus files shared with the organization).", obj({}))
+       "library, your leads' files and files shared with the organization).", obj({}))
 async def attachment_list(args: dict, ctx: ToolContext) -> str:
     files = await att.visible(ctx.org.id, ctx.agent.id)
     if not files:
@@ -47,7 +47,7 @@ async def attachment_list(args: dict, ctx: ToolContext) -> str:
             a.status if a.status != "ready" else "") if x)
         lines.append(f"- {a.id} '{a.name}' [{a.kind}, {att.human_size(a.size)}"
                      f"{', ' + detail if detail else ''}]"
-                     f"{' (shared with the org)' if a.agent_id is None else ''}"
+                     f"{' (shared with the org)' if a.agent_id != ctx.agent.id else ''}"
                      f"{' — ' + info['note'] if info.get('note') else ''}")
     return "\n".join(lines)
 

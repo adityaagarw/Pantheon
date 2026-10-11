@@ -127,6 +127,101 @@ async def test_web_ui_asks_pantheon_host_for_a_folder(app_client):
         host_svc.bridge.last_seen = 0
 
 
+def test_workspace_folders_are_mounted_through_the_override_file(settings, tmp_path, monkeypatch):
+    from host import mounts
+
+    repo = tmp_path / "Pantheon"
+    (repo / "data" / "workspaces" / "inside").mkdir(parents=True)
+    monkeypatch.setattr(paths, "REPO", repo)
+    monkeypatch.setattr(mounts, "OVERRIDE", repo / "docker-compose.override.yml")
+    restarts: list[int] = []
+    monkeypatch.setattr(mounts, "_restart_backend", lambda: restarts.append(1))
+    code = tmp_path / "My Code"
+    code.mkdir()
+    host = Host()
+    assert "workspaces" in host.capabilities()
+
+    monkeypatch.setattr(system, "ask_folder", lambda *a: None)
+    with pytest.raises(Refused, match="no folder chosen"):
+        host.pick_workspace({"org": "Acme"})
+
+    # A folder Docker already shares (under PANTHEON_WORKSPACES): no mount, no restart.
+    monkeypatch.setattr(system, "ask_folder", lambda *a: str(repo / "data/workspaces/inside"))
+    got = host.pick_workspace({"org": "Acme"})
+    assert got["path"] == "/workspaces/inside" and not got["restart"] and not restarts
+
+    # Anything else is mounted at /host/<name> and the backend restarts to see it.
+    monkeypatch.setattr(system, "ask_folder", lambda *a: str(code))
+    got = host.pick_workspace({"org": "Acme"})
+    assert got["path"].startswith("/host/my-code-") and got["restart"] and restarts == [1]
+    override = mounts.OVERRIDE.read_text()
+    assert mounts.MARK in override and f"target: \"{got['path']}\"" in override
+    assert code.resolve().as_posix() in override
+    again = host.pick_workspace({"org": "Acme"})  # already mounted: no second restart
+    assert again["path"] == got["path"] and not again["restart"] and restarts == [1]
+
+    # Pantheon may take a mount away; the file goes when nothing is left.
+    assert "no longer shared" in host.ops()["unmount_workspace"]({"path": got["path"]})
+    assert mounts.mounts() == {} and not mounts.OVERRIDE.exists()
+
+    # Someone's own override file is never rewritten.
+    mounts.OVERRIDE.write_text("services: {}\n")
+    with pytest.raises(Refused, match="is yours"):
+        mounts.mount(str(code))
+    assert mounts.OVERRIDE.read_text() == "services: {}\n"
+
+
+async def test_an_org_gets_a_workspace_from_this_computer(app_client):
+    from app.core.config import settings as app_settings
+    from app.models import Agent
+    from app.services import host as host_svc
+    from tests.helpers import make_agent, make_org, rows
+
+    mounted = (app_settings.workspace_root_paths[0] / "host-app").as_posix()  # like /host/app-…
+    headers = {"X-Host-Token": host_svc.token()}
+    org = await make_org(app_client, "Builders")
+    ann = await make_agent(app_client, org["id"], "Ann")
+    host_svc.bridge.last_seen = 0
+    r = await app_client.post("/api/v1/host/workspace", json={"orgId": org["id"]})
+    assert r.status_code == 409 and "isn't running" in r.json()["detail"]
+    await app_client.post("/api/v1/host/hello", headers=headers,
+                          json={"host": "my-pc", "capabilities": ["folders", "workspaces"]})
+    seen: list[dict] = []
+
+    async def fake_host():
+        while True:
+            r = await app_client.get("/api/v1/host/next?wait=2", headers=headers)
+            if r.status_code == 204:
+                continue
+            job = r.json()
+            seen.append(job)
+            await app_client.post("/api/v1/host/result", headers=headers, json={
+                "id": job["id"], "ok": True, "error": None,
+                "result": {"hostPath": "D:/code/app", "path": mounted, "restart": True}})
+
+    task = asyncio.create_task(fake_host())
+    try:
+        from app.core.db import SessionLocal
+
+        async with SessionLocal() as session:  # someone is working: a restart would stop them
+            row = await session.get(Agent, ann["id"])
+            row.runtime_status = "working"
+            await session.commit()
+        r = await app_client.post("/api/v1/host/workspace", json={"orgId": org["id"]})
+        assert r.status_code == 409 and r.json()["detail"]["running"] == ["Ann (Builders) is working"]
+        assert not seen  # nothing was asked of the computer
+        r = await app_client.post("/api/v1/host/workspace", json={"orgId": org["id"], "force": True})
+        assert r.json()["hostPath"] == "D:/code/app" and r.json()["restart"] is True
+        assert seen[-1]["op"] == "pick_workspace" and seen[-1]["args"] == {"org": "Builders"}
+        got = (await app_client.get(f"/api/v1/orgs/{org['id']}")).json()["org"]
+        assert Path(got["workspace"]) == Path(mounted)
+        assert got["settings"]["workspace_host"]["hostPath"] == "D:/code/app"
+        assert (await rows(Agent, Agent.id == ann["id"]))[0]
+    finally:
+        task.cancel()
+        host_svc.bridge.last_seen = 0
+
+
 def _zip(files: dict[str, str], top: str = "Pantheon-main/") -> bytes:
     import io
     import zipfile

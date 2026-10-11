@@ -61,7 +61,7 @@ async def test_agents_draw_read_and_erase(app_client):
     outs = [[str(m.content) for m in p if isinstance(m, ToolMessage)][-1] for p in ap[1:]]
     assert "rectangle 'Frontend'" in outs[0]
     assert "Drew 4 shape(s)" in outs[1]
-    assert "(being drawn) rectangle 'API' (api)" in outs[-1]
+    assert "(being drawn) rectangle 'API' in " in outs[-1] and "(api)" in outs[-1]
 
     scene = (await app_client.get(f"/api/v1/whiteboards/{bid}")).json()
     pend = {p.get("id"): p for p in scene["pending"]}

@@ -22,6 +22,12 @@ class Settings(BaseSettings):
     # multiple roots with ``;`` (Windows) or ``:`` is not supported — use ``;``.
     workspace_roots: str = "../data/workspaces"
 
+    # --- models ------------------------------------------------------------
+    # What an agent gets when neither it nor its organization says otherwise.
+    # Temperature is never defaulted: unset means the provider's own default.
+    default_max_tokens: int = 131072
+    default_reasoning_effort: str = "xhigh"  # off | low | medium | high | xhigh
+
     # --- runtime -----------------------------------------------------------
     # Concurrent agent turns across the whole process.
     max_concurrent_turns: int = 8

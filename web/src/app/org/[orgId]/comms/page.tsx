@@ -10,6 +10,7 @@ import { api } from "@/lib/api";
 import { timeAgo } from "@/lib/format";
 import type { Channel } from "@/lib/types";
 import { agentName, useOrg } from "@/store/org";
+import { liveFor } from "@/store/reduce";
 
 export default function CommsPage() {
   const orgId = useOrg((s) => s.orgId)!;
@@ -151,6 +152,7 @@ function ChannelView({ channel, orgId, title, onBack }: { channel: Channel; orgI
 
   const canPost = (channel.kind === "channel" && !channel.archived) || (channel.kind === "dm" && channel.members.includes("user"));
   const dmTarget = channel.kind === "dm" ? channel.members.find((m) => m !== "user") : undefined;
+  const dmWorking = useOrg((s) => (dmTarget ? liveFor(s, dmTarget).status === "working" : false));
   return (
     <>
       <div className="flex items-center gap-3 border-b border-line px-4 py-3 md:px-5">
@@ -188,7 +190,12 @@ function ChannelView({ channel, orgId, title, onBack }: { channel: Channel; orgI
       {canPost ? (
         <Composer
           placeholder={dmTarget ? `Message ${agentName(dmTarget)}…` : `Post to ${channel.key} (use @Name to mention)…`}
-          onSend={(t, files) => api.send(orgId, dmTarget ? { to: dmTarget, content: t, attachments: files } : { channel: channel.id, content: t, attachments: files }).then(() => undefined)}
+          onSend={(t, files, o) =>
+            api
+              .send(orgId, dmTarget ? { to: dmTarget, content: t, attachments: files, steer: o?.steer } : { channel: channel.id, content: t, attachments: files })
+              .then(() => undefined)
+          }
+          working={dmTarget && dmWorking ? { name: agentName(dmTarget) } : null}
           attach={{ orgId, agentId: dmTarget }}
           live={dmTarget ? { orgId, agentId: dmTarget, agentName: agentName(dmTarget) } : undefined}
           onLiveChange={setLiveOn}

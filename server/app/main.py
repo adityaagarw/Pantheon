@@ -16,6 +16,7 @@ from app.agents.runtime import runtime
 from app.api import (
     admin,
     attachments,
+    bench,
     comms,
     extend,
     host,
@@ -102,6 +103,9 @@ async def lifespan(app: FastAPI):
 
     await shadow_svc.resume_recorders()
     await runtime.start()
+    from app.services import bench as bench_service
+
+    await bench_service.recover()
     watcher = asyncio.create_task(oversight.run_forever(), name="argus-watches")
     from app.services import memory as memory_svc
 
@@ -139,7 +143,7 @@ async def domain_error(request: Request, exc: Exception) -> JSONResponse:
 for r in (orgs.router, comms.router, meetings.router, work.router, observe.router, admin.router,
           voice.router, world.router, extend.router, stage.router, memory.router, whiteboards.router,
           attachments.router, secrets.router, host.router, shadow.router, stagedocs.router,
-          ws.router):
+          bench.router, ws.router):
     app.include_router(r)
 
 

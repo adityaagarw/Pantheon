@@ -24,7 +24,9 @@ These files are part of the Pantheon source tree.
 | *Cube Pets* 3D models | `web/public/models/pets/`, `web/public/thumbs/pets/` | CC0 1.0 | [Kenney](https://kenney.nl) |
 | *Blocky Characters* 3D models | `web/public/models/blocky/`, `web/public/thumbs/blocky/` | CC0 1.0 | [Kenney](https://kenney.nl) |
 | *Mini Dungeon* 3D models | `web/public/models/dungeon/`, `web/public/thumbs/dungeon/` | CC0 1.0 | [Kenney](https://kenney.nl) |
+| *Nature Kit* 3D models | `web/public/models/nature/`, `web/public/thumbs/nature/` | CC0 1.0 | [Kenney](https://kenney.nl) |
 | *RobotExpressive* | `web/public/models/robot.glb` | CC0 1.0 | Tomás Laulhé ([Quaternius](https://quaternius.com)), modified by Don McCurdy |
+| Role ideas and review practices in the agent prompts of some organization templates (rewritten for Pantheon, no files copied) | `server/app/templates/` | MIT, Copyright (c) 2025 AgentLand Contributors | [agency-agents](https://github.com/msitarzewski/agency-agents) |
 
 The 3D asset credits are also in `web/public/models/LICENSE.txt`.
 

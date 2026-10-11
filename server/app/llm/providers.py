@@ -15,6 +15,7 @@ import httpx
 from langchain_core.language_models import BaseChatModel
 from sqlalchemy import select
 
+from app.core.config import settings
 from app.core.db import SessionLocal
 from app.core.security import decrypt_secret
 from app.llm import effort as effort_mod
@@ -112,6 +113,9 @@ def build_chat_model(
             "max_retries": 0,
             "max_tokens": max_tokens or 8192,
         }
+        if kwargs["max_tokens"] > 21333:
+            # The SDK refuses long non-streamed requests; streaming gives the same result.
+            kwargs["streaming"] = True
         if temperature is not None:
             kwargs["temperature"] = temperature
         if provider.base_url:
@@ -153,9 +157,9 @@ async def resolve_binding(binding: dict[str, Any], agent_id: str = "") -> Resolv
     if not model_id:
         raise ModelConfigError(f"provider '{provider.name}' has no model selected")
     meta = _model_meta(provider, model_id)
-    temperature = binding.get("temperature")
-    max_tokens = binding.get("max_tokens")
-    level = str(binding.get("reasoning_effort") or "")
+    temperature = binding.get("temperature")  # None: the provider's default
+    max_tokens = binding.get("max_tokens") or settings.default_max_tokens or None
+    level = str(binding.get("reasoning_effort") or settings.default_reasoning_effort or "")
     if not effort_mod.valid(level):
         level = ""
     level = effort_mod.effective(level, provider.id, model_id)

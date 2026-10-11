@@ -1,0 +1,22 @@
+{
+  "name": "plan-build-review",
+  "summary": "For features. Plan the change, build it, review it, and update the docs.",
+  "roles": [
+    {"name": "planner", "job": "Turns the request into a plan: the changes, the interface, the edge cases and the tests."},
+    {"name": "builder", "job": "Writes the code and the tests from the plan."},
+    {"name": "reviewer", "job": "Checks the code against the request, line by line. Finds missing cases."},
+    {"name": "doc-writer", "job": "Updates the user docs so that they match the new behavior."}
+  ],
+  "steps": [
+    {"id": "plan", "role": "planner", "do": "Read the request and the code. Write a plan with a list of acceptance checks.", "output": "worklog/PLAN.md"},
+    {"id": "build", "role": "builder", "do": "Write the code and tests for each acceptance check.", "after": ["plan"]},
+    {"id": "docs", "role": "doc-writer", "do": "Update the README for the new behavior.", "after": ["plan"]},
+    {"id": "review", "role": "reviewer", "do": "Check each acceptance check against the code and the tests. Send problems back to the builder.", "after": ["build", "docs"], "output": "worklog/REVIEW.md"}
+  ],
+  "rules": [
+    "The builder and the doc-writer can work at the same time.",
+    "The reviewer must not be the builder.",
+    "Repeat build and review until the reviewer accepts the change."
+  ],
+  "artifacts": ["worklog/PLAN.md", "worklog/REVIEW.md"]
+}

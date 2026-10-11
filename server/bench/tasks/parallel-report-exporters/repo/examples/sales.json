@@ -1,0 +1,14 @@
+{
+  "title": "Sales by product",
+  "generated_at": "2026-10-01T08:30:00",
+  "columns": [
+    {"name": "Product", "type": "text"},
+    {"name": "Units", "type": "int"},
+    {"name": "Revenue", "type": "money"},
+    {"name": "First sale", "type": "date"}
+  ],
+  "rows": [
+    {"Product": "Widget", "Units": 3, "Revenue": "59.97", "First sale": "2026-09-01"},
+    {"Product": "Desk Lamp, large", "Units": 10, "Revenue": "272.5", "First sale": null}
+  ]
+}

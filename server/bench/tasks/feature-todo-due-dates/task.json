@@ -1,0 +1,10 @@
+{
+  "id": "feature-todo-due-dates",
+  "title": "Add due dates to a todo CLI",
+  "category": "feature",
+  "difficulty": "medium",
+  "workflow": "plan-build-review",
+  "summary": "Add a feature across CLI parsing, storage, output format, filters, sorting, errors and docs.",
+  "time_limit_minutes": 30,
+  "protected_files": ["FEATURE_REQUEST.md"]
+}

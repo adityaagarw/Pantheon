@@ -1,0 +1,21 @@
+{
+  "name": "investigate-report",
+  "summary": "For incidents and research. Investigators collect evidence in parallel, an analyst finds the cause, a writer writes the report, a reviewer checks each claim.",
+  "roles": [
+    {"name": "investigator", "job": "Reads one evidence source (for example one log file). Writes facts with timestamps. Use several investigators at the same time."},
+    {"name": "analyst", "job": "Joins the facts into one timeline. Tests each possible cause. Rejects causes that the evidence does not support."},
+    {"name": "writer", "job": "Writes the final report and the structured data."},
+    {"name": "reviewer", "job": "Checks each claim and number in the report against the raw evidence."}
+  ],
+  "steps": [
+    {"id": "collect", "role": "investigator", "do": "Give one evidence source to each investigator. Each one writes facts with timestamps and example lines.", "output": "worklog/EVIDENCE.md"},
+    {"id": "analyze", "role": "analyst", "do": "Make one timeline. List all possible causes. For each one, write the evidence for and against it.", "after": ["collect"], "output": "worklog/ANALYSIS.md"},
+    {"id": "write", "role": "writer", "do": "Write the deliverables from the analysis.", "after": ["analyze"]},
+    {"id": "review", "role": "reviewer", "do": "Check each number and time against the raw data. Send errors back to the writer.", "after": ["write"], "output": "worklog/REVIEW.md"}
+  ],
+  "rules": [
+    "Calculate numbers from the raw data with a script. Do not guess them.",
+    "Each claim in the report must point to evidence."
+  ],
+  "artifacts": ["worklog/EVIDENCE.md", "worklog/ANALYSIS.md", "worklog/REVIEW.md"]
+}

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AgentAvatar, StatusBadge } from "@/components/agent";
 import { Markdown } from "@/components/Markdown";
-import { Badge, Button, cx, ErrorNote, Field, Input, Select, Tabs, Textarea } from "@/components/ui";
+import { Badge, Button, cx, ErrorNote, Field, Input, Select, Tabs, Textarea, Toggle } from "@/components/ui";
 import { api } from "@/lib/api";
 import { ContextControls } from "@/components/ContextControls";
 import { AgentFiles } from "@/components/Files";
@@ -133,6 +133,7 @@ function ProfileTab({ draft, set }: { draft: Agent; set: SetFn }) {
         <Field label="Status">
           <Select value={draft.status} onChange={(e) => set("status", e.target.value as Agent["status"])}>
             <option value="active">Active</option>
+            <option value="standby">Standby (starts when a task is ready for it)</option>
             <option value="paused">Paused (keeps inbox, doesn&apos;t work)</option>
             <option value="disabled">Disabled (receives nothing)</option>
           </Select>
@@ -152,6 +153,18 @@ function ProfileTab({ draft, set }: { draft: Agent; set: SetFn }) {
         ) : (
           <Textarea className="min-h-80 font-mono text-[13px]" value={draft.persona} onChange={(e) => set("persona", e.target.value)} />
         )}
+        <div className="mt-2">
+          <Toggle
+            checked={draft.persona.includes("ASD-STE100")}
+            onChange={(on) => set("persona", toggleSte(draft.persona, on))}
+            label={
+              <span>
+                Write in <b>ASD-STE100 Simplified Technical English</b>{" "}
+                <span className="text-ink-3">(adds a line to the persona; Pantheon adds the STE rules to the prompt)</span>
+              </span>
+            }
+          />
+        </div>
         <div className="mt-1.5 text-xs text-ink-3">
           Pantheon adds the org context, colleagues, open tasks, operating rules and tool list automatically — focus on who this agent is and how it works.
         </div>
@@ -192,21 +205,32 @@ export function ModelSettings({ model, onChange }: { model: Agent["model"]; onCh
         </datalist>
       </Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label={`Temperature ${m.temperature ?? "default"}`}>
-          <input type="range" min={0} max={1.5} step={0.05} value={m.temperature ?? 0.7} onChange={(e) => upd({ temperature: Number(e.target.value) })} className="w-full accent-[#8b7cff]" />
+        <Field label={`Temperature: ${m.temperature ?? "provider default"}`}>
+          {m.temperature === undefined ? (
+            <Button size="sm" variant="ghost" onClick={() => upd({ temperature: 0.7 })} title="Override the provider's temperature for this agent">
+              Set a temperature…
+            </Button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <input type="range" min={0} max={1.5} step={0.05} value={m.temperature} onChange={(e) => upd({ temperature: Number(e.target.value) })} className="w-full accent-[#8b7cff]" />
+              <Button size="sm" variant="ghost" onClick={() => upd({ temperature: undefined })} title="Use the provider's temperature">
+                Default
+              </Button>
+            </div>
+          )}
         </Field>
         <Field label="Thinking" hint="Off skips thinking (faster, cheaper). A server that doesn't offer a level gets the closest one it does.">
           <Select value={m.reasoning_effort ?? ""} onChange={(e) => upd({ reasoning_effort: (e.target.value || undefined) as Agent["model"]["reasoning_effort"] })}>
-            <option value="">Provider default</option>
+            <option value="">Extra high (default)</option>
             <option value="off">Off — no thinking</option>
             <option value="low">Low</option>
             <option value="medium">Medium</option>
             <option value="high">High</option>
-            <option value="xhigh">Extra high</option>
+            <option value="xhigh">Extra high (always)</option>
           </Select>
         </Field>
         <Field label="Max output tokens">
-          <Input type="number" value={m.max_tokens ?? ""} onChange={(e) => upd({ max_tokens: e.target.value ? Number(e.target.value) : undefined })} placeholder="default" />
+          <Input type="number" value={m.max_tokens ?? ""} onChange={(e) => upd({ max_tokens: e.target.value ? Number(e.target.value) : undefined })} placeholder="131072 (default)" />
         </Field>
         <Field label="Context window" hint="Compaction starts at 60%">
           <Input type="number" value={m.context_window ?? ""} onChange={(e) => upd({ context_window: e.target.value ? Number(e.target.value) : undefined })} placeholder="from provider (32k)" />
@@ -565,4 +589,16 @@ function VoicePicker({ value, onChange }: { value: string; onChange: (v: string)
       </Select>
     </Field>
   );
+}
+
+export const STE_LINE = "Always write in ASD-STE100 Simplified Technical English (STE).";
+
+/** Add or remove the persona line that asks for ASD-STE100 Simplified Technical English. */
+export function toggleSte(persona: string, on: boolean): string {
+  const without = persona
+    .split("\n")
+    .filter((l) => !l.includes("ASD-STE100"))
+    .join("\n")
+    .trimEnd();
+  return on ? `${without}${without ? "\n\n" : ""}${STE_LINE}` : without;
 }

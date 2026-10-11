@@ -318,6 +318,14 @@ lives inside it:
 PANTHEON_WORKSPACES=/home/me/projects      # then set an org's workspace to /workspaces/my-repo
 ```
 
+Or pick any folder on your computer for one organization: open its **Settings** and click
+**Use a folder on this computer…**. Pantheon Host (`python host/main.py`) shows a folder picker on
+your screen. For a folder outside `PANTHEON_WORKSPACES` it adds a mount to
+`docker-compose.override.yml` (the folder appears at `/host/<name>`) and restarts the backend.
+Pantheon warns you first if agents are working. Without the web UI:
+`python host/main.py mount "D:/code/app"`, then `docker compose up -d --no-deps backend`.
+`python host/main.py list` shows the shared folders, and `unmount` stops sharing one.
+
 Nothing outside the workspace roots is reachable. Shell commands and file writes can be set to *ask*
 per agent, so you approve each one from the Inbox.
 

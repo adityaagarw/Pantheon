@@ -1,0 +1,468 @@
+order_id,order_date,customer,region,product,quantity,unit_price,status
+SO-01001,"Aug 20, 2026",Acme Corp,Europe,Monitor Arm,-2, 89.00 ,cancelled
+SO-01002,"Jul 12, 2026",Wayne Ent,Europe,Widget Pro,1,$49.50,Pending
+SO-01003,2026-07-29,Initech,NA,Cable Kit,25,9.95,cancelled
+SO-01004,"Jul 13, 2026",Globex,apac,  USB-C Hub ,3,$ 34.95,Pending
+SO-01005,2026/08/08,Initech,APAC,  Standing Desk ,4,1249,COMPLETED 
+SO-01006,4/9/2026,Initech, NORTH AMERICA ,Widget Pro,12,$ 49.50,completed
+SO-01007,27/09/2026,,apac,Monitor Arm,1,89.00,completed
+SO-01008,"Aug 6, 2026",Wayne Ent,latam,  Desk Lamp ,12, 27.25 ,completed
+SO-01009,1/8/2026,Wayne Ent,EMEA,  Desk Lamp ,12,$ 27.25,refunded
+SO-01010,"Aug 15, 2026",Wayne Ent,LATAM,Desk Lamp,2,$27.25,completed
+SO-01003,2026/07/01,Wayne Ent,apac,Desk Lamp,5,$27.25,pending
+SO-01011,"Sep 26, 2026",Wayne Ent,latin america,Widget,1,$ 19.99,Pending
+SO-01012,15/07/2026,Acme Corp,Europe,  Standing Desk ,2,1249,completed
+SO-01013,"Jul 20, 2026",Hooli,latam,USB-C Hub,12,34.95,completed
+SO-01014,2026/07/11,Globex,asia,Standing Desk,2.5,"$1,249.00",refunded
+SO-01015,2026-09-21,Hooli,apac,Widget,2, 19.99 ,completed
+SO-01016,31/7/2026,Umbrella,EU,USB-C Hub,5,34.95,completed
+SO-01017,14/08/2026,Globex,LATAM,Monitor Arm,12,$89.00,completed
+SO-01018,22/09/2026,Globex,Latin America,Widget,3,$ 19.99,completed
+SO-01019,"Aug 21, 2026",Globex,LATAM,Cable Kit,2,9.95,completed
+SO-01020,"Jul 20, 2026",Initech,Asia Pacific,  Standing Desk ,1,1249,pending
+SO-01021,2026/08/02,Hooli,n america,USB-C Hub,5, 34.95 ,refunded
+SO-01022,"Sep 23, 2026",Wayne Ent,LATAM,Monitor Arm,25,89,completed
+SO-01023,19/7/2026,Globex,europe ,  Gadget ,25,12,refunded
+SO-01024,25/07/2026,Acme Corp,Europe,Widget,25,19.99,completed
+SO-01025,"Aug 27, 2026",,apac,USB-C Hub,25, 34.95 ,refunded
+SO-01026,20/8/2026,Stark Ind,North America,Cable Kit,10,9.95,completed
+SO-01027,19/07/2026,Initech,Asia  Pacific,Gadget,1,abc,COMPLETED 
+SO-01028,2026/08/23,Stark Ind,asia,  Cable Kit ,5,9.95,completed
+SO-01028,2026/08/23,Stark Ind,asia,  Cable Kit ,5,9.95,completed
+SO-01029,2026-09-04,Globex,APAC,Monitor Arm,1,89.00,completed
+SO-01030,25/09/2026,Wayne Ent,LATAM,Gadget,25,12,COMPLETED 
+SO-01031,10/07/2026,Acme Corp,Latin America,Gadget,1,12,shipped
+SO-01032,yesterday,Acme Corp,apac,Cable Kit,1,$9.95,completed
+SO-01033,"Aug 27, 2026",Initech,asia,USB-C Hub,1,"12,50.0.1",completed
+SO-01034,2026-08-27,Wayne Ent,EMEA,Standing Desk,10,1249,completed
+SO-01035,2026-08-14,Initech,Latin America,  Gadget ,4,$,completed
+SO-01036,27/09/2026,Acme Corp,EMEA,Desk Lamp,4,$ 27.25,completed
+SO-01037,05/07/2026,Umbrella,emea,Monitor Arm,5,$ 89.00,completed
+SO-01038,2026-08-03,Initech,N. America,Widget,10,19.99,completed
+SO-01039,"Aug 11, 2026",,LATAM,Gadget,2,12.00,pending
+SO-01040,"Sep 26, 2026",Umbrella,North America,  Gadget ,2, 12.00 ,completed
+SO-01041,01/09/2026,Acme Corp,EMEA,Widget,25,19.99,completed
+SO-01029,2026/08/03,Umbrella,north america,Desk Lamp,12,,Completed
+SO-01042,2026/09/15,Stark Ind,NA,,4,34.95,cancelled
+SO-01043,25/9/2026,Hooli,europe ,Widget Pro,12,$ 49.50,completed
+SO-01044,03/07/2026,,Latin America,Widget Pro,12, 49.50 ,Completed
+SO-01045,06/09/2026,Stark Ind,EU,Widget Pro,25, 49.50 ,completed
+SO-01046,2026/07/04,Acme Corp,Mars,Standing Desk,10, 1249.00 ,pending
+SO-01047,13/8/2026,Globex,APAC,,4, 19.99 ,completed
+SO-01048,2026-08-05,Acme Corp, NORTH AMERICA ,Desk Lamp,2,$27.25,completed
+
+SO-01049,19/9/2026,Umbrella,North  America,  Cable Kit ,10,$ 9.95,cancelled
+SO-01050,22/7/2026,Wayne Ent,emea,Widget,4, 19.99 ,Completed
+SO-01051,"Jul 22, 2026",Initech,North America,Cable Kit,12,9.95,completed
+SO-01052,2026/09/09,Umbrella,Europe,Cable Kit,25,9.95,completed
+SO-01053,19/8/2026,Umbrella,latin america,Widget,1,$ 19.99,completed
+SO-01054,2026/08/04,Wayne Ent,N. America,   ,10, 34.95 ,completed
+SO-01055,6/9/2026,,LATAM,Widget Pro,3,$49.50,completed
+SO-01056,2026-09-09,Acme Corp, NORTH AMERICA ,Standing Desk,1, 1249.00 ,completed
+SO-01057,10/07/2026,Umbrella,N. America,Widget Pro,1,49.50,refunded
+SO-01058,2026/09/06,Umbrella,Latin America,USB-C Hub,4,34.95,completed
+SO-01059,"Jul 30, 2026",Wayne Ent,asia,Widget Pro,1, 49.50 ,pending
+SO-01060,27/7/2026,Umbrella,NA,Desk Lamp,3,$27.25,COMPLETED 
+SO-01061,29/7/2026,Wayne Ent,Europe,Standing Desk,2,"$ 1,249.00",completed
+SO-01062,24/7/2026,,North  America,Widget,1,19.99,completed
+  ,"Aug 9, 2026",Wayne Ent, NORTH AMERICA ,Standing Desk,5,"$ 1,249.00",completed
+SO-01064,18/08/2026,Hooli,EMEA,  Widget Pro ,12,$49.50,completed
+,19/9/2026,Umbrella, NORTH AMERICA ,Standing Desk,10,1249.00,Completed
+SO-01066,04/08/2026,Acme Corp,asia,Monitor Arm,5, 89.00 ,shipped
+SO-01028,30/9/2026,Wayne Ent,latam,Widget Pro,12,$49.50,COMPLETED 
+SO-01067,2026/09/16,Stark Ind,emea,Desk Lamp,1,27.25,completed
+SO-01068,"Sep 09, 2026",Stark Ind,LATAM,Widget,1,19.99,completed
+SO-01069,2026/07/30,Wayne Ent,EMEA,Standing Desk,3,1249,Pending
+SO-01070,17/08/2026,Hooli,APAC,Desk Lamp,-2,$27.25,completed
+SO-01071,2026-09-22,,Europe,USB-C Hub,12,$34.95,COMPLETED 
+SO-01036,2026/07/07,Umbrella,North America,USB-C Hub,2,$ 34.95,cancelled
+SO-01072,"Sep 20, 2026",Stark Ind,north america,  Widget ,5,$19.99,completed
+SO-01073,11/8/2026,Stark Ind,north america,USB-C Hub,1,$34.95,completed
+SO-01074,"Sep 23, 2026",Initech,Latin America,Widget Pro,10, 49.50 ,Completed
+SO-01075,11/09/2026,Wayne Ent,Asia  Pacific,  Widget ,5,$19.99,Completed
+SO-01075,11/09/2026,Wayne Ent,Asia  Pacific,  Widget ,5,$19.99,Completed
+SO-01076,"Sept 05, 2026",Wayne Ent,latam,Gadget,2,$12.00,completed
+SO-01077,19/07/2026,Hooli,EU,Monitor Arm,1,89.00,Completed
+SO-01078,2026-07-17,,asia,  USB-C Hub ,10,34.95,pending
+SO-01079,2026/09/17,,Antarctica,USB-C Hub,1,$ 34.95,refunded
+SO-01080,"Sep 10, 2026",Acme Corp,North  America,USB-C Hub,1,$ 34.95,cancelled
+  ,2026/09/13,Wayne Ent,Asia  Pacific,Cable Kit,12,9.95,COMPLETED 
+SO-01082,30/8/2026,Globex,Europe,Standing Desk,10, 1249.00 ,completed
+SO-01083,"Jul 11, 2026",Stark Ind,europe ,  Widget ,25,$ 19.99,Pending
+SO-01084,17/7/2026,Hooli,EU,Widget Pro,3,49.50,completed
+SO-01085,19/07/2026,,LATAM,Desk Lamp,25,$27.25,completed
+SO-01086,2026/08/18,Hooli,Asia Pacific,Desk Lamp,1, 27.25 ,COMPLETED 
+SO-01087,"Sep 7, 2026",Wayne Ent,asia,Widget Pro,5,49.5,completed
+SO-01088,yesterday,Hooli,NA,Gadget,5,12.00,pending
+SO-01089,17/7/2026,Umbrella,n america,Monitor Arm,1,89.00,completed
+SO-01090,13/09/2026,Initech,LATAM,USB-C Hub,12,$34.95,
+SO-01091,24/09/2026,Wayne Ent,emea,Widget Pro,1,49.5,completed
+SO-01092,2026-07-22,Acme Corp,Europe,Standing Desk,10,"$1,249.00",shipped
+SO-01067,2026/08/22,Wayne Ent,europe ,USB-C Hub,4,34.95,completed
+SO-01093,18/8/2026,,North America,Standing Desk,12,"$1,249.00",completed
+SO-01094,27/09/2026,Acme Corp,asia,Widget Pro,10,49.5,completed
+SO-01095,22/07/2026,Umbrella, NORTH AMERICA ,Widget Pro,2, 49.50 ,completed
+SO-01096,"Sep 6, 2026",Acme Corp,Latin America,Standing Desk,3,1249,completed
+SO-01097,2026-07-05,Globex,Europe,Gadget,2, 12.00 ,completed
+SO-01017,2026-07-06,Stark Ind,north america,Widget,25,19.99,pending
+SO-01098,2026-07-15,Acme Corp,Europe,USB-C Hub,4,$ 34.95,
+SO-01099,14/08/2026,Hooli,North America,Desk Lamp,5, 27.25 ,cancelled
+SO-01100,4/7/2026,Globex,latam,Widget,1,19.99,cancelled
+SO-01101,2026-08-25,Umbrella,emea,Desk Lamp,1,27.25,completed
+SO-01102,14/09/2026,Hooli,LATAM,Gadget,3,0.00,COMPLETED 
+SO-01103,yesterday,Wayne Ent,Asia  Pacific,Widget Pro,1,$ 49.50,Pending
+SO-01104,2026/09/19,,LATAM,Gadget,1, 12.00 ,cancelled
+SO-01105,29/8/2026,Hooli,europe ,Monitor Arm,5,$ 89.00,Pending
+SO-01106,2026/07/20,Stark Ind,europe ,Desk Lamp,2,$27.25,completed
+SO-01107,2026-09-23,Umbrella,EMEA,Widget Pro,2, 49.50 ,pending
+SO-01108,27/7/2026,,Asia Pacific,  Widget Pro ,10,$49.50,refunded
+SO-01108,27/7/2026,,Asia Pacific,  Widget Pro ,10,$49.50,refunded
+SO-01109,"Jul 1, 2026",Umbrella,latin america,Desk Lamp,10,$27.25,Pending
+SO-01110,2026-09-21,,EMEA,USB-C Hub,1,$ 34.95,completed
+SO-01111,31/8/2026,Acme Corp,latin america,Desk Lamp,2, 27.25 ,completed
+SO-01112,2026/09/08,Initech,APAC,Widget,1,19.99,COMPLETED 
+SO-01113,"Aug 22, 2026",,APAC,Monitor Arm,2,$ 89.00,refunded
+SO-01114,02/08/2026,Wayne Ent,N. America,  Monitor Arm ,1,$ 89.00,Completed
+SO-01115,"Aug 8, 2026",Wayne Ent,europe ,Widget Pro,10,$ 49.50,shipped
+SO-01116,19/07/2026,Wayne Ent,EMEA,Standing Desk,25,"$1,249.00",COMPLETED 
+SO-01117,"Aug 24, 2026",Initech,Asia  Pacific,  Cable Kit ,4, 9.95 ,completed
+SO-01118,20/07/2026,Wayne Ent,Asia Pacific,  Widget Pro ,5,$49.50,refunded
+SO-01118,20/07/2026,Wayne Ent,Asia Pacific,  Widget Pro ,5,$49.50,refunded
+SO-01119,"Jul 10, 2026",Hooli,emea,Widget,2,$19.99,completed
+SO-01120,"Sep 17, 2026",Globex,europe ,Cable Kit,4,$9.95,COMPLETED 
+SO-01121,2026-09-10,Hooli,N. America,Standing Desk,2,"$ 1,249.00",COMPLETED 
+SO-01122,2026/09/02,Acme Corp,EU,Standing Desk,12,1249,COMPLETED 
+SO-01123,"Jul 24, 2026",Stark Ind,North  America,Cable Kit,1,9.95,completed
+SO-01124,2026/09/01,Acme Corp,LATAM,Widget Pro,2, 49.50 ,completed
+SO-01125,25/08/2026,Wayne Ent,asia,USB-C Hub,4, 34.95 ,completed
+SO-01126,"Jul 27, 2026",,Asia Pacific,Desk Lamp,5, 27.25 ,completed
+SO-01127,9/9/2026,Acme Corp,latin america,Widget,1,19.99,completed
+SO-01128,2026/09/17,Globex,LATAM,  Widget ,12,$19.99,completed
+  ,2026/08/17,Hooli,n america,Widget Pro,4,$49.50,Completed
+SO-01130,"Sep 11, 2026",Acme Corp,Latin America,Widget,10,19.99,pending
+SO-01130,"Sep 11, 2026",Acme Corp,Latin America,Widget,10,19.99,pending
+,30/8/2026,Globex,Europe,Cable Kit,3,$9.95,Pending
+SO-01132,2026/07/16,,Europe,Widget Pro,3,$ 49.50,pending
+,"Aug 7, 2026",,N. America,Gadget,4,12.00,pending
+SO-01134,09/08/2026,Initech,latin america,Widget Pro,5, 49.50 ,cancelled
+SO-01135,2026/09/21,Wayne Ent,Asia  Pacific,Widget Pro,12, 49.50 ,cancelled
+SO-01136,"Jul 20, 2026",Hooli,n america,Monitor Arm,3,$ 89.00,Completed
+SO-01137,2026-09-27,Stark Ind,asia,Standing Desk,2,1249,completed
+
+SO-01138,"Sep 9, 2026",,asia,Gadget,25,12,COMPLETED 
+SO-01139,2026-09-16,Wayne Ent,Asia  Pacific,USB-C Hub,4,34.95,completed
+SO-01140,30/7/2026,Hooli, NORTH AMERICA ,Monitor Arm,12,89,cancelled
+SO-01141,"Sep 12, 2026",Stark Ind,Asia  Pacific,Desk Lamp,2,$27.25,completed
+SO-01142,2026-13-01,Stark Ind,Latin America,Monitor Arm,25,89,completed
+SO-01143,13/7/2026,Initech,latam,Desk Lamp,5,$27.25,completed
+SO-01009,2026-09-01,Wayne Ent,Latin America,Monitor Arm,1, 89.00 ,completed
+SO-01144,2026/08/27,Stark Ind,EU,Cable Kit,3,$9.95,completed
+SO-01145,"Aug 03, 2026",,North America,Widget,5,19.99,completed
+SO-01146,11/08/2026,Hooli,latin america,Widget Pro,12,$ 49.50,completed
+SO-01147,2026/09/30,Acme Corp,LATAM,Widget,3,19.99,cancelled
+SO-01148,2026-08-19,Globex,,Standing Desk,5,"$1,249.00",COMPLETED 
+SO-01149,2026/09/09,,LATAM,Gadget,1e2,$12.00,completed
+SO-01150,14/07/2026,,latin america,Desk Lamp,25,27.25,Pending
+SO-01151,16/07/2026,Umbrella,Mars,Standing Desk,4,"$1,249.00",completed
+SO-01152,2026-09-20,,europe ,Desk Lamp,2,$ 27.25,completed
+SO-01153,6/7/2026,Umbrella,latam,Monitor Arm,2,$89.00,refunded
+SO-01154,"Sep 16, 2026",, NORTH AMERICA ,Widget Pro,3,$49.50,cancelled
+SO-01155,2026-07-02,Wayne Ent,Europe,Desk Lamp,5, 27.25 ,completed
+SO-01156,2026/08/31,Hooli,LATAM,Widget,5,19.99,completed
+SO-01157,2026-09-05,Globex,latam,Monitor Arm,5,$ 89.00,cancelled
+SO-01027,2026-09-04,Initech,Latin America,Standing Desk,1,"$1,249.00",cancelled
+SO-01158,2026-07-03,Umbrella,NA,  Desk Lamp ,12,27.25,completed
+SO-01159,"Jul 32, 2026",,N. America,Gadget,4,12.00,completed
+SO-01160,2026/08/20,Acme Corp,latin america,Gadget,25,12.00,Completed
+SO-01087,31/07/2026,Wayne Ent,latam,Monitor Arm,25,89.00,completed
+SO-01161,"Aug 24, 2026",Acme Corp,emea,Monitor Arm,2,89.00,completed
+SO-01161,"Aug 24, 2026",Acme Corp,emea,Monitor Arm,2,89.00,completed
+SO-01162,20/8/2026,Acme Corp,Latin America,  Gadget ,4,12,completed
+SO-01163,"Jul 16, 2026",Acme Corp,Asia  Pacific,Widget Pro,1, 49.50 ,completed
+SO-01164,"Aug 29, 2026",Initech,N. America,Desk Lamp,2, 27.25 ,Completed
+SO-01165,"Sep 17, 2026",Umbrella,latin america,Desk Lamp,5,$ 27.25,refunded
+SO-01166,,Umbrella,europe ,Widget,10,19.99,completed
+SO-01167,2026-08-07,Acme Corp,EU,   ,5,$ 27.25,Pending
+SO-01168,23/08/2026,Stark Ind,EU,USB-C Hub,4,34.95,completed
+SO-01169,"Sep 19, 2026",Initech,Asia  Pacific,Standing Desk,1,"$ 1,249.00",refunded
+SO-01170,"Aug 05, 2026",Globex,latin america,Gadget,12, 12.00 ,pending
+SO-01171,"Jul 1, 2026",,Asia  Pacific,Cable Kit,2,9.95,completed
+SO-01172,12/08/2026,Umbrella,NA,USB-C Hub,,34.95,completed
+SO-01173,"Sep 05, 2026",Wayne Ent,latin america,Desk Lamp,1,27.25,Pending
+SO-01174,22/08/2026,Wayne Ent,North  America,USB-C Hub,2,$34.95,Completed
+SO-01175,22/07/2026,Stark Ind,N/A,Monitor Arm,4,89,completed
+SO-01176,06/09/2026,Umbrella,europe ,Cable Kit,10,$9.95,completed
+,2026-07-02,Hooli,Latin America,Widget,10,19.99,cancelled
+,2026/09/12,Wayne Ent,europe ,Desk Lamp,2,27.25,refunded
+SO-01179,"Jul 8, 2026",Acme Corp,Antarctica,Standing Desk,3, 1249.00 ,completed
+SO-01180,25/7/2026,Wayne Ent,Asia Pacific,  Widget Pro ,10,49.5,completed
+SO-01181,2026/09/14,Stark Ind,Europe,Widget,12, 19.99 ,Completed
+SO-01182,,Umbrella,EMEA,Widget Pro,12,49.50,completed
+SO-01182,,Umbrella,EMEA,Widget Pro,12,49.50,completed
+SO-01183,10/09/2026,Globex,latam,Desk Lamp,10, 27.25 ,Completed
+SO-01184,2026/08/19,,emea,Monitor Arm,10,89.00,completed
+SO-01185,26/07/2026,Initech,n america,Gadget,3,$12.00,completed
+SO-01186,"Aug 30, 2026",Umbrella,APAC,USB-C Hub,2, 34.95 ,cancelled
+SO-01187,"Sep 16, 2026",Umbrella,LATAM,USB-C Hub,1,34.95,completed
+SO-01188,"Sep 23, 2026",Initech,NA,  Cable Kit ,1,$9.95,completed
+SO-01189,2026-07-25,Hooli,Asia Pacific,Monitor Arm,2,$ 89.00,completed
+SO-01190,2026-07-23,Stark Ind,asia,Gadget,1,$ 12.00,completed
+SO-01191,2026-08-07,Hooli,europe ,Widget Pro,1,$ 49.50,completed
+SO-01192,"Jul 06, 2026",Hooli,LATAM,Gadget,3,12,COMPLETED 
+SO-01193,"Jul 15, 2026",Hooli,North America,Monitor Arm,1,$89.00,done
+SO-01194,"Sep 27, 2026",Wayne Ent,LATAM,Widget Pro,1, 49.50 ,Completed
+SO-01195,"Sep 25, 2026",Umbrella,N. America,Standing Desk,2,"12,50.0.1",completed
+SO-01196,2026-08-01,Initech,asia,USB-C Hub,1,$34.95,Pending
+SO-01197,2026/09/29,Acme Corp,europe ,Standing Desk,2, 1249.00 ,pending
+SO-01198,2026-09-19,Wayne Ent,APAC,USB-C Hub,2,34.95,COMPLETED 
+SO-01199,16/8/2026,Umbrella,Mars,  Desk Lamp ,4, 27.25 ,completed
+SO-01200,11/09/2026,Hooli,LATAM,Standing Desk,1,1249.00,COMPLETED 
+SO-01201,"Jul 14, 2026",,Asia  Pacific,Monitor Arm,25, 89.00 ,completed
+SO-01202,2026/07/11,Acme Corp,Europe,Desk Lamp,2, 27.25 ,completed
+SO-01203,"Aug 9, 2026",Stark Ind,N. America,Gadget,5, 12.00 ,completed
+SO-01204,2026-07-08,Globex,europe ,Desk Lamp,10,27.25,completed
+SO-01205,"Jul 19, 2026",Umbrella,north america,Desk Lamp,10,27.25,completed
+SO-01206,"Jul 05, 2026",Wayne Ent,north america,Monitor Arm,1,89,pending
+SO-01207,18/08/2026,Acme Corp,EMEA,Gadget,5,12,completed
+SO-01208,"Aug 21, 2026",Globex,Europe,Cable Kit,5,9.95,Pending
+SO-01209,08/08/2026,Acme Corp,EU,Standing Desk,12,1249.00,completed
+SO-01210,2026/09/06,,Asia  Pacific,Cable Kit,3,$9.95,completed
+SO-01211,"Jul 25, 2026",Hooli,North  America,Desk Lamp,25,$ 27.25,completed
+SO-01212,2026-09-25,,LATAM,Widget Pro,25,49.5,pending
+SO-01213,26/9/2026,Initech,LATAM,Widget Pro,1,$49.50,completed
+SO-01058,2026-07-06,Umbrella,Asia  Pacific,Widget,2,$ 19.99,completed
+SO-01214,22/07/2026,Stark Ind,Asia Pacific,Widget Pro,1,$49.50,completed
+SO-01215,16/09/2026,Globex,NA,Standing Desk,1,1249.00,Pending
+SO-01216,2026-07-15,,Latin America,  Widget ,4,$19.99,completed
+SO-01217,14/09/2026,Hooli,EMEA,  Cable Kit ,5,$9.95,COMPLETED 
+SO-01218,"Jul 24, 2026",Wayne Ent, NORTH AMERICA ,Widget,2,$ 19.99,Completed
+SO-01219,2026/09/06,Hooli,APAC,Monitor Arm,1,$89.00,completed
+SO-01220,15/08/2026,Acme Corp,latam,Standing Desk,5,"$1,249.00",completed
+SO-01221,4/8/2026,Hooli,Europe,Gadget,4, 12.00 ,cancelled
+SO-01222,26/7/2026,Globex,NA,Widget,3,$19.99,done
+SO-01223,"Sep 9, 2026",Wayne Ent,asia,  USB-C Hub ,5, 34.95 ,COMPLETED 
+SO-01224,2026/07/18,Acme Corp,EMEA,Monitor Arm,10,89,completed
+SO-01225,"Sep 12, 2026",Stark Ind,Asia Pacific,Desk Lamp,1,27.25,completed
+SO-01226,01/09/2026,Initech,NA,Cable Kit,25,9.95,completed
+SO-01226,01/09/2026,Initech,NA,Cable Kit,25,9.95,completed
+  ,2026/08/27,Hooli,Latin America,Widget,1,$19.99,cancelled
+
+  ,2026/08/27,Hooli,Latin America,Widget,1,$19.99,cancelled
+SO-01228,20/09/2026,Acme Corp,north america,Desk Lamp,1,$ 27.25,Completed
+SO-01229,"Jul 12, 2026",Stark Ind, NORTH AMERICA ,Cable Kit,10, 9.95 ,COMPLETED 
+SO-01076,"Aug 23, 2026",Stark Ind,north america,  Monitor Arm ,2,$89.00,completed
+SO-01230,24/08/2026,Initech,apac,Monitor Arm,3,89,completed
+SO-01231,10/09/2026,Stark Ind,latam,Desk Lamp,1,27.25,done
+SO-01232,"Jul 04, 2026",Initech,North America,  Cable Kit ,25,$9.95,refunded
+SO-01233,"Jul 21, 2026",Acme Corp,emea,Gadget,3,$ 12.00,COMPLETED 
+SO-01234,28/07/2026,Acme Corp,Latin America,Cable Kit,1,9.95,Pending
+SO-01235,22/8/2026,Umbrella,Latin America,USB-C Hub,4,$ 34.95,completed
+SO-01236,2026/09/02,Initech,Asia  Pacific,Desk Lamp,4,$27.25,completed
+SO-01237,"Aug 10, 2026",,EU,USB-C Hub,3, 34.95 ,completed
+SO-01238,2026-09-26,Globex,APAC,Gadget,1,12.505,completed
+SO-01239,23/08/2026,Wayne Ent,NA,Cable Kit,1,9.95,completed
+SO-01239,23/08/2026,Wayne Ent,NA,Cable Kit,1,9.95,completed
+SO-01240,12/9/2026,Globex,Europe,,5,12.00,completed
+SO-01240,12/9/2026,Globex,Europe,,5,12.00,completed
+SO-01241,"Sep 20, 2026",Globex,europe ,USB-C Hub,12,34.95,completed
+SO-01242,"Aug 4, 2026",Initech,North America,USB-C Hub,1,34.95,completed
+SO-01243,02/07/2026,Acme Corp,Asia  Pacific,Monitor Arm,25, 89.00 ,pending
+SO-01244,24/08/2026,Wayne Ent,latin america,Desk Lamp,10,$ 27.25,Completed
+SO-01245,"Sep 27, 2026",Wayne Ent,APAC,USB-C Hub,1,34.95,cancelled
+SO-01246,"Sep 9, 2026",Stark Ind,latin america,Monitor Arm,1,$ 89.00,pending
+SO-01247,"Sep 19, 2026",Wayne Ent,emea,Cable Kit,10,9.95,completed
+SO-01248,3/8/2026,Stark Ind,apac,USB-C Hub,3,$34.95,completed
+SO-01249,"Jul 31, 2026",Initech,APAC,Gadget,12,$12.00,Pending
+SO-01250,18/08/2026,Wayne Ent,Asia Pacific,Widget,4,$ 19.99,completed
+SO-01251,2026-09-23,Hooli,latin america,Desk Lamp,12,27.25,COMPLETED 
+SO-01252,2026/09/26,Stark Ind,N. America,Gadget,3,12,completed
+SO-01253,12/09/2026,Acme Corp,n america,USB-C Hub,25, 34.95 ,completed
+SO-01254,2026/07/26,Wayne Ent, NORTH AMERICA ,Standing Desk,5,1249.00,pending
+SO-01255,"Aug 25, 2026",Hooli,latam,Desk Lamp,2,27.25,completed
+SO-01256,2026-08-12,Globex,EMEA,Widget Pro,25,$ 49.50,COMPLETED 
+SO-01257,"Aug 29, 2026",Wayne Ent,latin america,Widget Pro,2,49.50,COMPLETED 
+SO-01258,26/7/2026,Acme Corp,emea,Widget,10,$ 19.99,shipped
+SO-01258,26/7/2026,Acme Corp,emea,Widget,10,$ 19.99,shipped
+SO-01259,"Jul 28, 2026",,North America,Standing Desk,3, 1249.00 ,COMPLETED 
+SO-01260,"Jul 7, 2026",Initech,latam,Gadget,25,12.00,completed
+SO-01261,"Aug 2, 2026",Hooli,latin america,Monitor Arm,10,89.00,completed
+SO-01262,2026/07/26,Acme Corp,APAC,Desk Lamp,5,$ 27.25,Pending
+SO-01263,"Aug 28, 2026",Acme Corp,emea,  Monitor Arm ,1,$ 89.00,cancelled
+SO-01105,"Jul 26, 2026",Umbrella,apac,Standing Desk,10,"$ 1,249.00",completed
+SO-01264,2026/07/07,Globex, NORTH AMERICA ,Cable Kit,2,9.95,pending
+SO-01265,2026/09/07,Initech,EU,Desk Lamp,12,27.25,completed
+SO-01266,26/9/2026,Initech,Latin America,Desk Lamp,2,27.25,completed
+SO-01267,09/08/2026,Stark Ind,europe ,Monitor Arm,2,$89.00,Completed
+SO-01268,"Sep 22, 2026",Globex,EU,Desk Lamp,2,$ 27.25,completed
+SO-01269,"Sep 22, 2026",Globex,emea,Widget Pro,1,$ 49.50,completed
+SO-01270,18/7/2026,Hooli,EU,Widget Pro,4,49.50,cancelled
+SO-01271,2026/07/07,Stark Ind,asia,Gadget,3, 12.00 ,pending
+SO-01272,"Jul 13, 2026",Globex,LATAM,Widget Pro,0,49.50,completed
+SO-01273,10/07/2026,Initech,asia,Cable Kit,1, 9.95 ,completed
+SO-01274,2026-07-13,Umbrella,Asia Pacific,,4,12,refunded
+SO-01275,26/07/2026,Wayne Ent,apac,Desk Lamp,2,$27.25,pending
+SO-01276,7/7/2026,Umbrella,North  America,Widget,1,$19.99,completed
+SO-01277,2026-09-11,Globex,apac,Widget Pro,3,49.5,refunded
+SO-01117,2026-07-13,Umbrella,apac,Widget Pro,2, 49.50 ,complete
+SO-01278,10/8/2026,Wayne Ent,North America,  Gadget ,3,$12.00,pending
+SO-01279,2026/07/26,Stark Ind,Europe,Gadget,12,12.00,COMPLETED 
+SO-01280,2026-09-19,Stark Ind,EMEA,  Widget Pro ,5,49.5,completed
+SO-01281,"Aug 3, 2026",Hooli,Europe,Standing Desk,2,"$ 1,249.00",Completed
+SO-01282,09/07/2026,Umbrella,north america,Desk Lamp,12,27.25,completed
+SO-01283,23/9/2026,Stark Ind,latin america,Widget,1,$19.99,Pending
+SO-01284,01/07/2026,,apac,  Cable Kit ,1,$ 9.95,Completed
+SO-01285,15/8/2026,,n america,  USB-C Hub ,5,34.95,completed
+SO-01286,"Jul 28, 2026",Acme Corp,N. America,USB-C Hub,2,$ 34.95,completed
+SO-01287,9/8/2026,Stark Ind,LATAM,Monitor Arm,2,$ 89.00,
+SO-01288,2026-09-25,Wayne Ent,APAC,Desk Lamp,4,$ 27.25,completed
+SO-01289,"Aug 9, 2026",Wayne Ent,apac,Desk Lamp,1,$ 27.25,COMPLETED 
+SO-01290,27/08/2026,Initech,,  Widget Pro ,5,$ 49.50,completed
+SO-01291,"Jul 23, 2026",Hooli,LATAM,Widget,25,19.99,Completed
+SO-01292,29/09/2026,Hooli,latam,Cable Kit,12,9.95,refunded
+SO-01293,"Aug 9, 2026",Initech,emea,Widget,4,$ 19.99,completed
+SO-01294,18/09/2026,,EMEA,Standing Desk,4, 1249.00 ,Completed
+SO-01295,18/9/2026,Wayne Ent,EU,Widget Pro,5,49.50,completed
+SO-01296,5/8/2026,Stark Ind,North  America,,25, 9.95 ,Pending
+SO-01267,16/09/2026,Hooli,APAC,Desk Lamp,25,27.25,cancelled
+SO-01297,"Jul 22, 2026",Initech,Asia Pacific,Widget Pro,10, 49.50 ,Completed
+,"Sep 7, 2026",Wayne Ent,emea,Gadget,5,12.00,Completed
+SO-01299,2026/07/20,Umbrella,europe ,Desk Lamp,4,27.25,pending
+SO-01300,"Sep 21, 2026",Wayne Ent,europe ,Desk Lamp,1,27.25,cancelled
+SO-01301,13/07/2026,Globex,asia,  USB-C Hub ,25,34.95,completed
+SO-01301,13/07/2026,Globex,asia,  USB-C Hub ,25,34.95,completed
+SO-01302,"Aug 05, 2026",Acme Corp,latin america,Gadget,1,12.00,refunded
+SO-01303,"Sep 06, 2026",Umbrella,APAC,Monitor Arm,3, 89.00 ,cancelled
+SO-01083,24/08/2026,Globex,asia,Widget,1,$ 19.99,Completed
+SO-01304,"Aug 17, 2026",Stark Ind,North  America,   ,1,$ 34.95,cancelled
+SO-01305,22/07/2026,Umbrella,Latin America,Widget Pro,25,49.50,COMPLETED 
+SO-01306,"Sep 10, 2026",Hooli,Europe,Desk Lamp,1,27.25,completed
+SO-01302,2026/09/19,Stark Ind,asia,Desk Lamp,1,$27.25,pending
+SO-01307,2026-08-13,Initech,NA,Standing Desk,12,"$ 1,249.00",completed
+SO-01308,yesterday,Hooli,n america,Gadget,5, 12.00 ,Pending
+SO-01309,21/7/2026,Initech,LATAM,  Cable Kit ,3,9.95,refunded
+SO-01042,"Jul 27, 2026",Globex, NORTH AMERICA ,Standing Desk,25,"$ 1,249.00",COMPLETED 
+SO-01310,27/07/2026,Wayne Ent,Europe,  Widget ,2,$19.99,COMPLETED 
+SO-01311,"Sep 11, 2026",Acme Corp, NORTH AMERICA ,Standing Desk,10,"$1,249.00",pending
+SO-01312,"Sep 02, 2026",Wayne Ent,North America,Gadget,3,12.00,Completed
+
+SO-01313,2026/07/13,Acme Corp,Europe,Widget,10,$19.99,completed
+SO-01262,2026/07/06,,Asia Pacific,Cable Kit,-2,9.95,completed
+SO-01314,4/9/2026,Acme Corp,North America,Monitor Arm,25,89.00,refunded
+SO-01315,"Sep 23, 2026",Hooli,N. America,Widget Pro,1,49.5,pending
+SO-01316,"Jul 16, 2026",Umbrella,EMEA,Standing Desk,1,1249,refunded
+SO-01317,17/08/2026,Hooli,NA,Widget Pro,2,$ 49.50,cancelled
+SO-01318,2026-07-06,Umbrella,n america,Widget Pro,10,49.5,cancelled
+SO-01319,"Jul 8, 2026",Acme Corp,North  America,Widget Pro,10,49.50,completed
+SO-01320,08/08/2026,Acme Corp,asia,Gadget,2,$ 12.00,completed
+SO-01321,2026-08-01,Wayne Ent,apac,  Monitor Arm ,3,89,completed
+SO-01322,"Jul 11, 2026",Initech,Asia Pacific,  USB-C Hub ,5,$ 34.95,Pending
+SO-01060,"Jul 28, 2026",Acme Corp,europe ,Standing Desk,10,1249,pending
+SO-01323,2026-08-06,Hooli,EMEA,USB-C Hub,2,34.95,COMPLETED 
+SO-01324,01/08/2026,Hooli,Latin America,  Desk Lamp ,3, 27.25 ,cancelled
+,27/9/2026,Hooli,North America,  Widget Pro ,1,49.5,completed
+SO-01326,2026-07-23,Hooli,latam,Desk Lamp,2,$ 27.25,pending
+SO-01327,4/7/2026,Umbrella,Europe,Monitor Arm,5, 89.00 ,completed
+SO-01328,"Sep 23, 2026",Hooli,emea,Widget Pro,2,$ 49.50,completed
+SO-01121,2026-07-08,Hooli,Europe,Widget Pro,2, 49.50 ,completed
+SO-01329,17/08/2026,Initech,apac,Monitor Arm,3,$89.00,completed
+SO-01330,19/08/2026,Umbrella,EMEA,USB-C Hub,1,34.95,completed
+SO-01331,26/8/2026,Globex,Latin America,,12,19.99,Completed
+SO-01332,2026-07-25,Hooli,NA,Widget,-2, 19.99 ,refunded
+SO-01333,8/7/2026,Acme Corp,north america,   ,25, 9.95 ,completed
+SO-01334,"Aug 27, 2026",Stark Ind,North America,Gadget,5,12.00,completed
+SO-01335,21/9/2026,Acme Corp,n america,Widget,12,19.99,completed
+SO-01336,"Aug 17, 2026",Initech,North  America,Monitor Arm,12,89.00,COMPLETED 
+SO-01209,"Aug 8, 2026",Stark Ind,europe ,Gadget,1,$ 12.00,completed
+SO-01209,"Aug 8, 2026",Stark Ind,europe ,Gadget,1,$ 12.00,completed
+SO-01337,9/7/2026,Stark Ind,europe ,Standing Desk,12,"$1,249.00",cancelled
+SO-01338,2026/08/04,Stark Ind,Latin America,Desk Lamp,5,$ 27.25,Pending
+SO-01339,"Jul 20, 2026",Hooli,n america,USB-C Hub,25,34.95,pending
+SO-01340,2026/07/20,Initech,latam,Desk Lamp,1,$27.25,completed
+SO-01341,"Sep 11, 2026",Umbrella,APAC,Cable Kit,4,$ 9.95,shipped
+SO-01342,2026-13-01,Wayne Ent,Asia Pacific,Widget Pro,4,49.5,cancelled
+SO-01343,2026-08-25,Hooli,europe ,Monitor Arm,4,$89.00,Completed
+SO-01344,"Sep 18, 2026",,north america,Widget Pro,1,$ 49.50,COMPLETED 
+SO-01345,2026/08/11,Wayne Ent,Latin America,Gadget,3,12,Completed
+SO-01346,"Aug 18, 2026",,asia,Monitor Arm,-2,$89.00,completed
+SO-01347,13/9/2026,Stark Ind,latam,Widget Pro,10, 49.50 ,completed
+SO-01348,2026-08-17,Hooli,LATAM,Gadget,3, 12.00 ,completed
+SO-01349,2026-07-26,Wayne Ent,North  America,Standing Desk,1,1249.00,completed
+SO-01350,23/07/2026,Umbrella,Antarctica,  Gadget ,1,12.00,completed
+SO-01351,03/08/2026,Acme Corp,Latin America,Cable Kit,4,9.95,completed
+SO-01352,3/9/2026,Initech,APAC,Monitor Arm,25,89.00,completed
+SO-01353,2026-08-09,,Europe,  Widget ,2,$19.99,pending
+SO-01354,11/9/2026,Initech,Latin America,Widget Pro,3,49.50,Pending
+SO-01355,2026/07/04,Acme Corp,north america,Monitor Arm,3,$ 89.00,cancelled
+SO-01356,2026-07-21,Umbrella,EMEA,Desk Lamp,4,$ 27.25,completed
+SO-01357,2026-08-07,Stark Ind,Antarctica,Monitor Arm,2,$89.00,COMPLETED 
+SO-01358,06/09/2026,Globex,Latin America,Monitor Arm,10,$ 89.00,
+SO-01359,7/9/2026,Stark Ind,apac,  Cable Kit ,12,9.95,Pending
+SO-01360,"Aug 29, 2026",Acme Corp,NA,,5,$ 12.00,refunded
+SO-01361,"Sept 05, 2026",Globex,Asia Pacific,Widget,25,19.99,Completed
+SO-01362,2026/07/16,,apac,Monitor Arm,4,$ 89.00,COMPLETED 
+SO-01363,2026/09/30,Initech,LATAM,Standing Desk,12,1249.00,refunded
+SO-01364,17/09/2026,Stark Ind,EU,Standing Desk,5,"$1,249.00",Pending
+SO-01365,"Aug 02, 2026",Acme Corp,North America,Monitor Arm,5,$89.00,completed
+SO-01366,20/8/2026,Hooli,Asia Pacific,Monitor Arm,1,$ 89.00,Pending
+SO-01367,20/07/2026,Hooli,europe ,Widget,+3,$ 19.99,completed
+SO-01368,2026/08/10,Acme Corp,europe ,Monitor Arm,5,$ 89.00,COMPLETED 
+SO-01369,2026-08-01,Globex,Asia Pacific,Monitor Arm,1,89.00,completed
+SO-01370,"Aug 29, 2026",Wayne Ent,emea,Widget,10, 19.99 ,Pending
+SO-01371,"Aug 15, 2026",Globex,apac,Monitor Arm,25,89.00,COMPLETED 
+SO-01311,27/07/2026,Stark Ind,Europe,USB-C Hub,1,$ 34.95,cancelled
+SO-01311,27/07/2026,Stark Ind,Europe,USB-C Hub,1,$ 34.95,cancelled
+SO-01372,2026/07/12,Hooli,latam,Gadget,1,$12.00,completed
+SO-01373,2026/08/23,Stark Ind,NA,Cable Kit,25,$9.95,COMPLETED 
+SO-01374,2026/09/10,Initech,Latin America,Gadget,25,12.00,cancelled
+SO-01375,4/9/2026,Initech,europe ,Widget,2,$ 19.99,completed
+SO-01376,2026/08/23,,Europe,  Desk Lamp ,1, 27.25 ,
+SO-01377,2026/09/16,Umbrella,europe ,Gadget,1,$ 12.00,pending
+SO-01378,2026-09-01,, NORTH AMERICA ,  Cable Kit ,1,9.95,Pending
+SO-01379,"Aug 22, 2026",Umbrella,APAC,USB-C Hub,10, 34.95 ,cancelled
+SO-01380,2026/07/19,Stark Ind,North America,Standing Desk,2,"$ 1,249.00",COMPLETED 
+SO-01381,"Aug 30, 2026",Umbrella,Asia  Pacific,Standing Desk,2,1249,completed
+SO-01382,13/07/2026,Wayne Ent,latam,Widget Pro,10,$49.50,COMPLETED 
+SO-01382,13/07/2026,Wayne Ent,latam,Widget Pro,10,$49.50,COMPLETED 
+SO-01383,"Sep 4, 2026",Wayne Ent,Asia  Pacific,Standing Desk,2,1249,Pending
+SO-01384,25/9/2026,Stark Ind,apac,Gadget,3, 12.00 ,completed
+SO-01385,"Jul 04, 2026",Stark Ind,EMEA,Widget Pro,4, 49.50 ,refunded
+SO-01386,15/07/2026,Hooli,latin america,Monitor Arm,4,89.00,completed
+SO-01378,12/08/2026,,APAC,Widget,10,19.99,completed
+SO-01387,2026/08/09,Umbrella,Europe,Gadget,1,12.00,completed
+SO-01388,2026-07-25,,latin america,Gadget,2,12,completed
+SO-01028,2026.08.01,Stark Ind,North  America,Gadget,2,12.00,COMPLETED 
+SO-01389,16/7/2026,Stark Ind,Asia  Pacific,USB-C Hub,12,$34.95,COMPLETED 
+SO-01390,2026/07/24,Stark Ind,Europe,Gadget,1,$ 12.00,refunded
+SO-01391,23/9/2026,Initech,Asia Pacific,Widget,25,19.99,completed
+SO-01392,16/8/2026,Umbrella,n america,Widget,10, 19.99 ,COMPLETED 
+SO-01393,25/07/2026,Umbrella,Latin America,Monitor Arm,5, 89.00 ,Pending
+SO-01394,2026-08-05,,Latin America,Gadget,1,12,Completed
+SO-01395,2026/09/14,Globex,N. America,Widget,1,19.99,Completed
+SO-01396,2026-07-13,,asia,Standing Desk,4, 1249.00 ,completed
+SO-01397,"Aug 28, 2026",Stark Ind,Asia  Pacific,Cable Kit,12,9.95,completed
+SO-01398,"Aug 15, 2026",Wayne Ent,EU,Widget,25,19.99,COMPLETED 
+SO-01399,"Aug 29, 2026",,Europe,Widget,5,19.99,completed
+
+SO-01400,2026/08/13,Initech,APAC,Gadget,3, 12.00 ,completed
+SO-01401,19/9/2026,,north america,,12, 27.25 ,Pending
+SO-01402,"Jul 21, 2026",Globex,apac,USB-C Hub,2,$34.95,COMPLETED 
+SO-01403,14/09/2026,Initech,latam,Widget Pro,5,$ 49.50,completed
+SO-01404,"Sep 12, 2026",Initech,Mars,Monitor Arm,5,$89.00,COMPLETED 
+SO-01405,2026/09/20,Initech,latam,Monitor Arm,3, 89.00 ,completed
+SO-01406,2026/07/02,Globex,Antarctica,Widget Pro,1,$49.50,Pending
+SO-01407,7/7/2026,Globex,asia,Widget,1,19.99,Completed
+SO-01408,2026/09/12,Initech, NORTH AMERICA ,Gadget,3,12.00,completed
+SO-01409,2026-09-28,Globex,latin america,Cable Kit,4,9.95,completed
+SO-01409,2026-09-28,Globex,latin america,Cable Kit,4,9.95,completed
+SO-01410,"Aug 24, 2026",Wayne Ent,north america,Widget,5,19.99,completed
+SO-01411,2026/07/21,Initech,Europe,Gadget,1,$12.00,completed
+SO-01412,2026-09-08,Acme Corp,LATAM,Cable Kit,3,9.95,completed
+SO-01413,24/08/2026,,Latin America,Standing Desk,1,"$ 1,249.00",refunded
+SO-01087,2026-08-03,Stark Ind, NORTH AMERICA ,  USB-C Hub ,1,$ 34.95,complete
+,9/8/2026,Stark Ind,Europe,Gadget,10,$12.00,cancelled
+SO-01415,2026-08-12,Globex,n america,Desk Lamp,3,abc,Completed
+SO-01416,2026-08-29,Umbrella,EMEA,Widget Pro,10,49.50,refunded
+,2026-07-29,Wayne Ent,Asia  Pacific,Desk Lamp,10,27.25,completed
+SO-01418,"Sep 3, 2026",,latam,Widget Pro,12,49.5,COMPLETED 
+SO-01419,2026-07-19,,EMEA,Standing Desk,1,"$1,249.00",cancelled
+SO-01420,2026/08/11,Acme Corp,north america,Widget Pro,4, 49.50 ,completed

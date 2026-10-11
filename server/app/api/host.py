@@ -65,3 +65,49 @@ async def pick_folder() -> dict[str, Any]:
 @router.post("/folders/remove")
 async def remove_folder(body: dict[str, Any] = Body(...)) -> dict[str, Any]:
     return await _ask("disallow", {"path": str(body.get("path") or "")}, timeout=30)
+
+
+async def _running_work() -> list[str]:
+    """What a backend restart would stop: agents at work and benchmark runs."""
+    from sqlalchemy import select
+
+    from app.core.db import SessionLocal
+    from app.models import Agent, BenchRun, Org
+    from app.services.bench import BUSY
+
+    async with SessionLocal() as session:
+        busy = (await session.execute(select(Agent.name, Org.name).join(Org, Org.id == Agent.org_id).where(
+            Agent.runtime_status.in_(BUSY), Org.kind != "bench"))).all()
+        runs = (await session.execute(select(BenchRun.org_name).where(
+            BenchRun.status == "running"))).scalars().all()
+    return ([f"{a} ({o}) is working" for a, o in busy][:8]
+            + [f"a benchmark of {o} is running" for o in runs])
+
+
+@router.post("/workspace")
+async def pick_workspace(body: dict[str, Any] = Body(...)) -> dict[str, Any]:
+    """An organization's workspace from a folder on the user's computer. Pantheon Host shows a
+    folder picker on their screen and, for a folder Docker doesn't share yet, mounts it and
+    restarts the backend (which stops running work, so that needs ``force``)."""
+    from app.core.db import SessionLocal
+    from app.models import Org
+    from app.services import orgs
+
+    async with SessionLocal() as session:
+        org = await session.get(Org, str(body.get("orgId") or ""))
+    if org is None:
+        raise HTTPException(404, "org not found")
+    if not host.bridge.can("workspaces"):
+        raise HTTPException(409, "Pantheon Host isn't running on your computer, or it's an older "
+                                 "version: start or restart it (python host/main.py)")
+    if not body.get("force") and (running := await _running_work()):
+        raise HTTPException(409, {"restart": True, "running": running})
+    try:
+        got = await host.bridge.call("pick_workspace", {"org": org.name}, timeout=600)
+    except ToolError as e:
+        raise HTTPException(400, str(e)) from None
+    updated = await orgs.update_org(org.id, {
+        "workspace": got["path"],
+        "settings": {"workspace_host": {"path": got["path"], "hostPath": got["hostPath"]}}})
+    return {"workspace": updated.workspace, "hostPath": got["hostPath"],
+            "restart": bool(got.get("restart"))}

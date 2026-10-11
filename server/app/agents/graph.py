@@ -239,6 +239,23 @@ async def model_node(state: AgentState, config: RunnableConfig) -> dict:
         recalled_files=recalled_files,
     )
     messages = list(state.get("messages", []))
+    steered: list[BaseMessage] = []
+    direct = list(state.get("direct_senders") or [])
+    seen: list[str] = []
+    if steps:
+        # The user said something while this turn was running: read it now.
+        from app.agents import steering
+        from app.agents.runtime import runtime
+
+        if taken := await steering.take(agent.id, turn_id):
+            content, _depth, more = await runtime._format_inbox(agent, taken)
+            steered = [HumanMessage(content=f"{steering.STEER_NOTE}\n\n{content}",
+                                    id=f"steer_{taken[-1].id}")]
+            messages += steered
+            direct = list(dict.fromkeys([*direct, *more]))
+            seen = [m.id for m in taken]
+            await bus.publish("agent.steered", {"turnId": turn_id, "messageIds": seen},
+                              org_id=org.id, agent_id=agent.id)
     stale = {m.id: m for m in prune_images(messages)}
     history = sanitize([stale.get(m.id, m) if m.id else m for m in messages])
     final = steps >= max_steps
@@ -276,9 +293,12 @@ async def model_node(state: AgentState, config: RunnableConfig) -> dict:
     for i, tc in enumerate(ai.tool_calls):
         if not tc.get("id"):
             tc["id"] = f"call_{turn_id or 'x'}_{steps}_{i}_{int(time.time() * 1000)}"
-    return {"messages": [*prune_images(list(state.get("messages", []))), ai],
-            "steps": steps + 1, "recalled": recalled,
-            "recalled_files": recalled_files}
+    out: dict[str, Any] = {
+        "messages": [*prune_images(list(state.get("messages", []))), *steered, ai],
+        "steps": steps + 1, "recalled": recalled, "recalled_files": recalled_files}
+    if steered:
+        out.update(seen=seen, direct_senders=direct)
+    return out
 
 
 async def _recall(org: Org, agent: Agent, state: AgentState) -> tuple[str, str]:

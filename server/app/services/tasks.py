@@ -3,10 +3,12 @@
 Every change is audited (``task_events``) and notifies exactly the people it
 concerns, which is what drives agents to pick up work:
 
-- assigned            → new assignee
+- assigned            → new assignee (recorded without waking them while the task still
+                        waits on other tasks)
 - moved to ``review`` → reviewer (or reporter)
-- done / cancelled    → reporter + watchers; parent owner when all siblings done
-- dependency finished → assignees of tasks whose dependencies are now all done
+- done / cancelled    → reporter + watchers; parent owner when all siblings done;
+                        assignees of the open subtasks of a finished goal (stop)
+- dependency closed   → assignees of tasks whose dependencies are now all closed
 - comment             → assignee, reporter, watchers (minus the author)
 """
 
@@ -188,16 +190,27 @@ async def create_task(
     await bus.publish("task.created", task_to_dict(task), org_id=org_id,
                       agent_id=actor.id if actor.type == "agent" else None)
     if assignee_id and assignee_id != actor.id:
-        wait = f"\nIt is waiting on: {', '.join(open_deps)} — start when those are done." \
-            if open_deps else ""
+        # A task that still waits on others is news, not work: it doesn't wake anyone (an
+        # early start means work on code that isn't there yet). "You can start it now"
+        # comes when the last dependency closes.
         await comms.notify(
             org_id, [assignee_id],
             f"{names.get(actor.id, actor.id)} assigned you {task_ref(task)}: {task.title}\n"
             f"Priority: {task.priority}\n{task.description}"
-            + (f"\nAcceptance criteria: {task.acceptance}" if task.acceptance else "") + wait,
-            depth=actor.depth, task_id=task.id,
+            + (f"\nAcceptance criteria: {task.acceptance}" if task.acceptance else "")
+            + (WAITING.format(deps=", ".join(open_deps)) if open_deps else ""),
+            depth=actor.depth, task_id=task.id, wake=not open_deps,
         )
     return task
+
+
+WAITING = ("\nIt waits on {deps}. Don't start it yet: you'll get a message when it can "
+           "start.")
+
+
+async def open_dependencies(session: AsyncSession, task: Task) -> list[Task]:
+    deps = [await session.get(Task, d) for d in task.depends_on or []]
+    return [d for d in deps if d is not None and d.status not in CLOSED]
 
 
 async def update_task(
@@ -221,7 +234,7 @@ async def update_task(
     comment: str | None = None,
     watch: bool | None = None,
 ) -> Task:
-    notices: list[tuple[list[str], str]] = []
+    notices: list[tuple[list[str], str, bool]] = []  # (targets, text, wake)
     async with SessionLocal() as session:
         task = await find_task(session, org_id, ref)
         if task is None:
@@ -274,6 +287,7 @@ async def update_task(
                 raise TaskError(f"board '{board_id}' not found")
             task.board_id = board_id
         if depends_on is not None:
+            was_waiting = bool(await open_dependencies(session, task))
             dep_ids = []
             for d in depends_on:
                 dt = await find_task(session, org_id, d)
@@ -283,6 +297,10 @@ async def update_task(
                     raise TaskError("a task cannot depend on itself")
                 dep_ids.append(dt.id)
             task.depends_on = dep_ids
+            if (was_waiting and task.assignee_id and task.status not in CLOSED
+                    and not await open_dependencies(session, task)):
+                notices.append(([task.assignee_id], f"{ref_s} ({task.title}) no longer waits on "
+                                "other tasks. You can start it now.", True))
         if watch is not None:
             watchers = [w for w in (task.watchers or []) if w != actor.id]
             if watch:
@@ -302,10 +320,13 @@ async def update_task(
                 if task.status == "backlog" and new_assignee:
                     task.status = "todo"
                 if new_assignee and new_assignee != actor.id:
+                    waits = [task_ref(d) for d in await open_dependencies(session, task)]
                     notices.append(([new_assignee],
                                     f"{who} assigned you {ref_s}: {task.title}\n{task.description}"
                                     + (f"\nAcceptance criteria: {task.acceptance}"
-                                       if task.acceptance else "")))
+                                       if task.acceptance else "")
+                                    + (WAITING.format(deps=", ".join(waits)) if waits else ""),
+                                    not waits))
 
         became_closed = False
         if status is not None and status != task.status:
@@ -325,16 +346,17 @@ async def update_task(
                 summary += f"\nResult: {task.result}"
             if status == "review":
                 target = task.reviewer_id or task.reporter_id
-                notices.append(([target], summary + "\nPlease review it: move it to done if it "
-                                "meets the acceptance criteria, or back to in_progress with a "
-                                "comment explaining what is missing."))
+                notices.append(([target], summary + "\nPlease review it against its acceptance "
+                                "criteria: move it to done if it meets them, or back to "
+                                "in_progress with a comment saying which criterion is not met.",
+                                True))
             elif status in CLOSED:
-                notices.append(([task.reporter_id, *(task.watchers or [])], summary))
+                notices.append(([task.reporter_id, *(task.watchers or [])], summary, True))
             elif old == "review" and status == "in_progress" and task.assignee_id:
                 notices.append(([task.assignee_id], summary + " Review feedback is in the "
-                                "task comments."))
+                                "task comments.", True))
             elif task.assignee_id and actor.id != task.assignee_id:
-                notices.append(([task.assignee_id], summary))
+                notices.append(([task.assignee_id], summary, True))
 
         comment_msg: Message | None = None
         if comment:
@@ -354,6 +376,8 @@ async def update_task(
             for dep in dependents:
                 if task.id not in (dep.depends_on or []):
                     continue
+                if dep.status not in ("backlog", "todo", "blocked"):
+                    continue  # already started (or told before: a dependency closed twice)
                 others = [await session.get(Task, d) for d in dep.depends_on]
                 if all(o is None or o.status in CLOSED for o in others) and dep.assignee_id:
                     followups.append(([dep.assignee_id],
@@ -374,6 +398,16 @@ async def update_task(
                         )
                         followups.append(([owner], f"All subtasks of {task_ref(parent)} "
                                           f"({parent.title}) are closed:\n{lines}", parent.id))
+            # A finished goal: work still open under it is no longer needed. Tell the people
+            # on it to stop (their lead can say otherwise), so a team doesn't keep polishing.
+            children = (await session.execute(select(Task).where(
+                Task.parent_id == task.id, Task.status.not_in(CLOSED)))).scalars().all()
+            for child in children:
+                if child.assignee_id:
+                    followups.append(([child.assignee_id],
+                                      f"{ref_s} ({task.title}) is done, so {task_ref(child)} "
+                                      f"({child.title}) is no longer needed. Stop work on it, "
+                                      "and cancel it unless it still matters.", child.id))
 
     if comment:
         comment_msg = await comms.post(
@@ -385,9 +419,9 @@ async def update_task(
         )
     await bus.publish("task.updated", task_to_dict(task), org_id=org_id,
                       agent_id=actor.id if actor.type == "agent" else None)
-    for targets, text in notices:
+    for targets, text, wake in notices:
         await comms.notify(org_id, [t for t in targets if t and t != actor.id], text,
-                           depth=actor.depth, task_id=task.id)
+                           depth=actor.depth, task_id=task.id, wake=wake)
     for targets, text, tid in followups:
         await comms.notify(org_id, [t for t in targets if t and t != actor.id], text,
                            depth=actor.depth, task_id=tid)

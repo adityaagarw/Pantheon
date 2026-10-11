@@ -79,6 +79,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           {item("/supervisor", <><Icon d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z" /> Zeus</>, pathname.startsWith("/supervisor"))}
           {item("/argus", <><Icon d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12zm10-3a3 3 0 1 0 0 6 3 3 0 0 0 0-6z" /> Argus</>, pathname.startsWith("/argus"))}
           {item("/kronos", <><Icon d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 4.5V12l3 2" /> Kronos</>, pathname.startsWith("/kronos"))}
+          {item("/benchmarks", <><Icon d="M4 20V10m6 10V4m6 16v-7m4 7H2" /> Benchmarks</>, pathname.startsWith("/benchmarks"))}
           {item("/settings", <><Icon d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0-5v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1m0-12.8-2.1 2.1m-8.6 8.6-2.1 2.1" /> Settings</>, pathname.startsWith("/settings"))}
         </nav>
         <div className="mt-5 px-4 pb-1.5 text-[11px] font-medium uppercase tracking-wider text-ink-3">Organizations</div>

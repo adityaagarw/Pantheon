@@ -35,6 +35,9 @@ artifacts/
 .DS_Store
 Thumbs.db
 
+# workspace folders shared from this computer (written by Pantheon Host, host/mounts.py)
+docker-compose.override.yml
+
 # local isolated checkouts
 .worktrees/
 

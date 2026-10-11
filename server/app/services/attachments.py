@@ -309,11 +309,33 @@ async def get(att_id: str) -> Attachment | None:
         return await session.get(Attachment, att_id)
 
 
+async def _lead_ids(session, org_id: str) -> list[str]:
+    """Agents whose files the whole team sees: anyone who manages someone (a lead's
+    files are the team's, so a book given to the lead reaches everyone). Living
+    worlds keep every library private."""
+    from app.models import Org, Relationship
+    from app.services import life
+
+    org = await session.get(Org, org_id)
+    if org is None or life.enabled(org):
+        return []
+    return list((await session.execute(select(Relationship.from_id).where(
+        Relationship.org_id == org_id, Relationship.kind == "manages").distinct())).scalars())
+
+
+async def _scope(session, column_agent, org_id: str, agent_id: str | None):
+    owners = [i for i in await _lead_ids(session, org_id) if i != agent_id]
+    if agent_id is not None:
+        owners.append(agent_id)
+    return or_(column_agent.is_(None), column_agent.in_(owners)) if owners else \
+        column_agent.is_(None)
+
+
 async def visible(org_id: str, agent_id: str | None, *, limit: int = 100) -> list[Attachment]:
-    """What an agent can use: its own library plus everything shared with the org."""
-    scope = Attachment.agent_id.is_(None) if agent_id is None else or_(
-        Attachment.agent_id.is_(None), Attachment.agent_id == agent_id)
+    """What an agent can use: its own library, its leads' libraries and everything
+    shared with the org."""
     async with SessionLocal() as session:
+        scope = await _scope(session, Attachment.agent_id, org_id, agent_id)
         return list((await session.execute(select(Attachment).where(
             Attachment.org_id == org_id, scope).order_by(Attachment.created_at.desc())
             .limit(limit))).scalars())
@@ -414,10 +436,9 @@ def image_data_url(a: Attachment) -> str:
 async def search(org_id: str, agent_id: str | None, query: str, *, k: int = 5,
                  min_similarity: float = 0.4) -> list[tuple[AttachmentChunk, str, float]]:
     """Hybrid (vector + keyword) passage search: (chunk, file name, similarity)."""
-    scope = AttachmentChunk.agent_id.is_(None) if agent_id is None else or_(
-        AttachmentChunk.agent_id.is_(None), AttachmentChunk.agent_id == agent_id)
     ranked: dict[int, list[Any]] = {}
     async with SessionLocal() as session:
+        scope = await _scope(session, AttachmentChunk.agent_id, org_id, agent_id)
         vec = (await embeddings.embed([query]) or [None])[0]
         if vec is not None:
             rows = (await session.execute(

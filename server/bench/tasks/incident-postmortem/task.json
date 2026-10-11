@@ -1,0 +1,12 @@
+{
+  "id": "incident-postmortem",
+  "title": "Investigate an outage from logs and write the postmortem",
+  "category": "investigation",
+  "difficulty": "medium",
+  "workflow": "investigate-report",
+  "summary": "Six log sources, red herrings (a payments deploy, a cache alert, a wrong on-call action). Exact metrics are computed from 16k log lines.",
+  "time_limit_minutes": 30,
+  "protected_files": ["alerts.json", "logs/api-gateway.log", "logs/orders.log", "logs/payments.log", "logs/catalog.log", "logs/db-pool.log", "logs/deploys.log"],
+  "agent_tests_dir": null,
+  "weights": {"hidden_tests": 80, "agent_tests": 0, "safety": 10, "process": 10}
+}

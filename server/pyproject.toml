@@ -55,6 +55,7 @@ packages = ["app"]
 [tool.ruff]
 line-length = 110
 target-version = "py312"
+extend-exclude = ["bench"]  # SwarmBench, vendored (its own style; its tasks are sample code)
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "W"]

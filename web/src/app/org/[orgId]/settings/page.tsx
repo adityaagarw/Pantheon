@@ -71,9 +71,14 @@ export default function OrgSettingsPage() {
             <Field label="Description" hint="Given to every agent as shared context">
               <Textarea rows={4} value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
             </Field>
-            <Field label="Workspace folder" hint="Host folder agents read/write and run commands in">
+            <Field label="Workspace folder" hint="The folder agents read, write and run commands in (as Pantheon sees it)">
               <Input value={draft.workspace ?? ""} onChange={(e) => setDraft({ ...draft, workspace: e.target.value || null })} placeholder="(a fresh folder under the workspace root)" />
             </Field>
+            <HostWorkspace
+              org={org}
+              workspace={draft.workspace}
+              onPicked={(o) => setDraft({ ...draft, workspace: o.workspace, settings: { ...draft.settings, workspace_host: o.settings.workspace_host } })}
+            />
           </div>
         </Card>
 
@@ -94,6 +99,12 @@ export default function OrgSettingsPage() {
             </Field>
             <Field label="Agents working at once" hint="In this organization; 0 = only the global limit (Settings > Agents)">
               <Input type="number" min={0} max={64} value={s.max_concurrent ?? 0} onChange={(e) => setS({ max_concurrent: Math.max(0, Math.min(64, Math.round(Number(e.target.value) || 0))) })} />
+            </Field>
+            <Field label="Writing style" hint="For every agent's messages and documents (agents can also turn STE on one by one)">
+              <Select value={s.writing ?? "plain"} onChange={(e) => setS({ writing: e.target.value as "plain" | "ste" })}>
+                <option value="plain">Plain (each agent&apos;s own)</option>
+                <option value="ste">ASD-STE100 Simplified Technical English</option>
+              </Select>
             </Field>
             <Field label="Shell commands" hint="run_command and computer_shell, for every agent">
               <Select value={s.shell_approval ?? "ask"} onChange={(e) => setS({ shell_approval: e.target.value as "ask" | "auto" })}>
@@ -275,6 +286,91 @@ export default function OrgSettingsPage() {
         </Card>
         <DeleteOrgDialog org={org} open={deleting} onClose={() => setDeleting(false)} onDeleted={() => router.push("/")} />
       </div>
+    </div>
+  );
+}
+
+/** A workspace from a folder on the user's computer: Pantheon Host shows a folder picker on
+ * their screen, shares the folder with Pantheon and restarts the backend when it has to. */
+function HostWorkspace({ org, workspace, onPicked }: { org: Org; workspace: string | null; onPicked: (o: Org) => void }) {
+  const [hostReady, setHostReady] = useState<boolean | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [running, setRunning] = useState<string[] | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const picked = org.settings.workspace_host;
+
+  useEffect(() => {
+    api
+      .hostStatus()
+      .then((h) => setHostReady(h.connected && (h.info?.capabilities ?? []).includes("workspaces")))
+      .catch(() => setHostReady(false));
+  }, []);
+
+  const pick = async (force: boolean) => {
+    setBusy(true);
+    setError(null);
+    setNote(null);
+    setRunning(null);
+    try {
+      const got = await api.hostPickWorkspace(org.id, force);
+      const o = (await api.org(org.id)).org;
+      useOrg.getState().setOrg(o);
+      onPicked(o);
+      setNote(
+        got.restart
+          ? `Connected ${got.hostPath}. Pantheon's backend is restarting to reach it; this takes about half a minute.`
+          : `Connected ${got.hostPath}.`,
+      );
+    } catch (e) {
+      let detail: { restart?: boolean; running?: string[] } | null = null;
+      try {
+        detail = JSON.parse((e as Error).message);
+      } catch {
+        /* a plain message */
+      }
+      if (detail?.restart) setRunning(detail.running ?? []);
+      else setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="rounded-md border border-line px-3 py-2.5 text-xs text-ink-2">
+      <div className="flex flex-wrap items-center gap-3">
+        <Button disabled={busy || hostReady === false} onClick={() => pick(false)}>
+          {busy ? "Choose the folder on your computer…" : "Use a folder on this computer…"}
+        </Button>
+        {picked && picked.path === workspace && (
+          <span>
+            On your computer: <span className="font-mono text-ink">{picked.hostPath}</span>
+          </span>
+        )}
+      </div>
+      {hostReady === false && (
+        <p className="mt-2 text-ink-3">
+          Needs Pantheon Host on this computer (run <span className="font-mono">python host/main.py</span> from the Pantheon folder, or restart it if it&apos;s an older version).
+        </p>
+      )}
+      {running && (
+        <div className="mt-2 space-y-2 rounded-md border border-warn/40 bg-warn/10 p-2.5">
+          <p>A new folder restarts Pantheon&apos;s backend, which stops what is running now:</p>
+          <ul className="list-disc pl-5">
+            {running.map((r) => (
+              <li key={r}>{r}</li>
+            ))}
+          </ul>
+          <div className="flex gap-2">
+            <Button variant="danger" disabled={busy} onClick={() => pick(true)}>
+              Stop it and choose a folder
+            </Button>
+            <Button onClick={() => setRunning(null)}>Not now</Button>
+          </div>
+        </div>
+      )}
+      {note && <p className="mt-2 text-ok">{note}</p>}
+      <ErrorNote error={error} />
     </div>
   );
 }

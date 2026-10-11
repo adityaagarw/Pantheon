@@ -1,0 +1,72 @@
+{
+  "rows_read": 319,
+  "duplicates_removed": 19,
+  "valid_rows": 249,
+  "invalid_rows": 51,
+  "invalid_reasons": {
+    "order_date": 10,
+    "order_id": 7,
+    "product": 10,
+    "quantity": 7,
+    "region": 10,
+    "status": 4,
+    "unit_price": 3
+  },
+  "status_counts": {
+    "cancelled": 14,
+    "completed": 175,
+    "pending": 40,
+    "refunded": 20
+  },
+  "total_revenue": "210972.19",
+  "revenue_by_region": {
+    "Asia Pacific": "64794.09",
+    "Europe": "43141.23",
+    "Latin America": "37675.19",
+    "North America": "65361.68"
+  },
+  "revenue_by_month": {
+    "2026-07": "65877.65",
+    "2026-08": "77747.64",
+    "2026-09": "67346.90"
+  },
+  "revenue_by_region_month": {
+    "Asia Pacific": {
+      "2026-07": "17745.54",
+      "2026-08": "16620.04",
+      "2026-09": "30428.51"
+    },
+    "Europe": {
+      "2026-07": "12871.95",
+      "2026-08": "6506.04",
+      "2026-09": "23763.24"
+    },
+    "Latin America": {
+      "2026-07": "12541.68",
+      "2026-08": "20962.41",
+      "2026-09": "4171.10"
+    },
+    "North America": {
+      "2026-07": "22718.48",
+      "2026-08": "33659.15",
+      "2026-09": "8984.05"
+    }
+  },
+  "top_products": [
+    {
+      "product": "Standing Desk",
+      "revenue": "174860.00",
+      "units": 140
+    },
+    {
+      "product": "Widget Pro",
+      "revenue": "12226.50",
+      "units": 247
+    },
+    {
+      "product": "Monitor Arm",
+      "revenue": "8633.00",
+      "units": 97
+    }
+  ]
+}

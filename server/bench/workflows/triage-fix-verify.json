@@ -1,0 +1,20 @@
+{
+  "name": "triage-fix-verify",
+  "summary": "For bug reports. First prove each bug with a failing test, then fix, then check with a second agent.",
+  "roles": [
+    {"name": "triager", "job": "Reads the bug report and the code. Finds the cause of each problem. Writes one failing test for each problem."},
+    {"name": "fixer", "job": "Changes the code so that the failing tests pass. Makes the smallest correct change."},
+    {"name": "verifier", "job": "Did not write the fix. Reviews the change, looks for missed cases and runs all tests."}
+  ],
+  "steps": [
+    {"id": "triage", "role": "triager", "do": "For each problem in the report, find the cause in the code. Write a failing regression test for it.", "output": "worklog/TRIAGE.md"},
+    {"id": "fix", "role": "fixer", "do": "Fix the code until all tests pass. Do not change the meaning of the existing tests.", "after": ["triage"]},
+    {"id": "verify", "role": "verifier", "do": "Review the diff against the report and the rules in the README. Look for related bugs that the report did not name. Send problems back to the fixer.", "after": ["fix"], "output": "worklog/REVIEW.md"}
+  ],
+  "rules": [
+    "Each problem in the report must have its own test.",
+    "The verifier must not be the same agent as the fixer.",
+    "Repeat fix and verify until the verifier accepts the change."
+  ],
+  "artifacts": ["worklog/TRIAGE.md", "worklog/REVIEW.md"]
+}

@@ -49,7 +49,9 @@ export function MetaChat({
   const [modelOpen, setModelOpen] = useState(false);
   useAutoSpeak(messages, speakOn || liveOn);
   const name = agent?.name ?? fallbackName;
-  const send = (t: string, files?: string[]) => api.send(SYSTEM_ORG, { to: agentId, content: t, attachments: files }).then(() => undefined);
+  const send = (t: string, files?: string[], o?: { steer: boolean }) =>
+    api.send(SYSTEM_ORG, { to: agentId, content: t, attachments: files, steer: o?.steer }).then(() => undefined);
+  const [resetOpen, setResetOpen] = useState(false);
 
   return (
     <>
@@ -74,6 +76,11 @@ export function MetaChat({
             </Button>
           )}
           <Toggle checked={speakOn || liveOn} onChange={setSpeakOn} label="Speak" />
+          {agent?.metaRole && (
+            <Button size="sm" variant="ghost" title={`Start ${name} over with its original settings`} onClick={() => setResetOpen(true)}>
+              Reset
+            </Button>
+          )}
           <Button size="sm" variant="ghost" className="lg:hidden" onClick={onShowSide}>
             {sideLabel}
           </Button>
@@ -114,8 +121,16 @@ export function MetaChat({
           {live.tool ? `🛠 ${live.tool}…` : live.stream ? `✎ …${live.stream.slice(-160)}` : "thinking…"}
         </div>
       )}
-      <Composer placeholder={placeholder} onSend={send} attach={{ orgId: SYSTEM_ORG, agentId }} live={{ orgId: SYSTEM_ORG, agentId, agentName: name }} onLiveChange={setLiveOn} />
+      <Composer
+        placeholder={placeholder}
+        onSend={send}
+        working={live.status === "working" ? { name } : null}
+        attach={{ orgId: SYSTEM_ORG, agentId }}
+        live={{ orgId: SYSTEM_ORG, agentId, agentName: name }}
+        onLiveChange={setLiveOn}
+      />
       {agent && <ModelDialog open={modelOpen} agent={agent} onClose={() => setModelOpen(false)} />}
+      {agent?.metaRole && <ResetDialog open={resetOpen} role={agent.metaRole} name={name} onClose={() => setResetOpen(false)} />}
     </>
   );
 }
@@ -180,5 +195,44 @@ export function MetaLayout({ chat, side, sideOpen, onCloseSide }: { chat: ReactN
         {side}
       </aside>
     </div>
+  );
+}
+
+/** Start Zeus, Argus or Kronos over: chat cleared, original settings back. */
+function ResetDialog({ open, role, name, onClose }: { open: boolean; role: "zeus" | "argus" | "kronos"; name: string; onClose: () => void }) {
+  const [forget, setForget] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const reset = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await api.resetMetaAgent(role, forget);
+      onClose();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Modal open={open} onClose={onClose} title={`Reset ${name}?`}>
+      <div className="space-y-3 text-sm">
+        <p className="text-ink-2">
+          This stops what {name} is doing, deletes your chat with {name}, clears its context, and puts its name, instructions, tools, model and limits
+          back to the originals.
+        </p>
+        <Toggle checked={forget} onChange={setForget} label={`Also forget ${name}'s long-term memories`} />
+        <ErrorNote error={error} />
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button variant="danger" loading={busy} onClick={() => void reset()}>
+            Reset {name}
+          </Button>
+        </div>
+      </div>
+    </Modal>
   );
 }

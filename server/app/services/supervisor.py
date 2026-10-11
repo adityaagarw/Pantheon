@@ -132,6 +132,35 @@ async def ensure_meta_agent(role: str) -> Agent:
     return agent
 
 
+async def reset_meta_agent(role: str, *, forget: bool = False) -> Agent:
+    """Put Zeus, Argus or Kronos back as new: chat and context cleared, and its name,
+    persona, tools, model, limits and look restored. ``forget`` also deletes its
+    long-term memories."""
+    from sqlalchemy import delete as sql_delete
+
+    from app.agents.runtime import runtime
+    from app.models import Memory
+
+    if role not in META_AGENTS:
+        raise ValueError(f"no meta agent '{role}' (zeus, argus or kronos)")
+    agent = await ensure_meta_agent(role)
+    await runtime.clear_chat(agent.id)
+    spec = META_AGENTS[role]
+    agent = await orgs.update_agent(agent.id, {
+        "name": spec["name"], "role": spec["role"], "persona": spec["persona"],
+        "tools": spec["tools"], "model": {}, "avatar": spec["avatar"], "status": "active"})
+    async with SessionLocal() as session:
+        row = await session.get(Agent, agent.id)
+        assert row is not None
+        row.limits = {}  # a patch merges limits; a reset replaces them
+        if forget:
+            await session.execute(sql_delete(Memory).where(Memory.agent_id == agent.id))
+        await session.commit()
+        await session.refresh(row)
+    await bus.publish("agent.updated", orgs.agent_to_dict(row), org_id=row.org_id, agent_id=row.id)
+    return row
+
+
 async def ensure_supervisor() -> Agent:
     zeus = await ensure_meta_agent("zeus")
     await ensure_meta_agent("argus")
