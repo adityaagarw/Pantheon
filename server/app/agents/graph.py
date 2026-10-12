@@ -35,7 +35,6 @@ from langchain_core.messages import (
     SystemMessage,
     ToolMessage,
 )
-from langchain_core.messages.utils import count_tokens_approximately
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
@@ -55,8 +54,34 @@ from app.tools.resolve import clip, execute, resolve_tools
 log = logging.getLogger(__name__)
 
 DEFAULT_MAX_STEPS = 30
-COMPACT_AT = 0.6  # fraction of the context window
-KEEP_RECENT = 0.25  # fraction of the window kept verbatim after compaction
+COMPACT_AT = 0.6  # fraction of the context window (unless the model names a compact_at)
+KEEP_RECENT = 0.4  # fraction of the compaction point kept verbatim after compaction
+CHARS_PER_TOKEN = 3.2  # what current tokenizers average on English, code and JSON
+PROMPT_OVERHEAD = 8000  # system prompt and tool schemas, when nothing was measured yet
+
+
+def estimate_tokens(messages: list[BaseMessage]) -> int:
+    """Tokens a transcript costs, erring high: chars/4 undercounts by a quarter or more."""
+    chars = sum(len(str(m.content)) + sum(len(str(tc.get("args", ""))) + 40
+                                          for tc in getattr(m, "tool_calls", None) or [])
+                for m in messages)
+    return int(chars / CHARS_PER_TOKEN) + 4 * len(messages)
+
+
+def compact_point(model: Any) -> int:
+    return int(model.compact_at or model.context_window * COMPACT_AT)
+
+
+def context_size(state: AgentState) -> int:
+    """The prompt the next model call will send, in tokens: what the last call measured
+    (system prompt and tool schemas included) plus what arrived since; an estimate with
+    room for the system prompt when nothing has been measured."""
+    messages = state.get("messages", [])
+    measured = int(state.get("context_tokens") or 0)
+    if not measured:
+        return estimate_tokens(messages) + PROMPT_OVERHEAD
+    last_ai = max((i for i, m in enumerate(messages) if isinstance(m, AIMessage)), default=-1)
+    return measured + estimate_tokens(messages[last_ai + 1:])
 
 
 def _merge_seen(old: list[str] | None, new: list[str] | None) -> list[str]:
@@ -85,11 +110,17 @@ class AgentState(TypedDict, total=False):
     direct_senders: list[str]
     recalled: str  # memories auto-recalled for the current turn
     recalled_files: str  # passages from the agent's files, likewise
+    context_tokens: int  # input + output tokens of the last model call (0: not measured)
+
+
+# A step is four graph hops (prepare, model, gate, tool); max_steps_per_turn is what ends a
+# turn, so LangGraph's own limit must never come first.
+RECURSION_LIMIT = 10_000
 
 
 def thread_config(agent_id: str) -> RunnableConfig:
     return {"configurable": {"thread_id": f"agent:{agent_id}", "agent_id": agent_id},
-            "recursion_limit": 400}
+            "recursion_limit": RECURSION_LIMIT}
 
 
 async def _load(config: RunnableConfig) -> tuple[Org, Agent]:
@@ -151,10 +182,9 @@ def sanitize(messages: list[BaseMessage]) -> list[BaseMessage]:
 def compaction_split(messages: list[BaseMessage], window: int, *, force: bool = False) -> int:
     """Index where the verbatim tail starts; everything before it gets summarized.
 
-    Automatic compaction runs once the transcript passes ``COMPACT_AT`` of the
-    context window and keeps roughly ``KEEP_RECENT`` of it verbatim, cutting at
-    a human message so tool calls and their results stay together. ``force``
-    (the user's "compact now" on an idle agent) keeps only the final reply.
+    Keeps roughly ``KEEP_RECENT`` of ``window`` (the compaction point) verbatim,
+    cutting at a human message so tool calls and their results stay together.
+    ``force`` (the user's "compact now" on an idle agent) keeps only the final reply.
     """
     if force:
         return len(messages) - 1 if messages else 0
@@ -162,7 +192,7 @@ def compaction_split(messages: list[BaseMessage], window: int, *, force: bool = 
     keep_from = len(messages)
     running = 0
     for i in range(len(messages) - 1, 0, -1):
-        running += count_tokens_approximately([messages[i]])
+        running += estimate_tokens([messages[i]])
         if running > budget:
             break
         if isinstance(messages[i], HumanMessage):
@@ -170,6 +200,34 @@ def compaction_split(messages: list[BaseMessage], window: int, *, force: bool = 
     if keep_from >= len(messages):  # newest human block alone exceeds budget
         keep_from = max(i for i, m in enumerate(messages) if isinstance(m, HumanMessage))
     return keep_from
+
+
+def compaction_drop(messages: list[BaseMessage], point: int) -> list[BaseMessage]:
+    """The messages to fold into the summary when the context passes ``point``.
+
+    Whole earlier exchanges first. A turn long enough to pass the point on its own (a
+    long tool loop) is cut inside: its opening message stays, so the transcript still
+    starts with what the agent was asked, and so do its latest steps; the steps between
+    go. A cut always lands on one of the agent's replies, so every tool call keeps its
+    result.
+    """
+    keep_from = compaction_split(messages, point)
+    drop = list(messages[:keep_from])
+    budget = int(point * KEEP_RECENT)
+    if estimate_tokens(messages[keep_from:]) <= budget:
+        return drop
+    cut, running = len(messages), 0
+    for i in range(len(messages) - 1, keep_from, -1):
+        running += estimate_tokens([messages[i]])
+        if running > budget:
+            break
+        if isinstance(messages[i], AIMessage):
+            cut = i
+    # The newest step alone over budget: still drop everything before it.
+    if cut >= len(messages):
+        cut = max((i for i in range(keep_from + 1, len(messages))
+                   if isinstance(messages[i], AIMessage)), default=len(messages))
+    return drop + list(messages[keep_from + 1:cut])
 
 
 async def summarize(org: Org, agent: Agent, model: Any, previous: str,
@@ -208,17 +266,18 @@ async def prepare_node(state: AgentState, config: RunnableConfig) -> dict:
         return {}
     org, agent = await _load(config)
     model = await resolve_for_agent(agent, org)
-    window = model.context_window
-    if count_tokens_approximately(messages) + 4000 < window * COMPACT_AT:
+    point = compact_point(model)
+    if context_size(state) < point:
         return {}
-    old = messages[:compaction_split(messages, window)]
+    old = compaction_drop(messages, point)
     if not old:
         return {}
     summary = await summarize(org, agent, model, state.get("summary", ""), old,
                               state.get("turn_id"))
     await bus.publish("agent.compacted", {"removed": len(old), "turnId": state.get("turn_id")},
                       org_id=org.id, agent_id=agent.id)
-    return {"summary": summary,
+    # The last measurement covered what was just dropped: estimate until the next call.
+    return {"summary": summary, "context_tokens": 0,
             "messages": [RemoveMessage(id=m.id) for m in old if m.id]}
 
 
@@ -295,7 +354,8 @@ async def model_node(state: AgentState, config: RunnableConfig) -> dict:
             tc["id"] = f"call_{turn_id or 'x'}_{steps}_{i}_{int(time.time() * 1000)}"
     out: dict[str, Any] = {
         "messages": [*prune_images(list(state.get("messages", []))), *steered, ai],
-        "steps": steps + 1, "recalled": recalled, "recalled_files": recalled_files}
+        "steps": steps + 1, "recalled": recalled, "recalled_files": recalled_files,
+        "context_tokens": tin + tout}
     if steered:
         out.update(seen=seen, direct_senders=direct)
     return out
@@ -500,5 +560,7 @@ def build_graph(checkpointer: Any):
     g.add_edge("prepare", "model")
     g.add_conditional_edges("model", route_after_model, ["gate", END])
     g.add_conditional_edges("gate", route_after_gate, ["tool"])
-    g.add_edge("tool", "model")
+    # Through prepare after every tool step, not only at the start of a turn: a long tool
+    # loop grows the context until it fills the window otherwise.
+    g.add_edge("tool", "prepare")
     return g.compile(checkpointer=checkpointer)

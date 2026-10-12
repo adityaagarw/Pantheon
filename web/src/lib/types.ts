@@ -276,6 +276,8 @@ export interface StagePageInfo {
   title: string;
   kind: "scene" | "html";
   version: number;
+  /** "" on the Stage list, "archive" when put away. */
+  folder?: string;
   createdAt: string | null;
   updatedAt: string | null;
 }

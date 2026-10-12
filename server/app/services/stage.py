@@ -16,7 +16,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from app.core.db import SessionLocal
 from app.events import bus
@@ -27,6 +27,7 @@ LIB_DIR = HERE / "lib"
 VENDOR_DIR = HERE / "vendor"
 LIB_URL = "/api/v1/stage-lib"
 MAX_SOURCE = 400_000
+ARCHIVE = "archive"
 
 
 class StageError(ValueError):
@@ -35,7 +36,7 @@ class StageError(ValueError):
 
 def to_dict(p: StagePage, *, source: bool = False) -> dict[str, Any]:
     out = {"id": p.id, "orgId": p.org_id, "agentId": p.agent_id, "title": p.title,
-           "kind": p.kind, "version": p.version,
+           "kind": p.kind, "version": p.version, "folder": p.folder or "",
            "createdAt": p.created_at.isoformat() if p.created_at else None,
            "updatedAt": p.updated_at.isoformat() if p.updated_at else None}
     if source:
@@ -58,12 +59,23 @@ def _import_map() -> str:
         "three/addons/": f"{LIB_URL}/three/addons/",
         "katex": f"{LIB_URL}/katex/katex.mjs",
         "stage": f"{LIB_URL}/stage.js",
+        # Art and motion libraries, served from here so pages work offline and package as-is.
+        "stage/art": f"{LIB_URL}/art.js",
+        "gsap": f"{LIB_URL}/gsap/gsap.js",
+        "postprocessing": f"{LIB_URL}/postprocessing/postprocessing.js",
+        "troika-three-text": f"{LIB_URL}/troika/troika-three-text.js",
+        "pixi.js": f"{LIB_URL}/pixi/pixi.js",
+        "pixi-filters": f"{LIB_URL}/pixi/pixi-filters.js",
+        "d3": f"{LIB_URL}/d3/d3.js",
+        "roughjs": f"{LIB_URL}/rough/rough.js",
     }})
 
 
 def _head(title: str) -> str:
     return (f'<meta charset="utf-8"><meta name="viewport" content="width=device-width, '
             f'initial-scale=1"><title>{html_lib.escape(title)}</title>'
+            # Inter, Fraunces and Space Grotesk; a face downloads only when text uses it.
+            f'<link rel="stylesheet" href="{LIB_URL}/fonts/fonts.css">'
             f'<script type="importmap">{_import_map()}</script>'
             # Every Stage export is a global, so pages can use Stage, create, THREE… directly.
             '<script type="module">import * as S from "stage"; Object.assign(globalThis, S);'
@@ -100,9 +112,15 @@ async def save(org_id: str, agent_id: str | None, title: str, *, code: str = "",
             if page is None or page.org_id != org_id:
                 raise StageError(f"no stage page {page_id}")
         elif title.strip():
+            # The org's page with this title, whoever made it (an editor restyling a lesson
+            # updates it instead of adding a copy); one's own first, then the newest. The
+            # page keeps its author, who answers learners' questions on it. Archived pages
+            # stay as they were.
             page = (await session.execute(select(StagePage).where(
-                StagePage.org_id == org_id, StagePage.agent_id == agent_id,
-                StagePage.title == title.strip()))).scalars().first()
+                StagePage.org_id == org_id, StagePage.title == title.strip(),
+                StagePage.folder != ARCHIVE).order_by(
+                (StagePage.agent_id == agent_id).desc(), StagePage.updated_at.desc())
+            )).scalars().first()
         if page is None:
             page = StagePage(org_id=org_id, agent_id=agent_id, title=title.strip() or "Untitled",
                              kind=kind, source=source)
@@ -120,6 +138,23 @@ async def for_org(org_id: str) -> list[StagePage]:
     async with SessionLocal() as session:
         return list((await session.execute(select(StagePage).where(
             StagePage.org_id == org_id).order_by(StagePage.updated_at.desc()))).scalars())
+
+
+async def move(page_id: str, folder: str) -> StagePage:
+    """Put a page in the archive ("archive") or back on the Stage list ("")."""
+    if folder not in ("", ARCHIVE):
+        raise StageError(f"no folder '{folder}' (use '{ARCHIVE}' or '')")
+    async with SessionLocal() as session:
+        # Moving isn't an edit: the page keeps its updated time and place in the order.
+        await session.execute(update(StagePage).where(StagePage.id == page_id).values(
+            folder=folder, updated_at=StagePage.updated_at))
+        await session.commit()
+        p = await session.get(StagePage, page_id)
+        if p is None:
+            raise StageError("page not found")
+    await bus.publish("stage.updated", {**to_dict(p), "moved": True}, org_id=p.org_id,
+                      agent_id=p.agent_id)
+    return p
 
 
 async def get(page_id: str) -> StagePage | None:

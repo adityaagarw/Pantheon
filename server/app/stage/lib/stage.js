@@ -29,10 +29,33 @@ export { THREE };
 
 // --- the bridge to Pantheon ----------------------------------------------------------
 
+// In a packaged site (stage_package) there is no Pantheon: site.js lists the pages.
+const site = globalThis.__pantheonSite;
+
+function siteFile(target) {
+  const t = String(target).trim().toLowerCase();
+  const pages = site.pages;
+  const p = pages.find((x) => x.id === String(target).trim()) ||
+    pages.find((x) => x.title.toLowerCase() === t) ||
+    pages.find((x) => { const ti = x.title.toLowerCase(); return ti.startsWith(t) && !/[a-z0-9]/.test(ti[t.length] ?? ""); });
+  return p?.file;
+}
+
 export const pantheon = {
   /** Send something to the agent that made this page (appears as your message). */
   send(text, data) {
+    if (site) return;
     window.parent?.postMessage({ pantheon: true, type: "send", text: String(text), data: data ?? null }, "*");
+  },
+  /** Open another Stage page: its id, its title, or the start of its title ("Ch 4"). */
+  open(target) {
+    if (site) {
+      const file = siteFile(target);
+      if (file) location.href = file;
+      else console.warn(`no page "${target}" in this site`);
+      return;
+    }
+    window.parent?.postMessage({ pantheon: true, type: "open", text: String(target) }, "*");
   },
 };
 window.pantheon = pantheon;
@@ -49,7 +72,7 @@ function showError(msg) {
   if (!el) {
     el = document.createElement("div");
     el.id = "stage-error";
-    el.style.cssText = "position:fixed;left:12px;right:12px;bottom:12px;padding:10px 12px;border-radius:8px;background:#5b1e24;color:#ffd7db;font:13px ui-monospace,monospace;z-index:99;white-space:pre-wrap";
+    el.style.cssText = "position:fixed;left:12px;right:12px;bottom:12px;padding:10px 12px;border-radius:8px;background:#5b1e24;color:#ffd7db;font:13px ui-monospace,monospace;z-index:1003;white-space:pre-wrap";
     document.body.appendChild(el);
   }
   el.textContent = "⚠ " + msg;
@@ -67,6 +90,8 @@ export const ease = {
 
 class Anim {
   constructor(duration, update, { easing = ease.smooth, begin, end } = {}) {
+    // An easing may also be named ("inOut") or missing; anything else falls back to smooth.
+    if (typeof easing !== "function") easing = ease[easing] ?? ease.smooth;
     Object.assign(this, { duration, update, easing, begin, end });
   }
 }
@@ -179,25 +204,27 @@ const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt
 // --- the stage ------------------------------------------------------------------------
 
 const CSS = `
-html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:#ececec;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
-canvas.stage{display:block;width:100vw;height:100vh}
+/* Layers: the page's own art uses z-index below 1000; the Stage's controls (title,
+   caption, questions, Next) sit at 1000+ so nothing a page draws can cover them. */
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:#ececec;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
+canvas.stage{position:fixed;inset:0;display:block;width:100vw;height:100vh}
 .stage-overlay{position:fixed;inset:0;pointer-events:none;overflow:hidden}
 .stage-label{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:1em;line-height:1.2;will-change:transform}
 .stage-label[data-anchor=left]{transform:translate(0,-50%)}
-.stage-title{position:fixed;top:18px;left:0;right:0;text-align:center;font-size:22px;font-weight:600;letter-spacing:.2px;pointer-events:none}
-.stage-caption{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);max-width:min(900px,90vw);padding:10px 16px;border-radius:10px;background:rgba(15,17,22,.78);font-size:17px;line-height:1.45;text-align:center;backdrop-filter:blur(6px);transition:opacity .25s}
-.stage-panel{position:fixed;right:16px;top:16px;display:flex;flex-direction:column;gap:8px;max-width:320px;pointer-events:auto}
+.stage-title{position:fixed;z-index:1000;top:18px;left:0;right:0;text-align:center;font-size:22px;font-weight:600;letter-spacing:.2px;pointer-events:none}
+.stage-caption{position:fixed;z-index:1000;left:50%;bottom:22px;transform:translateX(-50%);max-width:min(900px,90vw);padding:10px 16px;border-radius:10px;background:rgba(15,17,22,.78);font-size:17px;line-height:1.45;text-align:center;backdrop-filter:blur(6px);transition:opacity .25s}
+.stage-panel{position:fixed;z-index:1001;right:16px;top:16px;display:flex;flex-direction:column;gap:8px;max-width:320px;pointer-events:auto}
 .stage-card{background:rgba(22,24,31,.92);border:1px solid #2f3441;border-radius:12px;padding:12px 14px;font-size:15px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
 .stage-btn{font:inherit;font-size:14px;padding:8px 14px;border-radius:8px;border:1px solid #3a4152;background:#232734;color:#eee;cursor:pointer;transition:background .15s}
 .stage-btn:hover{background:#2e3445}.stage-btn.primary{background:#6d5dfc;border-color:#6d5dfc;color:#fff}
 .stage-btn.right{background:#1f5f3f;border-color:#3ecf8e}.stage-btn.wrong{background:#5b1e24;border-color:#f2667a}
-.stage-next{position:fixed;right:22px;bottom:22px;pointer-events:auto}
+.stage-next{position:fixed;z-index:1001;right:22px;bottom:22px;pointer-events:auto}
 .stage-choices{display:flex;flex-direction:column;gap:6px;margin-top:10px}
 .stage-input{font:inherit;width:100%;box-sizing:border-box;margin-top:8px;padding:8px 10px;border-radius:8px;border:1px solid #3a4152;background:#11131a;color:#eee}
 .stage-slider{width:100%}
 .katex{font-size:1.1em}
 body.stage-held .stage-caption{outline:2px solid #f5b454}
-body.stage-held::after{content:"⏸ Paused — the teacher is listening";position:fixed;top:14px;left:14px;padding:4px 10px;border-radius:999px;background:#f5b454;color:#111;font:600 12px ui-sans-serif,system-ui;z-index:50}
+body.stage-held::after{content:"⏸ Paused — the teacher is listening";position:fixed;top:14px;left:14px;padding:4px 10px;border-radius:999px;background:#f5b454;color:#111;font:600 12px ui-sans-serif,system-ui;z-index:1002}
 `;
 
 export class Stage {
@@ -207,7 +234,10 @@ export class Stage {
    *   3D: a perspective camera you can orbit with the mouse.
    */
   constructor({ mode = "2d", background = "#0f1116", height = 8, title } = {}) {
-    document.documentElement.style.setProperty("--bg", background);
+    // "transparent": the canvas lets through whatever the page puts behind it (an art layer,
+    // a CSS gradient), so a background can be designed without hiding the Stage's objects.
+    const clear = background === "transparent";
+    document.documentElement.style.setProperty("--bg", clear ? "#0f1116" : background);
     const style = document.createElement("style");
     style.textContent = CSS;
     document.head.appendChild(style);
@@ -219,8 +249,9 @@ export class Stage {
     this.mode = mode;
     this.frameHeight = height;
     this.scene = new THREE.Scene();
-    this.scene.background = color(background);
-    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    this.scene.background = clear ? null : color(background);
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: clear });
+    if (clear) this.renderer.setClearColor(0x000000, 0);
     this.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio));
     this.renderer.domElement.className = "stage";
     document.body.appendChild(this.renderer.domElement);
@@ -268,6 +299,7 @@ export class Stage {
     const w = window.innerWidth;
     const h = window.innerHeight;
     this.renderer.setSize(w, h, false);
+    this.composer?.setSize(w, h, false);
     if (this.mode === "3d") {
       this.camera.aspect = w / h;
     } else {
@@ -294,7 +326,9 @@ export class Stage {
     }
     if (!this.held) this.onFrame?.(dt);
     this.controls?.update();
-    this.renderer.render(this.scene, this.camera);
+    // s.composer: a postprocessing EffectComposer (bloom, grain…) renders instead.
+    if (this.composer) this.composer.render(dt);
+    else this.renderer.render(this.scene, this.camera);
     const w = window.innerWidth;
     const h = window.innerHeight;
     const v = new THREE.Vector3();
@@ -525,10 +559,19 @@ export class Stage {
   // --- time -------------------------------------------------------------------------
 
   /** Run animations together; resolves when all finish. */
-  async play(...anims) {
+  async play(...args) {
     await this.gate();
+    // Forgiving, like manim's run_time: a trailing number is the duration for this whole
+    // play; a bare mobject is drawn in; nothing-values (a skipped conditional) are ignored.
+    const list = args.flat();
+    const seconds = typeof list.at(-1) === "number" ? list.pop() : null;
+    const anims = list
+      .filter((a) => a && typeof a === "object")
+      .map((a) => (a instanceof Anim ? a : a.obj ? create(a) : null))
+      .filter(Boolean);
+    if (seconds !== null) for (const a of anims) a.duration = seconds;
     return Promise.all(
-      anims.flat().map(
+      anims.map(
         (anim) =>
           new Promise((resolve) => {
             anim.begin?.();
@@ -779,6 +822,12 @@ export function countTo(mob, from, to, format = fmt, duration = 1.5) {
 /** Run a custom update over time: tween(t => ..., seconds). */
 export function tween(update, duration = 1, easing = ease.smooth) {
   return new Anim(duration, update, { easing });
+}
+
+// The animations also work as methods (s.fadeIn(mob), s.tween(fn, 1)): lessons write both.
+for (const [name, fn] of Object.entries({ create, uncreate, grow, fadeIn, fadeOut, write, moveTo,
+  shift, scaleTo, rotate, colorTo, transform, countTo, tween })) {
+  if (!(name in Stage.prototype)) Stage.prototype[name] = fn;
 }
 
 // --- helpers ------------------------------------------------------------------------

@@ -37,7 +37,8 @@ def _normalize_models(models: Any) -> list[dict[str, Any]]:
             m = {"id": m}
         if isinstance(m, dict) and m.get("id"):
             out.append({k: v for k, v in m.items()
-                        if k in ("id", "context_window", "input_per_mtok", "output_per_mtok", "vision")})
+                        if k in ("id", "context_window", "input_per_mtok", "output_per_mtok", "vision",
+                                 "compact_at")})
     return out
 
 

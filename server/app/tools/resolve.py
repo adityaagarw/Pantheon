@@ -34,6 +34,7 @@ from app.tools import (  # noqa: E402,F401
     scheduling,
     shadowtools,
     stagetools,
+    subagents,
     web,
     whiteboard,
     workspace,

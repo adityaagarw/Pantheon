@@ -52,7 +52,11 @@ function usePref(key: string, initial: boolean): [boolean, (v: boolean) => void]
 
 export default function StagePage() {
   const orgId = useOrg((s) => s.orgId)!;
-  const pages = useOrg(useShallow((s) => Object.values(s.stagePages).sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""))));
+  const allPages = useOrg(useShallow((s) => Object.values(s.stagePages).sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""))));
+  // Archived pages sit in their own folder, out of the list, links and following.
+  const pages = useMemo(() => allPages.filter((p) => p.folder !== "archive"), [allPages]);
+  const archived = useMemo(() => allPages.filter((p) => p.folder === "archive"), [allPages]);
+  const [archiveOpen, setArchiveOpen] = useState(false);
   const browsers = useOrg((s) => s.browsers);
   const agents = useOrg((s) => s.agents);
   const boards = useOrg(useShallow((s) => Object.values(s.whiteboards)));
@@ -89,7 +93,7 @@ export default function StagePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newest?.id, newest?.version]);
 
-  const current = view?.kind === "page" ? pages.find((p) => p.id === view.id) : undefined;
+  const current = view?.kind === "page" ? allPages.find((p) => p.id === view.id) : undefined;
   const [listOpen, setListOpen] = useState(true);
   const [chatOpen, setChatOpen] = useState(false);
   // Panels: the list can fold to a rail and the chat can go wide (remembered per device).
@@ -198,8 +202,36 @@ export default function StagePage() {
               icon={<AgentAvatar agent={p.agentId ? agents[p.agentId] : undefined} size={18} />}
               label={p.title}
               meta={`v${p.version} · ${timeAgo(p.updatedAt)}`}
+              action={{ label: "Archive", title: "Move to the archive", run: () => void api.moveStagePage(p.id, "archive") }}
             />
           ))}
+          {archived.length > 0 && (
+            <>
+              <button
+                onClick={() => setArchiveOpen((o) => !o)}
+                className="mt-1 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-ink-3 hover:bg-panel-2/60 hover:text-ink-2 cursor-pointer"
+              >
+                <span className="w-[18px] text-center">{archiveOpen ? "▾" : "▸"}</span>
+                <span className="flex-1">🗄 Archive</span>
+                <span className="text-[10px]">{archived.length}</span>
+              </button>
+              {archiveOpen && (
+                <div className="ml-3 border-l border-line pl-1">
+                  {archived.map((p) => (
+                    <Item
+                      key={p.id}
+                      active={view?.kind === "page" && view.id === p.id}
+                      onClick={() => (setView({ kind: "page", id: p.id }), setListOpen(false))}
+                      icon={<AgentAvatar agent={p.agentId ? agents[p.agentId] : undefined} size={18} />}
+                      label={p.title}
+                      meta={`v${p.version}`}
+                      action={{ label: "Restore", title: "Put it back on the Stage list", run: () => void api.moveStagePage(p.id, "") }}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </Section>
         <Section
           title="Whiteboards"
@@ -285,6 +317,15 @@ export default function StagePage() {
             onWhere={(t) => (whereRef.current = t)}
             onPause={() => void pauseLesson()}
             onResume={() => setAwait(false)}
+            onOpen={(target) => {
+              // A page opens another by id, title, or the start of a title ("Ch 4"); newest wins.
+              const t = target.trim().toLowerCase();
+              const hit =
+                pages.find((p) => p.id === target) ??
+                pages.find((p) => p.title.toLowerCase() === t) ??
+                pages.find((p) => p.title.toLowerCase().startsWith(t) && !/[a-z0-9]/.test(p.title.toLowerCase()[t.length] ?? ""));
+              if (hit) setView({ kind: "page", id: hit.id });
+            }}
             chatOpen={chatOpen}
             onToggleChat={() => setChatOpen((o) => !o)}
           />
@@ -360,16 +401,39 @@ function Section({ title, children, action }: { title: string; children: React.R
   );
 }
 
-function Item({ active, onClick, icon, label, meta }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string; meta: string }) {
+function Item({
+  active,
+  onClick,
+  icon,
+  label,
+  meta,
+  action,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+  meta: string;
+  /** A small button shown on hover (e.g. Archive), beside the item rather than inside it. */
+  action?: { label: string; title: string; run: () => void };
+}) {
   return (
-    <button
-      onClick={onClick}
-      className={cx("flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors cursor-pointer", active ? "bg-panel-2 text-ink" : "text-ink-2 hover:bg-panel-2/60")}
-    >
-      {icon}
-      <span className="min-w-0 flex-1 truncate">{label}</span>
-      <span className="shrink-0 text-[10px] text-ink-3">{meta}</span>
-    </button>
+    <div className={cx("group flex items-center rounded-md transition-colors", active ? "bg-panel-2 text-ink" : "text-ink-2 hover:bg-panel-2/60")}>
+      <button onClick={onClick} className="flex min-w-0 flex-1 items-center gap-2 px-2 py-1.5 text-left text-sm cursor-pointer">
+        {icon}
+        <span className="min-w-0 flex-1 truncate">{label}</span>
+        <span className={cx("shrink-0 text-[10px] text-ink-3", action && "group-hover:hidden")}>{meta}</span>
+      </button>
+      {action && (
+        <button
+          onClick={action.run}
+          title={action.title}
+          className="mr-1 hidden shrink-0 rounded px-1.5 py-0.5 text-[10px] text-ink-3 hover:bg-panel hover:text-ink group-hover:block cursor-pointer"
+        >
+          {action.label}
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -384,6 +448,7 @@ function StageFrame({
   onWhere,
   onPause,
   onResume,
+  onOpen,
   chatOpen,
   onToggleChat,
 }: {
@@ -398,6 +463,8 @@ function StageFrame({
   onWhere: (text: string) => void;
   onPause: () => void;
   onResume: () => void;
+  /** The page asked to open another Stage page (a contents page linking to chapters). */
+  onOpen: (target: string) => void;
   chatOpen: boolean;
   onToggleChat: () => void;
 }) {
@@ -427,6 +494,10 @@ function StageFrame({
   // Narration must never outlive the frame that asked for it (reload, new version, leaving).
   useEffect(() => () => stopSpeaking(), [src]);
 
+  // The latest page list, without re-subscribing the message handler.
+  const openRef = useRef(onOpen);
+  openRef.current = onOpen;
+
   const postToFrame = (msg: Record<string, unknown>) => {
     frame.current?.contentWindow?.postMessage(msg, "*");
   };
@@ -438,6 +509,7 @@ function StageFrame({
       const d = e.data as { pantheon?: boolean; type?: string; text?: string; step?: boolean; id?: number };
       if (!d?.pantheon) return;
       if (d.type === "error") setError(String(d.text ?? "error"));
+      else if (d.type === "open" && d.text) openRef.current(String(d.text));
       else if (d.type === "send" && d.text && page.agentId) {
         const text = String(d.text).slice(0, 4000);
         void api.send(orgId, { to: page.agentId, content: `[On the Stage · ${page.title}] ${text}` }).then(() => {

@@ -22,18 +22,18 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from collections.abc import Awaitable, Callable
 from datetime import timedelta
 from typing import Any
 
 from langchain_core.messages import AIMessage, HumanMessage, RemoveMessage, ToolMessage
-from langchain_core.messages.utils import count_tokens_approximately
 from langgraph.types import Command
 from sqlalchemy import func, select, text, update
 
 from app.agents import signals
 from app.agents.checkpointer import SqlCheckpointSaver
-from app.agents.graph import COMPACT_AT, build_graph, thread_config
+from app.agents.graph import build_graph, compact_point, context_size, thread_config
 from app.agents.llm import text_of
 from app.agents.slots import Slots
 from app.core.config import settings
@@ -63,6 +63,17 @@ RUNTIME_KEY = "runtime"  # settings row: {"max_concurrent": n}
 MAX_CONCURRENT = 64
 DEFAULT_TURNS_PER_HOUR = 120
 BACKOFF = [5, 20, 60, 180, 600]
+# A model server that is full (its KV cache can't take another long context, or it
+# answers 429) isn't broken: the agent waits for room and tries again, and it never
+# counts toward parking the agent.
+FULL_SERVER = re.compile(
+    r"kv pool cannot hold|kv_exhausted|kv cache.*(full|exhausted)|too many requests|\b429\b"
+    r"|server is (busy|overloaded)|overloaded_error|no free slot", re.I)
+FULL_BACKOFF = [15, 30, 60, 120]
+
+
+def server_full(error: str) -> bool:
+    return bool(FULL_SERVER.search(error))
 
 
 class RuntimeBusy(RuntimeError):
@@ -81,6 +92,7 @@ class Runtime:
         self._stop_requested: set[str] = set()
         self._resume_values: dict[str, dict[str, Any]] = {}
         self._inbox_images: list[str] = []
+        self._full_waits: dict[str, int] = {}  # agent -> tries in a row on a full server
         self.started = False
 
     # --- lifecycle --------------------------------------------------------------
@@ -222,7 +234,7 @@ class Runtime:
     async def _worker(self, agent_id: str) -> None:
         try:
             org_id = await self._org_of(agent_id)
-            if org_id is None:
+            if org_id is None or not await self._runnable(agent_id):
                 return
             queued = self.slots.would_wait(org_id) and await self._queue(agent_id, org_id)
             async with self.slots.hold(agent_id, org_id):
@@ -241,7 +253,16 @@ class Runtime:
         if await self._has_pending(agent_id):
             self.wake(agent_id)
 
+    async def _runnable(self, agent_id: str) -> bool:
+        """A standby or paused agent keeps its mail but takes no slot (and no queue place)."""
+        async with SessionLocal() as session:
+            return bool(await session.scalar(select(func.count()).select_from(Agent).join(
+                Org, Org.id == Agent.org_id).where(
+                Agent.id == agent_id, Agent.status == "active", Org.status == "running")))
+
     async def _has_pending(self, agent_id: str) -> bool:
+        if not await self._runnable(agent_id):
+            return False
         async with SessionLocal() as session:
             return bool(await session.scalar(select(func.count()).select_from(Delivery).where(
                 Delivery.agent_id == agent_id, Delivery.status == "pending",
@@ -504,6 +525,7 @@ class Runtime:
             await session.execute(update(Agent).where(Agent.id == agent.id).values(
                 consecutive_failures=0, retry_at=None))
             await session.commit()
+        self._full_waits.pop(agent.id, None)
         await bus.publish("turn.completed", {"turnId": turn_id, "summary": summary[:2000]},
                           org_id=org.id, agent_id=agent.id)
         await self._set_status(agent, "idle", "")
@@ -529,17 +551,27 @@ class Runtime:
     async def _on_failure(self, agent: Agent, org: Org, turn_id: str | None, exc: Exception) -> None:
         error = f"{type(exc).__name__}: {exc}"[:4000]
         log.warning("turn failed for %s: %s", agent.name, error)
+        full = server_full(error)
         async with SessionLocal() as session:
             a = await session.get(Agent, agent.id)
             if a is None:
                 return
-            a.consecutive_failures = (a.consecutive_failures or 0) + 1
-            failures = a.consecutive_failures
+            if not full:
+                a.consecutive_failures = (a.consecutive_failures or 0) + 1
+            failures = a.consecutive_failures or 0
             if turn_id:
                 await session.execute(update(Turn).where(Turn.id == turn_id).values(
                     status="failed", error=error, ended_at=func.now()))
-            parked = failures >= settings.max_turn_failures
-            if parked:
+            parked = not full and failures >= settings.max_turn_failures
+            if full:
+                waits = self._full_waits.get(agent.id, 0) + 1
+                self._full_waits[agent.id] = waits
+                delay = FULL_BACKOFF[min(waits - 1, len(FULL_BACKOFF) - 1)]
+                a.runtime_status = "retrying"
+                a.runtime_detail = ("the model server is full (other agents' contexts fill "
+                                    f"it); trying again in {delay}s")
+                a.retry_at = utcnow() + timedelta(seconds=delay)
+            elif parked:
                 a.runtime_status, a.runtime_detail, a.retry_at = "error", error, None
                 session.add(UserInboxItem(org_id=org.id, kind="error", ref_id=agent.id,
                                           title=f"{agent.name} stopped after {failures} failed "
@@ -802,7 +834,7 @@ class Runtime:
             summary = await summarize(org, agent, model, values.get("summary", ""), old, None)
             # As the model node: routing sees the final reply and ends, so nothing runs.
             await self.graph.aupdate_state(
-                cfg, {"summary": summary,
+                cfg, {"summary": summary, "context_tokens": 0,
                       "messages": [RemoveMessage(id=m.id) for m in old if m.id]},
                 as_node="model")
             await bus.publish("agent.compacted", {"removed": len(old), "manual": True},
@@ -811,6 +843,11 @@ class Runtime:
                                    "summary.", "context_compacted")
             return {"removed": len(old), "summary": summary}
 
+        # A turn that just ended still has its worker winding down for a moment.
+        for _ in range(30):
+            if not self.is_busy(agent_id):
+                break
+            await asyncio.sleep(0.1)
         if self.is_busy(agent_id):
             raise RuntimeBusy("the agent is working; try when it's idle")
         return await self._exclusive(agent_id, go)
@@ -825,14 +862,14 @@ class Runtime:
         from app.agents.llm import serialize_messages
 
         messages = values.get("messages") or []
-        context: dict[str, Any] = {"tokens": count_tokens_approximately(messages)}
+        context: dict[str, Any] = {"tokens": context_size(values) if messages else 0}
         async with SessionLocal() as session:
             agent = await session.get(Agent, agent_id)
             org = await session.get(Org, agent.org_id) if agent else None
         if agent is not None and org is not None:
             try:
-                window = (await resolve_for_agent(agent, org)).context_window
-                context |= {"window": window, "compactAt": int(window * COMPACT_AT)}
+                model = await resolve_for_agent(agent, org)
+                context |= {"window": model.context_window, "compactAt": compact_point(model)}
             except Exception:  # noqa: BLE001 - usage is informational
                 pass
         return {

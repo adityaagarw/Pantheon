@@ -589,6 +589,8 @@ class StagePage(Base):
     kind: Mapped[str] = mapped_column(String, default="scene")  # scene (JS module) | html
     source: Mapped[str] = mapped_column(Text, default="")
     version: Mapped[int] = mapped_column(Integer, default=1)
+    # "" (the Stage list) or "archive": kept and viewable, out of the way and out of links.
+    folder: Mapped[str] = mapped_column(String, default="", server_default="")
     created_at: Mapped[datetime] = _ts()
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()

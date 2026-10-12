@@ -87,6 +87,7 @@ async def app_client(db):
     from app.main import app
 
     runtime_mod.BACKOFF[:] = [0, 0, 0, 0, 0]
+    runtime_mod.FULL_BACKOFF[:] = [0, 0, 0, 0]
     async with app.router.lifespan_context(app):
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
             yield c

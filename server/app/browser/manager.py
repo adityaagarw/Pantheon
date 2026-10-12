@@ -116,6 +116,7 @@ class Session:
     page: Any
     last_used: float = field(default_factory=time.monotonic)
     console: list[str] = field(default_factory=list)
+    log: list[str] = field(default_factory=list)  # console.log/info/warn lines
     shot: bytes = b""
     title: str = ""
     url: str = ""
@@ -167,8 +168,10 @@ class BrowserManager:
                 context = await self._new_context()
                 page = await context.new_page()
                 s = Session(context, page)
-                page.on("console", lambda m, s=s: m.type == "error" and not _noise(m.text)
-                        and s.console.append(f"error: {m.text}"[:500]))
+                page.on("console", lambda m, s=s: (
+                    s.console.append(f"error: {m.text}"[:500]) if m.type == "error"
+                    and not _noise(m.text) else m.type in ("log", "info", "warning")
+                    and len(s.log) < 200 and s.log.append(m.text[:2000])))
                 page.on("pageerror", lambda e, s=s: s.console.append(f"error: {e}"[:500]))
                 self._sessions[key] = s
             s.last_used = time.monotonic()

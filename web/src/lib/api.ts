@@ -263,6 +263,7 @@ export const api = {
   deleteMemory: (id: string) => del(`/memories/${id}`),
   stagePages: (orgId: string) => get<StagePageInfo[]>(`/orgs/${orgId}/stage`),
   deleteStagePage: (id: string) => del(`/stage/${id}`),
+  moveStagePage: (id: string, folder: "" | "archive") => patch<StagePageInfo>(`/stage/${id}`, { folder }),
   agentAttention: (agentId: string, view: AttentionView) => post<void>(`/agents/${agentId}/attention`, view),
   clearAttention: (agentId: string) => post<void>(`/agents/${agentId}/attention`, { kind: "none" }),
   agentBrowser: (agentId: string) => get<{ open: boolean; url: string; title: string }>(`/agents/${agentId}/browser`),

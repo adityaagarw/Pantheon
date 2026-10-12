@@ -84,6 +84,8 @@ class Settings(BaseSettings):
     computer_lease_seconds: int = 120
     # Where the backend's own browser reaches Stage pages (for stage_check).
     stage_base_url: str = "http://127.0.0.1:8710"
+    # Where the user's browser reaches this backend (links to packaged Stage sites).
+    public_url: str = "http://localhost:8710"
 
     # --- web ----------------------------------------------------------------
     cors_origins: str = "http://localhost:3710,http://127.0.0.1:3710"

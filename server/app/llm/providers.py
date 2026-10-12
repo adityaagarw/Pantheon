@@ -45,6 +45,10 @@ class ResolvedModel:
     max_tokens: int | None
     vision: bool = False  # accepts images (screenshots from computer use / the browser)
     effort: str = ""  # off | low | medium | high | xhigh ("" = the provider's default)
+    # Tokens of context at which an agent compacts (0: a share of the window). A local
+    # server's KV cache is shared by every agent at once, so it can need far less than
+    # the window: three agents at 100K each don't fit a 200K pool.
+    compact_at: int = 0
 
     def cost(self, input_tokens: int, output_tokens: int) -> float:
         return (input_tokens * self.input_per_mtok + output_tokens * self.output_per_mtok) / 1e6
@@ -181,6 +185,7 @@ async def resolve_binding(binding: dict[str, Any], agent_id: str = "") -> Resolv
         vision=bool(binding.get("vision") if binding.get("vision") is not None
                     else meta.get("vision")),
         effort=level,
+        compact_at=int(binding.get("compact_at") or meta.get("compact_at") or 0),
     )
 
 

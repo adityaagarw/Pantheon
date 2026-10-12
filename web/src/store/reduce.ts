@@ -406,8 +406,10 @@ export function reduce(s: OrgState, e: PantheonEvent, now = Date.now()): OrgStat
       return { ...s, objects };
     }
     case "stage.updated": {
-      const pg = p as unknown as StagePageInfo;
+      const pg = p as unknown as StagePageInfo & { moved?: boolean };
       const isNew = !s.stagePages[pg.id];
+      // Archiving or restoring isn't news for the feed.
+      if (pg.moved) return { ...s, stagePages: { ...s.stagePages, [pg.id]: pg } };
       return pushFeed(
         { ...s, stagePages: { ...s.stagePages, [pg.id]: pg } },
         { id: fid, ts: e.ts, agentId: aid, kind: "stage", text: `${name(s, aid)} ${isNew ? "put" : "updated"} “${pg.title}” on the Stage`, ref: pg.id },

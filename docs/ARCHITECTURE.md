@@ -78,6 +78,10 @@ full history is recorded separately).
 - **Workspace:** `read_file`, `write_file`, `edit_file`, `list_dir`, `search_files`, `run_command`
   (approval by default) — confined to the org workspace, which must live inside `PANTHEON_WORKSPACE_ROOTS`.
 - **Web:** `web_search`, `fetch_url` (content marked untrusted).
+- **Subagents:** `spawn_subagent` starts a temporary helper for one self-contained job: the agent's
+  model, tools and workspace in a fresh context, returning only its report. It can't message anyone,
+  so messaging, tasks, meetings and tools set to "ask" are left out. Several run side by side, at most
+  the org's concurrency limit at once.
 - **MCP:** any stdio or Streamable-HTTP MCP server, granted per agent as `mcp:<server>:*` or
   `mcp:<server>:<tool>`.
 - **Self-improvement:** `request_feature` files a request with the supervisor.

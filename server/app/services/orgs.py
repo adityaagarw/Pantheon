@@ -124,7 +124,7 @@ async def _validate_tools(entries: list[Any], org_id: str | None) -> list[dict[s
 async def _validate_model(model: dict[str, Any] | None) -> dict[str, Any]:
     model = {k: v for k, v in (model or {}).items() if v not in (None, "")}
     allowed = {"provider_id", "model", "temperature", "max_tokens", "context_window", "vision",
-               "reasoning_effort"}
+               "reasoning_effort", "compact_at"}
     unknown = set(model) - allowed
     if unknown:
         raise OrgError(f"unknown model settings: {', '.join(sorted(unknown))}")

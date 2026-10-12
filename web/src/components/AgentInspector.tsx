@@ -132,10 +132,17 @@ export function AgentInspector({ agentId, onClose }: { agentId: string; onClose:
             Live
             {live.tool && <Badge tone="accent">🛠 {live.tool}</Badge>}
           </div>
-          <LiveThinking text={live.thinking} />
-          <div className="mt-1.5 max-h-40 overflow-y-auto rounded-md bg-bg p-2.5 font-mono text-xs leading-relaxed text-ink-2 whitespace-pre-wrap">
-            {stream ? stream.slice(-1500) : live.tool ? `running ${live.tool}…` : "thinking…"}
-          </div>
+          {stream && <LiveThinking text={live.thinking} />}
+          {!stream && live.thinking.trim() ? (
+            // Most steps are tool calls with no reply text: show the reasoning itself, as it streams.
+            <div className="mt-1.5 max-h-40 overflow-y-auto rounded-md bg-bg p-2.5 text-xs italic leading-relaxed text-ink-2 whitespace-pre-wrap">
+              {live.thinking.trim().slice(-1500)}
+            </div>
+          ) : (
+            <div className="mt-1.5 max-h-40 overflow-y-auto rounded-md bg-bg p-2.5 font-mono text-xs leading-relaxed text-ink-2 whitespace-pre-wrap">
+              {stream ? stream.slice(-1500) : live.tool ? `running ${live.tool}…` : "thinking…"}
+            </div>
+          )}
         </div>
       )}
 

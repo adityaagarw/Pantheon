@@ -5,13 +5,13 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Body, HTTPException
-from fastapi.responses import FileResponse, HTMLResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response
 
 from app.browser.manager import manager as browsers
 from app.core.config import settings
 from app.core.db import SessionLocal
 from app.models import Agent
-from app.services import schedules, stage
+from app.services import schedules, sitepack, stage
 
 router = APIRouter(prefix="/api/v1", tags=["stage"])
 
@@ -19,7 +19,8 @@ router = APIRouter(prefix="/api/v1", tags=["stage"])
 # never use the viewer's access to Pantheon. The library is fetched cross-origin.
 SANDBOX = {"Content-Security-Policy": "sandbox allow-scripts allow-popups allow-forms",
            "Cache-Control": "no-store"}
-LIB_HEADERS = {"Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=3600"}
+# Revalidated, so a library fix reaches open lessons on reload.
+LIB_HEADERS = {"Access-Control-Allow-Origin": "*", "Cache-Control": "no-cache"}
 TYPES = {".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css",
          ".woff2": "font/woff2"}
 
@@ -41,6 +42,21 @@ async def stage_view(page_id: str) -> HTMLResponse:
     return HTMLResponse(stage.render(p), headers=SANDBOX)
 
 
+@router.get("/sites/{org_id}/{path:path}")
+async def site(org_id: str, path: str) -> Response:
+    """A packaged Stage site (stage_package). Its pages are sandboxed like Stage pages."""
+    if path and "/" not in path and not path.endswith(".zip"):
+        return RedirectResponse(f"{path}/")  # relative links need the trailing slash
+    f = sitepack.site_file(org_id, path + "index.html" if path.endswith("/") else path)
+    if f is None:
+        raise HTTPException(404, "not found")
+    if f.suffix == ".html":
+        return FileResponse(f, media_type="text/html", headers=SANDBOX)
+    kind = {".zip": "application/zip", ".json": "application/json"}.get(f.suffix)
+    return FileResponse(f, media_type=kind or TYPES.get(f.suffix, "application/octet-stream"),
+                        headers=LIB_HEADERS)
+
+
 @router.get("/orgs/{org_id}/stage")
 async def stage_pages(org_id: str) -> list[dict[str, Any]]:
     return [stage.to_dict(p) for p in await stage.for_org(org_id)]
@@ -52,6 +68,15 @@ async def stage_page(page_id: str) -> dict[str, Any]:
     if p is None:
         raise HTTPException(404, "page not found")
     return stage.to_dict(p, source=True)
+
+
+@router.patch("/stage/{page_id}")
+async def move_stage_page(page_id: str, body: dict[str, Any] = Body(...)) -> dict[str, Any]:
+    """{"folder": "archive"} archives a page; {"folder": ""} puts it back on the list."""
+    try:
+        return stage.to_dict(await stage.move(page_id, str(body.get("folder") or "")))
+    except stage.StageError as e:
+        raise HTTPException(404 if "not found" in str(e) else 400, str(e)) from None
 
 
 @router.delete("/stage/{page_id}", status_code=204)

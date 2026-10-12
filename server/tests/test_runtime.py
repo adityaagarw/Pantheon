@@ -203,6 +203,36 @@ async def test_failures_retry_then_park_then_manual_retry(app_client):
     assert (await _agent(a["id"])).consecutive_failures == 0
 
 
+def test_a_full_model_server_is_recognised():
+    from app.agents.runtime import server_full
+
+    assert server_full("LLMFailure: APIError: the engine failed this request: the KV pool "
+                       "cannot hold it (pool or table exhausted)")
+    assert server_full("RateLimitError: Error code: 429 - Too Many Requests")
+    assert not server_full("ValueError: model exploded")
+    assert not server_full("BadRequestError: context length exceeded")
+
+
+async def test_a_full_model_server_means_wait_not_fail(app_client):
+    org = await make_org(app_client)
+    a = await make_agent(app_client, org["id"], "Patient")
+    state = {"full": 8}  # more than the failures that would park an agent
+
+    def fn(messages, tools):
+        if state["full"] > 0:
+            state["full"] -= 1
+            raise ValueError("the engine failed this request: the KV pool cannot hold it "
+                             "(pool or table exhausted)")
+        return say("got through")
+
+    mock.set_script(a["id"], fn)
+    await dm(app_client, org["id"], "Patient", "hello")
+    await wait_for(lambda: _turn_done(a["id"]), timeout=60, msg="the turn gets through")
+    agent = await _agent(a["id"])
+    assert agent.runtime_status == "idle" and agent.consecutive_failures == 0
+    assert not await rows(UserInboxItem, UserInboxItem.kind == "error")
+
+
 async def _status(agent_id: str, status: str):
     a = await _agent(agent_id)
     return a if a.runtime_status == status else None

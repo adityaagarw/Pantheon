@@ -101,6 +101,111 @@ async def test_stage_pages_are_served_sandboxed_with_the_library(app_client):
     assert (await app_client.get("/api/v1/stage-lib/../services/stage.py")).status_code == 404
 
 
+async def test_a_stage_page_can_come_from_a_workspace_file(app_client, workspace_root):
+    org = await make_org(app_client)
+    ada = await make_agent(app_client, org["id"], "Ada", tools=[
+        {"name": n} for n in ("stage_show", "write_file")])
+    code = 'const s = new Stage({ title: "From a file" });'
+    ap = script(ada["id"], call("write_file", path="lessons/ch01.js", content=code),
+                call("stage_show", title="Ch 1", file="lessons/ch01.js"),
+                call("stage_show", title="Ch 2", file="lessons/missing.js"), say("ok"))
+    await dm(app_client, org["id"], "Ada", "Show chapter 1.")
+    await wait_for(lambda: _done(ada["id"], 3), msg="shown")
+    assert "version 1" in _out(ap, 2) and "no file 'lessons/missing.js'" in _out(ap, 3)
+    pages = (await app_client.get(f"/api/v1/orgs/{org['id']}/stage")).json()
+    assert [p["title"] for p in pages] == ["Ch 1"]
+    view = await app_client.get(f"/api/v1/stage/{pages[0]['id']}/view")
+    assert "From a file" in view.text
+
+
+async def test_stage_pages_can_include_a_shared_kit(app_client, workspace_root):
+    org = await make_org(app_client)
+    ada = await make_agent(app_client, org["id"], "Ada", tools=[
+        {"name": n} for n in ("stage_show", "write_file")])
+    kit = 'globalThis.glow = () => "KIT-GLOW"; // </script> stays inside'
+    ap = script(ada["id"], call("write_file", path="lessons/kit.js", content=kit),
+                call("write_file", path="lessons/ch01.js", content="glow(); // PAGE-CODE"),
+                call("write_file", path="lessons/cover.html",
+                     content="<html><body><h1>COVER</h1></body></html>"),
+                call("stage_show", title="Ch 1", file="lessons/ch01.js",
+                     include=["lessons/kit.js"]),
+                call("stage_show", title="Cover", file="lessons/cover.html",
+                     include=["lessons/kit.js"]), say("ok"))
+    await dm(app_client, org["id"], "Ada", "Show them.")
+    await wait_for(lambda: _done(ada["id"], 5), msg="shown")
+    assert "version 1" in _out(ap, 4) and "version 1" in _out(ap, 5)
+    pages = {p["title"]: p for p in (await app_client.get(
+        f"/api/v1/orgs/{org['id']}/stage")).json()}
+    lesson = (await app_client.get(f"/api/v1/stage/{pages['Ch 1']['id']}/view")).text
+    assert lesson.index("KIT-GLOW") < lesson.index("PAGE-CODE")
+    cover = (await app_client.get(f"/api/v1/stage/{pages['Cover']['id']}/view")).text
+    assert cover.index("KIT-GLOW") < cover.index("COVER") and "<\\/script> stays" in cover
+
+
+async def test_archived_stage_pages_are_kept_but_out_of_the_way(app_client, workspace_root):
+    from app.services import stage
+
+    org = await make_org(app_client)
+    old = await stage.save(org["id"], None, "Ch 1 · Start", code="// OLD")
+    before = stage.to_dict(old)["updatedAt"]
+    moved = (await app_client.patch(f"/api/v1/stage/{old.id}", json={"folder": "archive"})).json()
+    assert moved["folder"] == "archive" and moved["updatedAt"] == before  # not an edit
+    assert "OLD" in (await app_client.get(f"/api/v1/stage/{old.id}/view")).text
+    new = await stage.save(org["id"], None, "Ch 1 · Start", code="// NEW")
+    assert new.id != old.id and (await stage.get(old.id)).source == "// OLD"
+    assert (await app_client.patch(f"/api/v1/stage/{old.id}", json={"folder": "x"})).status_code == 400
+    back = (await app_client.patch(f"/api/v1/stage/{old.id}", json={"folder": ""})).json()
+    assert back["folder"] == ""
+
+
+async def test_agents_archive_their_stray_stage_pages(app_client, workspace_root):
+    org = await make_org(app_client)
+    ada = await make_agent(app_client, org["id"], "Ada", tools=[
+        {"name": n} for n in ("stage_show", "stage_archive", "stage_list")])
+    ap = script(ada["id"], call("stage_show", title="Ch 4 · Feedback", code="// REAL"),
+                call("stage_show", title="Ch 4 probe", code="// PROBE"),
+                call("stage_archive", pages=["Ch 4"]),
+                call("stage_archive", pages=["ch 4 PROBE", "nope"]),
+                call("stage_list"),
+                call("stage_archive", pages=["Ch 4 probe"], restore=True), say("ok"))
+    await dm(app_client, org["id"], "Ada", "Tidy up.")
+    await wait_for(lambda: _done(ada["id"], 6), msg="archived")
+    assert "ERROR" in _out(ap, 3)  # a title start never archives the real chapter
+    assert "Archived 1" in _out(ap, 4) and "'nope'" in _out(ap, 4)
+    assert "Ch 4 probe" not in _out(ap, 5) and "Ch 4 · Feedback" in _out(ap, 5)
+    assert "Restored 1" in _out(ap, 6)
+    pages = (await app_client.get(f"/api/v1/orgs/{org['id']}/stage")).json()
+    assert all(p["folder"] == "" for p in pages)
+
+
+async def test_stage_pages_package_as_one_site(app_client, workspace_root, tmp_path, monkeypatch):
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "data_dir", str(tmp_path))
+    org = await make_org(app_client)
+    ada = await make_agent(app_client, org["id"], "Ada", tools=[
+        {"name": n} for n in ("stage_show", "stage_package")])
+    ap = script(ada["id"], call("stage_show", title="Contents", code="// CONTENTS"),
+                call("stage_show", title="Ch 1 · Start", code="// CH-ONE"),
+                call("stage_package", name="My Book", pages=["Contents", "Ch 1"]), say("ok"))
+    await dm(app_client, org["id"], "Ada", "Package it.")
+    await wait_for(lambda: _done(ada["id"], 3), msg="packaged")
+    out = _out(ap, 3)
+    assert f"/api/v1/sites/{org['id']}/my-book/" in out and "ch-1-start.html" in out
+    base = f"/api/v1/sites/{org['id']}/my-book"
+    assert (await app_client.get(base)).status_code in (301, 302, 307)
+    home = await app_client.get(base + "/")
+    assert "CONTENTS" in home.text and "sandbox" in home.headers["content-security-policy"]
+    assert '<script src="site.js">' in home.text and '"stage": "./lib/stage.js"' in home.text
+    listing = (await app_client.get(base + "/site.js")).text
+    assert '"file": "index.html"' in listing and '"file": "ch-1-start.html"' in listing
+    assert "CH-ONE" in (await app_client.get(base + "/ch-1-start.html")).text
+    lib = await app_client.get(base + "/lib/stage.js")
+    assert lib.status_code == 200 and lib.headers["access-control-allow-origin"] == "*"
+    assert (await app_client.get(base + ".zip")).headers["content-type"] == "application/zip"
+    assert (await app_client.get(base + "/%2e%2e/%2e%2e/%2e%2e/host.token")).status_code == 404
+
+
 # --- images in tool results -----------------------------------------------------------------
 
 
