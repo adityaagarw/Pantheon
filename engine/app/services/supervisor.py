@@ -139,8 +139,8 @@ async def ensure_meta_agent(role: str) -> Agent:
 
 async def reset_meta_agent(role: str, *, forget: bool = False) -> Agent:
     """Put Zeus, Argus or Kronos back as new: chat and context cleared, and its name,
-    persona, tools, model, limits and look restored. ``forget`` also deletes its
-    long-term memories."""
+    persona, tools, kind (Pantheon's own loop), model, limits and look restored.
+    ``forget`` also deletes its long-term memories."""
     from sqlalchemy import delete as sql_delete
 
     from app.agents.runtime import runtime
@@ -153,7 +153,8 @@ async def reset_meta_agent(role: str, *, forget: bool = False) -> Agent:
     spec = META_AGENTS[role]
     agent = await orgs.update_agent(agent.id, {
         "name": spec["name"], "role": spec["role"], "persona": spec["persona"],
-        "tools": spec["tools"], "model": {}, "avatar": spec["avatar"], "status": "active"})
+        "tools": spec["tools"], "kind": "llm", "runner": {}, "model": {}, "avatar": spec["avatar"],
+        "status": "active"})
     async with SessionLocal() as session:
         row = await session.get(Agent, agent.id)
         assert row is not None

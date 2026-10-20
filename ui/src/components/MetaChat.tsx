@@ -1,9 +1,9 @@
 "use client";
 
-/** Chat with one of Pantheon's built-in meta agents (Zeus, Argus). */
+/** Chat with one of Pantheon's built-in meta agents (Zeus, Argus, Kronos). */
 
 import { useShallow } from "zustand/react/shallow";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { api } from "@/lib/api";
 import { useOrg } from "@/store/org";
 import { liveFor } from "@/store/reduce";
@@ -13,8 +13,9 @@ import { Composer, LiveThinking, MessageList, useAutoSpeak } from "./Chat";
 import { ContextControls } from "./ContextControls";
 import { ApprovalCard, ApproveAllButton } from "./InboxDrawer";
 import { ModelSettings } from "./team/AgentEditor";
-import { Button, ErrorNote, Modal, Toggle } from "./ui";
-import type { Agent } from "@/lib/types";
+import { KindTab } from "./team/KindTab";
+import { Button, ErrorNote, Modal, Tabs, Toggle } from "./ui";
+import type { Agent, AgentKind } from "@/lib/types";
 
 export const SYSTEM_ORG = "org_pantheon";
 
@@ -47,6 +48,10 @@ export function MetaChat({
   const [speakOn, setSpeakOn] = useState(false);
   const [liveOn, setLiveOn] = useState(false);
   const [modelOpen, setModelOpen] = useState(false);
+  const [kinds, setKinds] = useState<AgentKind[]>([]);
+  useEffect(() => {
+    api.agentKinds().then(setKinds).catch(() => {});
+  }, []);
   useAutoSpeak(messages, speakOn || liveOn);
   const name = agent?.name ?? fallbackName;
   const send = (t: string, files?: string[], o?: { steer: boolean }) =>
@@ -70,9 +75,9 @@ export function MetaChat({
             </Button>
           )}
           {agent && (
-            <Button size="sm" variant="ghost" title={`Choose the model ${name} uses`} onClick={() => setModelOpen(true)}>
-              <span className="hidden sm:inline">Model: </span>
-              <span className="max-w-32 truncate">{agent.model?.model || "default"}</span>
+            <Button size="sm" variant="ghost" title={`Choose what runs ${name}: Pantheon with a model, or an agent such as Claude Code, Codex or Hermes`} onClick={() => setModelOpen(true)}>
+              <span className="hidden sm:inline">Runs on: </span>
+              <span className="max-w-32 truncate">{runsOn(agent, kinds)}</span>
             </Button>
           )}
           <Toggle checked={speakOn || liveOn} onChange={setSpeakOn} label="Speak" />
@@ -135,24 +140,37 @@ export function MetaChat({
   );
 }
 
-/** Pick the model a meta agent runs on (it inherits the global default otherwise). */
+/** What the header says a meta agent runs on: its model, or the agent that runs it. */
+function runsOn(agent: Agent, kinds: AgentKind[]): string {
+  const kindId = agent.kind ?? "llm";
+  if (kindId === "llm") return agent.model?.model || "default";
+  const kind = kinds.find((k) => k.id === kindId);
+  const preset = kind?.presets.find((p) => p.id === agent.runner?.preset);
+  return preset?.label ?? kind?.label ?? kindId;
+}
+
+/** Choose what runs a meta agent: Pantheon's own loop with a model (the global default
+ *  unless one is picked), or any agent kind, such as Claude Code, Codex, Hermes or an ACP agent. */
 function ModelDialog({ open, agent, onClose }: { open: boolean; agent: Agent; onClose: () => void }) {
-  const [model, setModel] = useState<Agent["model"]>(agent.model ?? {});
+  const [draft, setDraft] = useState<Agent>(agent);
+  const [tab, setTab] = useState<"kind" | "model">("kind");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [wasOpen, setWasOpen] = useState(open);
   if (open !== wasOpen) {
     setWasOpen(open);
     if (open) {
-      setModel(agent.model ?? {});
+      setDraft(agent);
+      setTab("kind");
       setError(null);
     }
   }
+  const llm = (draft.kind ?? "llm") === "llm";
   const save = async () => {
     setBusy(true);
     setError(null);
     try {
-      const updated = await api.updateAgent(agent.id, { model });
+      const updated = await api.updateAgent(agent.id, { kind: draft.kind ?? "llm", runner: draft.runner ?? {}, model: draft.model ?? {} });
       useOrg.setState((s) => ({ agents: { ...s.agents, [agent.id]: updated } }));
       onClose();
     } catch (e) {
@@ -165,18 +183,41 @@ function ModelDialog({ open, agent, onClose }: { open: boolean; agent: Agent; on
     <Modal
       open={open}
       onClose={onClose}
-      title={`${agent.name}'s model`}
+      title={`What runs ${agent.name}`}
       footer={
         <Button variant="primary" loading={busy} onClick={save}>
           Save
         </Button>
       }
     >
-      <div className="grid gap-3">
-        <p className="text-sm text-ink-2">
-          {agent.name} uses the default provider unless you pick one here. A strong model with reliable tool calling works best: {agent.name} builds and changes organizations for you.
-        </p>
-        <ModelSettings model={model} onChange={setModel} />
+      <div className="grid gap-4">
+        <Tabs
+          value={tab}
+          onChange={setTab}
+          items={[
+            { value: "kind", label: "Kind" },
+            { value: "model", label: "Model" },
+          ]}
+        />
+        {tab === "kind" && (
+          <>
+            <p className="text-sm text-ink-2">
+              {agent.name} keeps its instructions, its tools and its chat with you whatever runs it. Another agent, such as Claude Code, Codex or Hermes, gets {agent.name}&apos;s tools through
+              Pantheon&apos;s MCP bridge.
+            </p>
+            <KindTab draft={draft} exclude={["human"]} onChange={(kind, runner) => setDraft((d) => ({ ...d, kind, runner }))} />
+          </>
+        )}
+        {tab === "model" && (
+          <>
+            <p className="text-sm text-ink-2">
+              {llm
+                ? `${agent.name} uses the default provider unless you pick one here. A strong model with reliable tool calling works best: ${agent.name} builds and changes organizations for you.`
+                : `${agent.name} runs on another agent, which picks its own model on the Kind tab. Pantheon still uses this model for ${agent.name}'s quick jobs, such as drafting a new organization.`}
+            </p>
+            <ModelSettings model={draft.model ?? {}} onChange={(model) => setDraft((d) => ({ ...d, model }))} />
+          </>
+        )}
         <ErrorNote error={error} />
       </div>
     </Modal>
@@ -219,8 +260,8 @@ function ResetDialog({ open, role, name, onClose }: { open: boolean; role: "zeus
     <Modal open={open} onClose={onClose} title={`Reset ${name}?`}>
       <div className="space-y-3 text-sm">
         <p className="text-ink-2">
-          This stops what {name} is doing, deletes your chat with {name}, clears its context, and puts its name, instructions, tools, model and limits
-          back to the originals.
+          This stops what {name} is doing, deletes your chat with {name}, clears its context, and puts its name, instructions, tools, kind, model and
+          limits back to the originals.
         </p>
         <Toggle checked={forget} onChange={setForget} label={`Also forget ${name}'s long-term memories`} />
         <ErrorNote error={error} />

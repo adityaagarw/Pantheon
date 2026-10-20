@@ -120,6 +120,40 @@ async def test_the_bridge_gives_external_agents_pantheons_tools(app_client, monk
         external._grants.pop("tok", None)
 
 
+async def test_zeus_argus_and_kronos_can_run_on_any_agent(app_client, tmp_path):
+    from app.agents import external
+    from app.core.db import SessionLocal
+    from app.models import Org
+    from app.services import supervisor
+
+    script = tmp_path / "echo_agent.py"
+    script.write_text(ECHO, encoding="utf-8")
+    zeus = await supervisor.ensure_meta_agent("zeus")
+    r = await app_client.patch(f"/api/v1/agents/{zeus.id}", json={
+        "kind": "cli", "runner": {"preset": "custom", "command": str(script)}})
+    assert r.status_code == 200 and r.json()["kind"] == "cli" and r.json()["metaRole"] == "zeus"
+
+    # He answers in his chat, with his rules and the bridge…
+    await dm(app_client, supervisor.SYSTEM_ORG_ID, "Zeus", "build me a legal desk")
+    await wait_for(lambda: _completed(zeus.id), timeout=60, msg="zeus cli turn")
+    reply = (await _replies(zeus.id))[-1]
+    assert "ECHO: build me a legal desk" in reply and "SYSTEM-HAS-RULES" in reply and "BRIDGE" in reply
+
+    # …and the bridge carries his admin tools, as it does Argus's and Kronos's.
+    async with SessionLocal() as session:
+        system = await session.get(Org, supervisor.SYSTEM_ORG_ID)
+        row = await session.get(Agent, zeus.id)
+    assert {"create_org", "create_agent", "ask_kronos", "run_flow"} <= set(
+        await external.bridge_tools(system, row))
+    for role, tool in (("argus", "org_health"), ("kronos", "host_run")):
+        meta = await supervisor.ensure_meta_agent(role)
+        assert tool in await external.bridge_tools(system, meta)
+
+    # Reset puts him back on Pantheon's own loop.
+    back = await supervisor.reset_meta_agent("zeus")
+    assert back.kind == "llm" and back.runner == {}
+
+
 def _fake_remote(request: httpx.Request) -> httpx.Response:
     url = str(request.url)
     body = json.loads(request.content or b"{}")

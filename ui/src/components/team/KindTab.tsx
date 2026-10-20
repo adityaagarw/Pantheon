@@ -12,17 +12,20 @@ import type { Account, Agent, AgentKind, KindCheck } from "@/lib/types";
 
 type Runner = Record<string, unknown>;
 
-export function KindTab({ draft, onChange }: { draft: Agent; onChange: (kind: string, runner: Runner) => void }) {
+export function KindTab({ draft, onChange, exclude = [] }: { draft: Agent; onChange: (kind: string, runner: Runner) => void; exclude?: string[] }) {
   const [kinds, setKinds] = useState<AgentKind[] | null>(null);
   const [check, setCheck] = useState<KindCheck | "running" | null>(null);
   const [accounts, setAccounts] = useState<Account[]>([]);
   useEffect(() => {
-    api.agentKinds().then(setKinds).catch(() => setKinds([]));
+    api
+      .agentKinds()
+      .then((ks) => setKinds(ks.filter((k) => !exclude.includes(k.id))))
+      .catch(() => setKinds([]));
     api
       .accounts()
       .then((r) => setAccounts(r.accounts))
       .catch(() => {});
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const kindId = draft.kind ?? "llm";
   const runner = (draft.runner ?? {}) as Runner;
   const preset = String(runner.preset ?? "");

@@ -56,6 +56,14 @@ You're a member of a Pantheon organization. Pantheon's tools are yours through t
 server "pantheon": messaging colleagues (send_message), tasks, the board, memory, flow
 steps (finish_step) and more. Your own tools work as usual, in your working folder.
 Your final reply goes back to whoever wrote to you, so make it the answer itself."""
+# Zeus, Argus and Kronos run the platform rather than work in an organization.
+META_EXTERNAL_RULES = """\
+# Working in Pantheon
+You're one of Pantheon's built-in agents. The tools your instructions name (organizations,
+agents, flows, oversight, Pantheon's code…) are yours through the MCP server "pantheon":
+use those, not files or commands, to change Pantheon. Your own tools work as usual, in your
+working folder. Your final reply goes back to whoever wrote to you, so make it the answer
+itself."""
 
 RECENT_TURNS = 6
 
@@ -277,7 +285,7 @@ async def run(runtime: Any, agent: Agent, org: Org, turn_id: str, inbox: str,
             accounts.Choice()
         live.account_id = account.account.id if account.account else ""
         system = await build_system_prompt(org, agent, tool_names=list(tools)) + "\n\n" + \
-            EXTERNAL_RULES
+            (META_EXTERNAL_RULES if agent.is_supervisor else EXTERNAL_RULES)
         turn = kinds.ExternalTurn(
             agent=agent, org=org, turn_id=turn_id, inbox=inbox, system=system,
             workdir=agent_workdir(org, agent), bridge=_bridge(agent, turn_id, token, list(tools)),
