@@ -1,0 +1,13 @@
+{
+  "id": "auth-security-audit",
+  "title": "Fix a failed pentest and meet the security requirements",
+  "category": "security",
+  "difficulty": "hard",
+  "workflow": "audit-fix-verify",
+  "summary": "Six reported findings (session expiry, predictable reset tokens, path traversal, open redirect, enumeration, weak hashing with transparent upgrade) and five unreported ones (unsigned token parts, reusable reset tokens, case-insensitive lockout bypass, role from a header, profile IDOR), each checked by an attack, while existing users and flows keep working.",
+  "time_limit_minutes": 45,
+  "protected_files": [
+    "PENTEST_REPORT.md",
+    "SECURITY_REQUIREMENTS.md"
+  ]
+}

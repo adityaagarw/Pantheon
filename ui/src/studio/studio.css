@@ -1,0 +1,218 @@
+/* Pantheon Studio's visual language (docs/DESIGN.md): deep space, layered glass,
+   colour spent only on what changed. */
+
+:root {
+  --st-void: #05060b;
+  --st-deep: #090b14;
+  --st-glass: rgba(18, 21, 34, 0.72);
+  --st-glass-2: rgba(26, 30, 47, 0.78);
+  --st-glass-hi: rgba(36, 41, 62, 0.85);
+  --st-edge: rgba(148, 160, 220, 0.12);
+  --st-edge-2: rgba(148, 160, 220, 0.22);
+  --st-ink: #eef0f8;
+  --st-ink-2: #a9afc7;
+  --st-ink-3: #6b7290;
+  --st-violet: #9d8cff;
+  --st-violet-2: #6c5cff;
+  --st-amber: #ffb547;
+  --st-red: #ff5d6c;
+  --st-green: #3ddc97;
+  --st-cyan: #4cc9f0;
+  --st-radius: 14px;
+  --st-blur: blur(22px) saturate(140%);
+  --st-spring: cubic-bezier(0.22, 1.2, 0.36, 1);
+}
+
+/* Pantheon 1's views, inside the Studio: their colour tokens mapped onto glass, so every
+   page that became a pane matches without being rewritten. */
+.studio {
+  --color-bg: transparent;
+  --color-panel: rgba(255, 255, 255, 0.025);
+  --color-panel-2: rgba(255, 255, 255, 0.055);
+  --color-surface: #0f111b;
+  --color-line: rgba(148, 160, 220, 0.12);
+  --color-line-2: rgba(148, 160, 220, 0.22);
+  --color-ink: var(--st-ink);
+  --color-ink-2: var(--st-ink-2);
+  --color-ink-3: var(--st-ink-3);
+  --color-accent: var(--st-violet);
+  --color-accent-2: var(--st-violet-2);
+  --color-ok: var(--st-green);
+  --color-warn: var(--st-amber);
+  --color-bad: var(--st-red);
+  --color-info: var(--st-cyan);
+}
+
+.studio {
+  background:
+    radial-gradient(1200px 700px at 12% -10%, rgba(108, 92, 255, 0.16), transparent 60%),
+    radial-gradient(900px 600px at 110% 110%, rgba(76, 201, 240, 0.09), transparent 60%),
+    var(--st-void);
+  color: var(--st-ink);
+}
+
+/* A pane of glass: translucent, a hairline edge, light from above. */
+.glass {
+  background: var(--st-glass);
+  backdrop-filter: var(--st-blur);
+  -webkit-backdrop-filter: var(--st-blur);
+  border: 1px solid var(--st-edge);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 18px 50px -24px rgba(0, 0, 0, 0.8);
+}
+
+.st-grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  mix-blend-mode: overlay;
+}
+
+.st-display {
+  font-family: "Geist Variable", system-ui, sans-serif;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  font-stretch: 112%;
+}
+
+.st-mono {
+  font-family: "Geist Mono Variable", ui-monospace, monospace;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Breathing: a working agent's node rises and falls. */
+@keyframes st-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.035); }
+}
+@keyframes st-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes st-glow {
+  0%, 100% { box-shadow: 0 0 0 0 var(--glow, rgba(255, 181, 71, 0.55)); }
+  50% { box-shadow: 0 0 0 10px transparent; }
+}
+.st-breathe { animation: st-breathe 2.6s ease-in-out infinite; }
+.st-glow { animation: st-glow 1.8s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .st-breathe, .st-glow { animation: none; }
+}
+
+/* --- dockview, dressed as glass ------------------------------------------------- */
+
+.dockview-theme-studio {
+  --dv-paneview-active-outline-color: var(--st-violet);
+  --dv-tabs-and-actions-container-font-size: 12.5px;
+  --dv-tabs-and-actions-container-height: 36px;
+  --dv-drag-over-background-color: rgba(157, 140, 255, 0.14);
+  --dv-drag-over-border-color: rgba(157, 140, 255, 0.55);
+  --dv-tabs-container-scrollbar-color: transparent;
+  --dv-icon-hover-background-color: rgba(255, 255, 255, 0.06);
+  --dv-floating-box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.85);
+  --dv-group-view-background-color: transparent;
+  --dv-tabs-and-actions-container-background-color: transparent;
+  --dv-activegroup-visiblepanel-tab-background-color: rgba(157, 140, 255, 0.12);
+  --dv-activegroup-hiddenpanel-tab-background-color: transparent;
+  --dv-inactivegroup-visiblepanel-tab-background-color: rgba(255, 255, 255, 0.04);
+  --dv-inactivegroup-hiddenpanel-tab-background-color: transparent;
+  --dv-tab-divider-color: transparent;
+  --dv-activegroup-visiblepanel-tab-color: var(--st-ink);
+  --dv-activegroup-hiddenpanel-tab-color: var(--st-ink-3);
+  --dv-inactivegroup-visiblepanel-tab-color: var(--st-ink-2);
+  --dv-inactivegroup-hiddenpanel-tab-color: var(--st-ink-3);
+  --dv-separator-border: transparent;
+  --dv-paneview-header-border-color: var(--st-edge);
+  --dv-sash-color: transparent;
+  --dv-active-sash-color: rgba(157, 140, 255, 0.6);
+  --dv-background-color: transparent;
+  --dv-group-gap-size: 8px;
+}
+
+.dockview-theme-studio .dv-groupview {
+  background: var(--st-glass);
+  backdrop-filter: var(--st-blur);
+  -webkit-backdrop-filter: var(--st-blur);
+  border: 1px solid var(--st-edge);
+  border-radius: var(--st-radius);
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.dockview-theme-studio .dv-groupview.dv-active-group {
+  border-color: var(--st-edge-2);
+}
+.dockview-theme-studio .dv-tabs-and-actions-container {
+  border-bottom: 1px solid var(--st-edge);
+  padding: 0 4px;
+}
+.dockview-theme-studio .dv-tab {
+  border-radius: 8px;
+  margin: 5px 1px;
+  padding: 0 10px;
+  transition: background 0.15s, color 0.15s;
+}
+.dockview-theme-studio .dv-resize-container {
+  border-radius: var(--st-radius);
+}
+
+/* --- the command bar (cmdk) ------------------------------------------------------ */
+
+.st-cmdk [cmdk-input] {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  outline: none;
+  font-size: 16px;
+  color: var(--st-ink);
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--st-edge);
+}
+.st-cmdk [cmdk-list] {
+  max-height: min(60vh, 460px);
+  overflow: auto;
+  padding: 8px;
+}
+.st-cmdk [cmdk-group-heading] {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--st-ink-3);
+  padding: 10px 12px 6px;
+}
+.st-cmdk [cmdk-item] {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--st-ink-2);
+  cursor: pointer;
+}
+.st-cmdk [cmdk-item][data-selected="true"] {
+  background: rgba(157, 140, 255, 0.14);
+  color: var(--st-ink);
+}
+.st-cmdk [cmdk-empty] {
+  padding: 28px;
+  text-align: center;
+  color: var(--st-ink-3);
+  font-size: 14px;
+}
+
+/* --- the canvas (xyflow) --------------------------------------------------------- */
+
+.st-canvas .react-flow__background { background: transparent; }
+.st-canvas .react-flow__attribution { display: none; }
+.st-canvas .react-flow__node { cursor: pointer; }
+.st-canvas .react-flow__controls { box-shadow: none; }
+.st-canvas .react-flow__controls-button {
+  background: var(--st-glass-2);
+  border: 1px solid var(--st-edge);
+  color: var(--st-ink-2);
+  fill: var(--st-ink-2);
+}

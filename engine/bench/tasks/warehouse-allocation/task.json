@@ -1,0 +1,14 @@
+{
+  "id": "warehouse-allocation",
+  "title": "Build multi-warehouse order allocation with reservations",
+  "category": "feature",
+  "difficulty": "hard",
+  "workflow": "plan-build-review",
+  "summary": "Single-warehouse or greedy split allocation with distance tie-breaks, backorders promised against inbound stock, 30-minute reservations with exact expiry, idempotent re-allocation, local cut-off ship dates, confirm/cancel rules, and event-sourced state that survives restarts.",
+  "time_limit_minutes": 50,
+  "protected_files": [
+    "ALLOCATION.md",
+    "fulfil/geo.py",
+    "fulfil/catalog.py"
+  ]
+}

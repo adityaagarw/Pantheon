@@ -1,0 +1,35 @@
+; A household's books for early 2025.
+commodity $1,000.00
+alias bank = assets:bank:checking
+
+P 2025-01-01 EUR $1.04
+P 2025-02-01 EUR $1.08
+
+~ monthly  Household budget
+    expenses:food        $400
+    expenses:rent      $1,200
+    assets:bank:checking
+
+2025-01-01 * Opening balances
+    assets:bank:checking      $3,000.00 = $3,000.00
+    assets:cash                 $120.00
+    equity:opening
+
+2025-01-02 * (1001) Landlord | January rent
+    expenses:rent             $1,200.00
+    bank
+
+2025-01-05 Grocer ; trip:none
+    expenses:food:groceries      $84.17
+    expenses:food:snacks          $5.83
+    assets:cash                  -$90.00
+
+2025-01-10 * Employer | salary
+    bank                      $2,500.00
+    income:salary
+
+2025-01-20 * Bureau de change
+    assets:wallet:eur           200 EUR @ $1.05
+    assets:bank:checking
+
+include household-feb.journal

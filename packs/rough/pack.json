@@ -1,0 +1,15 @@
+{
+  "id": "rough",
+  "name": "Rough.js",
+  "version": "4",
+  "description": "A hand-drawn, sketchy look for SVG and canvas shapes.",
+  "libraries": [
+    {
+      "id": "rough",
+      "name": "Rough.js",
+      "summary": "A hand-drawn, sketchy look for SVG or canvas shapes.",
+      "imports": { "roughjs": "rough.js" },
+      "docs": "docs.md"
+    }
+  ]
+}

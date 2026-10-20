@@ -1,0 +1,7 @@
+{
+  "id": "cua-desktop",
+  "name": "Sandbox desktop (Docker)",
+  "version": "2.0.0",
+  "description": "A Linux desktop in Docker (trycua's cua-ubuntu) for agents to use instead of your own computer. Choose it in Settings \u2192 This computer: Pantheon sets it up.",
+  "module": "plugin.py"
+}

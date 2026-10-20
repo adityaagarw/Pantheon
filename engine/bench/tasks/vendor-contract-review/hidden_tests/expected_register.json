@@ -1,0 +1,215 @@
+{
+  "review_date": "2026-04-15",
+  "contracts": [
+    {
+      "contract_id": "CT-101",
+      "vendor": "Atlas Cloud Hosting",
+      "annual_fee_usd": 186000.0,
+      "current_term_end": "2026-04-30",
+      "auto_renews": true,
+      "notice_deadline": "2026-03-01",
+      "liability_cap_usd": 186000.0,
+      "governing_law": "Delaware",
+      "personal_data": true,
+      "dpa": true,
+      "termination_for_convenience": false,
+      "renewal_price_cap_pct": 4,
+      "terminates_on": null,
+      "violations": [],
+      "action": "ok"
+    },
+    {
+      "contract_id": "CT-102",
+      "vendor": "Brightline Staffing",
+      "annual_fee_usd": 420000.0,
+      "current_term_end": "2028-01-14",
+      "auto_renews": false,
+      "notice_deadline": null,
+      "liability_cap_usd": 840000.0,
+      "governing_law": "New York",
+      "personal_data": true,
+      "dpa": false,
+      "termination_for_convenience": true,
+      "renewal_price_cap_pct": null,
+      "terminates_on": null,
+      "violations": [
+        "P4"
+      ],
+      "action": "renegotiate_later"
+    },
+    {
+      "contract_id": "CT-103",
+      "vendor": "Papier & Co",
+      "annual_fee_usd": 41580.0,
+      "current_term_end": "2026-06-30",
+      "auto_renews": true,
+      "notice_deadline": "2026-03-30",
+      "liability_cap_usd": 27000.0,
+      "governing_law": "Germany",
+      "personal_data": false,
+      "dpa": false,
+      "termination_for_convenience": false,
+      "renewal_price_cap_pct": null,
+      "terminates_on": null,
+      "violations": [
+        "P1",
+        "P2",
+        "P6"
+      ],
+      "action": "missed"
+    },
+    {
+      "contract_id": "CT-104",
+      "vendor": "Rhein Logistik",
+      "annual_fee_usd": 280800.0,
+      "current_term_end": "2027-03-31",
+      "auto_renews": true,
+      "notice_deadline": "2026-12-31",
+      "liability_cap_usd": 108000.0,
+      "governing_law": "Germany",
+      "personal_data": true,
+      "dpa": true,
+      "termination_for_convenience": false,
+      "renewal_price_cap_pct": 3,
+      "terminates_on": null,
+      "violations": [
+        "P2"
+      ],
+      "action": "renegotiate_later"
+    },
+    {
+      "contract_id": "CT-105",
+      "vendor": "Hoffmann Steuerberatung",
+      "annual_fee_usd": 58320.0,
+      "current_term_end": "2027-03-31",
+      "auto_renews": true,
+      "notice_deadline": "2027-02-17",
+      "liability_cap_usd": null,
+      "governing_law": "Germany",
+      "personal_data": true,
+      "dpa": true,
+      "termination_for_convenience": false,
+      "renewal_price_cap_pct": 7,
+      "terminates_on": null,
+      "violations": [
+        "P6"
+      ],
+      "action": "renegotiate_later"
+    },
+    {
+      "contract_id": "CT-106",
+      "vendor": "Lumen Analytics",
+      "annual_fee_usd": 152400.0,
+      "current_term_end": "2030-01-31",
+      "auto_renews": false,
+      "notice_deadline": null,
+      "liability_cap_usd": 63500.0,
+      "governing_law": "England and Wales",
+      "personal_data": true,
+      "dpa": true,
+      "termination_for_convenience": false,
+      "renewal_price_cap_pct": null,
+      "terminates_on": null,
+      "violations": [
+        "P2",
+        "P5"
+      ],
+      "action": "renegotiate_later"
+    },
+    {
+      "contract_id": "CT-107",
+      "vendor": "Kestrel Security",
+      "annual_fee_usd": 96000.0,
+      "current_term_end": "2026-05-14",
+      "auto_renews": true,
+      "notice_deadline": "2026-04-22",
+      "liability_cap_usd": 96000.0,
+      "governing_law": "California",
+      "personal_data": false,
+      "dpa": false,
+      "termination_for_convenience": false,
+      "renewal_price_cap_pct": 5,
+      "terminates_on": null,
+      "violations": [
+        "P3"
+      ],
+      "action": "renegotiate_now"
+    },
+    {
+      "contract_id": "CT-108",
+      "vendor": "Orbit Telecom",
+      "annual_fee_usd": 72000.0,
+      "current_term_end": "2027-08-31",
+      "auto_renews": true,
+      "notice_deadline": "2027-03-04",
+      "liability_cap_usd": 50000.0,
+      "governing_law": "Ireland",
+      "personal_data": false,
+      "dpa": false,
+      "termination_for_convenience": false,
+      "renewal_price_cap_pct": 5,
+      "terminates_on": null,
+      "violations": [
+        "P1",
+        "P2"
+      ],
+      "action": "renegotiate_later"
+    },
+    {
+      "contract_id": "CT-110",
+      "vendor": "Northstar Payroll",
+      "annual_fee_usd": 150000.0,
+      "current_term_end": "2026-05-31",
+      "auto_renews": true,
+      "notice_deadline": "2026-04-01",
+      "liability_cap_usd": 150000.0,
+      "governing_law": "New York",
+      "personal_data": true,
+      "dpa": false,
+      "termination_for_convenience": false,
+      "renewal_price_cap_pct": 5,
+      "terminates_on": null,
+      "violations": [
+        "P4"
+      ],
+      "action": "missed"
+    },
+    {
+      "contract_id": "CT-111",
+      "vendor": "Quill Translation",
+      "annual_fee_usd": 23760.0,
+      "current_term_end": "2026-08-31",
+      "auto_renews": true,
+      "notice_deadline": "2026-08-01",
+      "liability_cap_usd": 23760.0,
+      "governing_law": "Singapore",
+      "personal_data": false,
+      "dpa": false,
+      "termination_for_convenience": false,
+      "renewal_price_cap_pct": null,
+      "terminates_on": "2026-07-31",
+      "violations": [
+        "P3",
+        "P6"
+      ],
+      "action": "ending"
+    },
+    {
+      "contract_id": "CT-112",
+      "vendor": "Meridian Software",
+      "annual_fee_usd": 310000.0,
+      "current_term_end": "2030-12-31",
+      "auto_renews": false,
+      "notice_deadline": null,
+      "liability_cap_usd": 500000.0,
+      "governing_law": "Delaware",
+      "personal_data": true,
+      "dpa": true,
+      "termination_for_convenience": true,
+      "renewal_price_cap_pct": null,
+      "terminates_on": null,
+      "violations": [],
+      "action": "ok"
+    }
+  ]
+}

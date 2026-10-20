@@ -1,0 +1,15 @@
+{
+  "id": "ledger-engine",
+  "title": "Build a plain-text accounting engine to its specification",
+  "category": "library",
+  "difficulty": "very hard",
+  "workflow": "parallel-fanout",
+  "summary": "A ledger/hledger-style engine from a long spec: amounts in many forms with inferred display precision, a journal parser (costs, virtual postings, inferred amounts, balance assertions in date order, includes, aliases, tags, periodic transactions), market prices with inverse rates, queries, balance/register/income-statement/period reports, budgets, and a command line with exact output.",
+  "time_limit_minutes": 75,
+  "grade_timeout_seconds": 240,
+  "protected_files": [
+    "LEDGER.md",
+    "ledger/dates.py",
+    "ledger/errors.py"
+  ]
+}

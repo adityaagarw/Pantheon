@@ -1,0 +1,452 @@
+{
+  "period_end": "2026-04-30",
+  "bank_lines": 45,
+  "matches": [
+    {
+      "line": "eurobank:1",
+      "kind": "exact",
+      "items": {
+        "BILL-804": "684.65"
+      }
+    },
+    {
+      "line": "northwind:22",
+      "kind": "exact",
+      "items": {
+        "INV-2012": "6165.33"
+      }
+    },
+    {
+      "line": "eurobank:2",
+      "kind": "alias",
+      "items": {
+        "BILL-812": "621.54"
+      }
+    },
+    {
+      "line": "northwind:20",
+      "kind": "exact",
+      "items": {
+        "INV-2011": "3448.14"
+      }
+    },
+    {
+      "line": "northwind:21",
+      "kind": "exact",
+      "items": {
+        "INV-2006": "1389.30"
+      }
+    },
+    {
+      "line": "eurobank:4",
+      "kind": "exact",
+      "items": {
+        "INV-2002": "4740.97"
+      }
+    },
+    {
+      "line": "eurobank:5",
+      "kind": "exact",
+      "items": {
+        "BILL-805": "3968.13"
+      }
+    },
+    {
+      "line": "eurobank:6",
+      "kind": "multi",
+      "items": {
+        "INV-2025": "1888.18",
+        "INV-2026": "1988.92",
+        "INV-2027": "1211.28"
+      }
+    },
+    {
+      "line": "eurobank:7",
+      "kind": "exact",
+      "items": {
+        "INV-2004": "3469.67"
+      }
+    },
+    {
+      "line": "northwind:18",
+      "kind": "exact",
+      "items": {
+        "INV-2013": "1458.29"
+      }
+    },
+    {
+      "line": "northwind:16",
+      "kind": "exact",
+      "items": {
+        "INV-2003": "902.96"
+      }
+    },
+    {
+      "line": "eurobank:9",
+      "kind": "fee",
+      "items": {
+        "INV-2030": "3661.98"
+      }
+    },
+    {
+      "line": "northwind:15",
+      "kind": "exact",
+      "items": {
+        "BILL-803": "4754.36"
+      }
+    },
+    {
+      "line": "eurobank:10",
+      "kind": "exact",
+      "items": {
+        "INV-2010": "8167.19"
+      }
+    },
+    {
+      "line": "eurobank:11",
+      "kind": "exact",
+      "items": {
+        "BILL-801": "622.42"
+      }
+    },
+    {
+      "line": "eurobank:12",
+      "kind": "exact",
+      "items": {
+        "INV-2009": "5282.78"
+      }
+    },
+    {
+      "line": "eurobank:13",
+      "kind": "fee",
+      "items": {
+        "INV-2029": "2873.05"
+      }
+    },
+    {
+      "line": "eurobank:14",
+      "kind": "partial",
+      "items": {
+        "INV-2031": "1688.80"
+      }
+    },
+    {
+      "line": "northwind:14",
+      "kind": "exact",
+      "items": {
+        "INV-2040": "561.47"
+      }
+    },
+    {
+      "line": "eurobank:15",
+      "kind": "exact",
+      "items": {
+        "INV-2005": "3131.00"
+      }
+    },
+    {
+      "line": "eurobank:16",
+      "kind": "exact",
+      "items": {
+        "INV-2014": "7641.23"
+      }
+    },
+    {
+      "line": "northwind:12",
+      "kind": "exact",
+      "items": {
+        "BILL-813": "3200.00"
+      }
+    },
+    {
+      "line": "northwind:10",
+      "kind": "alias",
+      "items": {
+        "INV-2035": "775.60"
+      }
+    },
+    {
+      "line": "northwind:11",
+      "kind": "exact",
+      "items": {
+        "BILL-802": "2721.49"
+      }
+    },
+    {
+      "line": "eurobank:17",
+      "kind": "fee",
+      "items": {
+        "INV-2028": "2175.98"
+      }
+    },
+    {
+      "line": "northwind:9",
+      "kind": "exact",
+      "items": {
+        "INV-2001": "1593.08"
+      }
+    },
+    {
+      "line": "eurobank:18",
+      "kind": "exact",
+      "items": {
+        "INV-2015": "8661.44"
+      }
+    },
+    {
+      "line": "northwind:8",
+      "kind": "exact",
+      "items": {
+        "INV-2007": "2678.78"
+      }
+    },
+    {
+      "line": "eurobank:19",
+      "kind": "exact",
+      "items": {
+        "BILL-806": "417.19"
+      }
+    },
+    {
+      "line": "northwind:6",
+      "kind": "partial",
+      "items": {
+        "INV-2032": "2830.41",
+        "INV-2033": "933.86"
+      }
+    },
+    {
+      "line": "eurobank:20",
+      "kind": "exact",
+      "items": {
+        "BILL-807": "1554.94"
+      }
+    },
+    {
+      "line": "eurobank:21",
+      "kind": "partial",
+      "items": {
+        "BILL-811": "1519.36"
+      }
+    },
+    {
+      "line": "northwind:3",
+      "kind": "exact",
+      "items": {
+        "INV-2033": "1867.71"
+      }
+    },
+    {
+      "line": "northwind:4",
+      "kind": "exact",
+      "items": {
+        "INV-2008": "661.92"
+      }
+    },
+    {
+      "line": "northwind:1",
+      "kind": "overpayment",
+      "items": {
+        "INV-2034": "963.53"
+      }
+    },
+    {
+      "line": "northwind:2",
+      "kind": "multi",
+      "items": {
+        "INV-2023": "2178.94",
+        "INV-2024": "1669.16"
+      }
+    }
+  ],
+  "bank_charges": [
+    "northwind:19",
+    "eurobank:8",
+    "eurobank:23"
+  ],
+  "unmatched": [
+    {
+      "line": "eurobank:3",
+      "reason": "no match"
+    },
+    {
+      "line": "northwind:17",
+      "reason": "no match"
+    },
+    {
+      "line": "northwind:13",
+      "reason": "no match"
+    },
+    {
+      "line": "northwind:7",
+      "reason": "no match"
+    },
+    {
+      "line": "northwind:5",
+      "reason": "no match"
+    },
+    {
+      "line": "eurobank:22",
+      "reason": "ambiguous"
+    }
+  ],
+  "overpayments": [
+    {
+      "line": "northwind:1",
+      "counterparty": "Orbit Freight",
+      "currency": "USD",
+      "amount": "150.00"
+    }
+  ],
+  "open_items": [
+    {
+      "id": "BILL-808",
+      "kind": "bill",
+      "counterparty": "Hoffmann Steuerberatung",
+      "currency": "EUR",
+      "open": "1380.52",
+      "bucket": "1-30"
+    },
+    {
+      "id": "BILL-809",
+      "kind": "bill",
+      "counterparty": "Hoffmann Steuerberatung",
+      "currency": "EUR",
+      "open": "2390.40",
+      "bucket": "31-60"
+    },
+    {
+      "id": "BILL-810",
+      "kind": "bill",
+      "counterparty": "Papier & Co",
+      "currency": "EUR",
+      "open": "2850.93",
+      "bucket": "90+"
+    },
+    {
+      "id": "BILL-811",
+      "kind": "bill",
+      "counterparty": "Rhein Logistik",
+      "currency": "EUR",
+      "open": "10.00",
+      "bucket": "31-60"
+    },
+    {
+      "id": "INV-2016",
+      "kind": "invoice",
+      "counterparty": "Vogel Maschinenbau",
+      "currency": "EUR",
+      "open": "2008.38",
+      "bucket": "1-30"
+    },
+    {
+      "id": "INV-2017",
+      "kind": "invoice",
+      "counterparty": "Northwind Trading",
+      "currency": "USD",
+      "open": "3929.56",
+      "bucket": "31-60"
+    },
+    {
+      "id": "INV-2018",
+      "kind": "invoice",
+      "counterparty": "Vogel Maschinenbau",
+      "currency": "EUR",
+      "open": "4940.99",
+      "bucket": "61-90"
+    },
+    {
+      "id": "INV-2019",
+      "kind": "invoice",
+      "counterparty": "Lumen Studio",
+      "currency": "EUR",
+      "open": "348.34",
+      "bucket": "90+"
+    },
+    {
+      "id": "INV-2020",
+      "kind": "invoice",
+      "counterparty": "Vogel Maschinenbau",
+      "currency": "EUR",
+      "open": "626.09",
+      "bucket": "90+"
+    },
+    {
+      "id": "INV-2021",
+      "kind": "invoice",
+      "counterparty": "Kessler GmbH",
+      "currency": "EUR",
+      "open": "3646.93",
+      "bucket": "1-30"
+    },
+    {
+      "id": "INV-2022",
+      "kind": "invoice",
+      "counterparty": "Bluefin Foods",
+      "currency": "USD",
+      "open": "688.41",
+      "bucket": "current"
+    },
+    {
+      "id": "INV-2031",
+      "kind": "invoice",
+      "counterparty": "Lumen Studio",
+      "currency": "EUR",
+      "open": "25.01",
+      "bucket": "31-60"
+    },
+    {
+      "id": "INV-2036",
+      "kind": "invoice",
+      "counterparty": "Vogel Maschinenbau",
+      "currency": "EUR",
+      "open": "846.20",
+      "bucket": "1-30"
+    },
+    {
+      "id": "INV-2037",
+      "kind": "invoice",
+      "counterparty": "Vogel Maschinenbau",
+      "currency": "EUR",
+      "open": "846.20",
+      "bucket": "31-60"
+    },
+    {
+      "id": "INV-2039",
+      "kind": "invoice",
+      "counterparty": "Kessler GmbH",
+      "currency": "EUR",
+      "open": "396.86",
+      "bucket": "1-30"
+    }
+  ],
+  "ar_aging_usd": {
+    "current": "688.41",
+    "1-30": "7719.97",
+    "31-60": "4904.53",
+    "61-90": "5529.46",
+    "90+": "1090.49"
+  },
+  "ap_aging_usd": {
+    "current": "0.00",
+    "1-30": "1544.94",
+    "31-60": "2686.29",
+    "61-90": "0.00",
+    "90+": "3190.48"
+  },
+  "fees_usd": "86.20",
+  "fx_gain_loss_usd": "386.18",
+  "cash": {
+    "northwind": {
+      "currency": "USD",
+      "opening": "61904.33",
+      "closing": "82904.93"
+    },
+    "eurobank": {
+      "currency": "EUR",
+      "opening": "9875.40",
+      "closing": "57781.11"
+    }
+  },
+  "cash_usd_total": "147567.77"
+}

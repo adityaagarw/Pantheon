@@ -1,0 +1,16 @@
+{
+  "id": "troika",
+  "name": "troika-three-text",
+  "version": "0.52",
+  "description": "Crisp, scalable text inside three.js scenes.",
+  "requires": ["three"],
+  "libraries": [
+    {
+      "id": "troika",
+      "name": "troika-three-text",
+      "summary": "Crisp text inside 3D scenes.",
+      "imports": { "troika-three-text": "troika-three-text.js" },
+      "docs": "docs.md"
+    }
+  ]
+}

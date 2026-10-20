@@ -1,0 +1,15 @@
+{
+  "id": "d3",
+  "name": "D3",
+  "version": "7",
+  "description": "Data visualization: charts, scales, axes, force graphs, maps.",
+  "libraries": [
+    {
+      "id": "d3",
+      "name": "D3",
+      "summary": "Charts, scales, axes, force graphs, maps, data transitions.",
+      "imports": { "d3": "d3.js" },
+      "docs": "docs.md"
+    }
+  ]
+}

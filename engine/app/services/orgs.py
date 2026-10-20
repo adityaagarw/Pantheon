@@ -1,0 +1,853 @@
+"""Organizations, agents and structure (validated CRUD + import/export)."""
+
+from __future__ import annotations
+
+import asyncio
+import hashlib
+import json
+import re
+from typing import Any
+
+from sqlalchemy import delete, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app import packs
+from app.core.db import SessionLocal, session_scope
+from app.events import bus
+from app.llm import effort as effort_mod
+from app.models import Agent, Board, Channel, McpServer, Org, Provider, Relationship
+from app.services import life, tasks
+from app.services.comms import channel_to_dict as comms_channel_dict
+from app.services.permissions import validate_task_policy
+from app.tools import base as tools_base
+
+REL_KINDS = ("manages", "peer", "advises", "custom")
+# standby: like paused (messages wait), but the agent comes back on its own when it has
+# work it can do: a task it can start or review, or a message from the user.
+AGENT_STATUSES = ("active", "standby", "paused", "disabled")
+DEFAULT_ORG_SETTINGS: dict[str, Any] = {
+    "comm_policy": "open",
+    "max_chain_depth": 40,
+    "daily_token_budget": 0,
+    "task_policy": {},
+    "meetings": {},
+    "shell_approval": "ask",  # "auto": shell commands run without asking (per-agent deny wins)
+    "max_concurrent": 0,  # agents of this org working at once; 0: only the global limit
+    "mode": "team",  # team: agents coordinate freely | flow: work runs through flows
+}
+
+
+
+
+class OrgError(ValueError):
+    pass
+
+
+# --- serialization ------------------------------------------------------------------
+
+
+def org_to_dict(o: Org) -> dict[str, Any]:
+    return {"id": o.id, "name": o.name, "description": o.description, "kind": o.kind,
+            "status": o.status, "workspace": o.workspace,
+            "settings": {**DEFAULT_ORG_SETTINGS, **(o.settings or {})}, "layout": o.layout or {},
+            "createdAt": o.created_at.isoformat() if o.created_at else None}
+
+
+def agent_to_dict(a: Agent) -> dict[str, Any]:
+    return {"id": a.id, "orgId": a.org_id, "name": a.name, "role": a.role, "team": a.team,
+            "persona": a.persona, "model": a.model or {}, "tools": a.tools or [],
+            "skills": a.skills or [], "worktree": a.worktree, "limits": a.limits or {},
+            "permissions": a.permissions or {}, "libraries": a.libraries,
+            "kind": a.kind or "llm", "runner": _public_runner(a.runner),
+            "avatar": a.avatar or {}, "status": a.status, "runtimeStatus": a.runtime_status,
+            "runtimeDetail": a.runtime_detail, "consecutiveFailures": a.consecutive_failures,
+            "retryAt": a.retry_at.isoformat() if a.retry_at else None,
+            "isSupervisor": a.is_supervisor, "metaRole": a.meta_role,
+            "location": a.location, "life": life.snapshot(a.life),
+            "createdAt": a.created_at.isoformat() if a.created_at else None}
+
+
+# What a kind keeps between turns in the agent's runner (its session with the agent).
+RUNNER_STATE = ("session", "session_dir", "rollout", "history", "context", "hermes_session")
+
+
+def _public_runner(runner: dict[str, Any] | None) -> dict[str, Any]:
+    """An agent's kind settings, without what the kind keeps between turns."""
+    return {k: v for k, v in (runner or {}).items() if k not in RUNNER_STATE}
+
+
+def _validate_kind(kind: Any, runner: Any) -> tuple[str, dict[str, Any]]:
+    from app.agents import kinds
+
+    kind = str(kind or "llm")
+    if not isinstance(runner, dict | type(None)):
+        raise OrgError("runner must be an object")
+    try:
+        return kind, kinds.validate(kind, runner)
+    except ValueError as e:
+        raise OrgError(str(e)) from None
+
+
+def rel_to_dict(r: Relationship) -> dict[str, Any]:
+    return {"id": r.id, "orgId": r.org_id, "fromId": r.from_id, "toId": r.to_id,
+            "kind": r.kind, "label": r.label}
+
+
+# --- helpers ----------------------------------------------------------------------------
+
+_PALETTE = ["#e4572e", "#29335c", "#f3a712", "#669bbc", "#8f2d56", "#218380", "#73d2de",
+            "#ffbc42", "#d81159", "#3a86ff", "#8338ec", "#2a9d8f", "#e76f51", "#6a994e"]
+_SKINS = ["#f6d7c3", "#eac1a4", "#d9a47f", "#b97f5a", "#8d5b3e", "#5f3b28"]
+_HAIRS = ["#1f1a17", "#3b2a20", "#6b4226", "#a86b3c", "#d9b26f", "#8a8a8a", "#b33a3a"]
+
+
+def default_avatar(seed: str) -> dict[str, Any]:
+    h = int(hashlib.sha1(seed.encode()).hexdigest(), 16)
+    return {"outfit": _PALETTE[h % len(_PALETTE)], "skin": _SKINS[(h >> 8) % len(_SKINS)],
+            "hair": _HAIRS[(h >> 16) % len(_HAIRS)], "body": ("a", "b")[(h >> 24) % 2],
+            "accent": _PALETTE[(h >> 32) % len(_PALETTE)]}
+
+
+def _clean_name(name: str) -> str:
+    name = re.sub(r"\s+", " ", (name or "").strip())
+    if not name or len(name) > 40:
+        raise OrgError("agent name must be 1–40 characters")
+    if name.lower() in ("user", "system", "everyone", "all"):
+        raise OrgError(f"'{name}' is reserved")
+    return name
+
+
+async def _validate_tools(entries: list[Any], org_id: str | None) -> list[dict[str, str]]:
+    out: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for e in entries or []:
+        if isinstance(e, str):
+            e = {"name": e}
+        if not isinstance(e, dict) or not e.get("name"):
+            raise OrgError(f"invalid tool entry {e!r}")
+        name = str(e["name"]).strip()
+        approval = e.get("approval") or ""
+        if approval and approval not in tools_base.APPROVALS:
+            raise OrgError(f"approval for {name} must be one of {tools_base.APPROVALS}")
+        if name.startswith("mcp:"):
+            parts = name.split(":", 2)
+            if len(parts) != 3 or not parts[1] or not parts[2]:
+                raise OrgError(f"MCP tool entry must look like mcp:<server>:<tool|*>, got {name}")
+        elif tools_base.builtin(name) is None:
+            raise OrgError(f"unknown tool '{name}'")
+        if name in seen:
+            continue
+        seen.add(name)
+        spec = tools_base.builtin(name)
+        out.append({"name": name,
+                    "approval": approval or (spec.default_approval if spec else "auto")})
+    return out
+
+
+async def _validate_model(model: dict[str, Any] | None,
+                          session: AsyncSession | None = None) -> dict[str, Any]:
+    model = {k: v for k, v in (model or {}).items() if v not in (None, "")}
+    allowed = {"provider_id", "model", "temperature", "max_tokens", "context_window", "vision",
+               "video", "reasoning_effort", "compact_at"}
+    unknown = set(model) - allowed
+    if unknown:
+        raise OrgError(f"unknown model settings: {', '.join(sorted(unknown))}")
+    if pid := model.get("provider_id"):
+        async with session_scope(session) as s:
+            if await s.get(Provider, pid) is None:
+                raise OrgError(f"provider '{pid}' does not exist")
+    if "reasoning_effort" in model and not effort_mod.valid(model["reasoning_effort"]):
+        raise OrgError("reasoning_effort must be one of: " + ", ".join(effort_mod.LEVELS))
+    if "temperature" in model:
+        t = float(model["temperature"])
+        if not 0 <= t <= 2:
+            raise OrgError("temperature must be between 0 and 2")
+        model["temperature"] = t
+    for k in ("max_tokens", "context_window"):
+        if k in model:
+            model[k] = int(model[k])
+    return model
+
+
+def _validate_permissions(perms: dict[str, Any] | None) -> dict[str, Any]:
+    perms = dict(perms or {})
+    unknown = set(perms) - {"tasks"}
+    if unknown:
+        raise OrgError(f"unknown permission groups: {', '.join(sorted(unknown))}")
+    if "tasks" in perms:
+        try:
+            perms["tasks"] = validate_task_policy(perms["tasks"])
+        except ValueError as e:
+            raise OrgError(str(e)) from None
+    return perms
+
+
+def _validate_libraries(libs: Any) -> list[str] | None:
+    """A list of Stage library ids (app/packs.py), or None for every library. Ids of packs
+    that aren't installed are kept: the choice comes back if the pack does."""
+    if libs is None:
+        return None
+    if not isinstance(libs, list) or not all(isinstance(x, str) for x in libs):
+        raise OrgError("libraries must be a list of library ids, or null for all of them")
+    return sorted(set(libs))
+
+
+MEETING_STYLES = ("discussion", "decision", "brainstorm", "standup", "review")
+
+
+def _validate_meeting_settings(m: dict[str, Any] | None) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    for k, v in (m or {}).items():
+        if k in ("max_participants", "max_rounds", "default_rounds"):
+            v = int(v)
+            if not 1 <= v <= (20 if k == "max_participants" else 6):
+                raise OrgError(f"meetings.{k} is out of range")
+            out[k] = v
+        elif k == "create_tasks":
+            out[k] = bool(v)
+        elif k == "default_style":
+            if v not in MEETING_STYLES:
+                raise OrgError(f"meetings.default_style must be one of {MEETING_STYLES}")
+            out[k] = v
+        elif k == "model":
+            out[k] = v or {}
+        else:
+            raise OrgError(f"unknown meeting setting '{k}'")
+    return out
+
+
+async def _general(session, org_id: str) -> Channel:
+    ch = (await session.execute(select(Channel).where(
+        Channel.org_id == org_id, Channel.key == "#general"))).scalar_one_or_none()
+    if ch is None:
+        ch = Channel(org_id=org_id, kind="channel", key="#general", name="general",
+                     topic="Org-wide announcements and coordination", members=["user"],
+                     notify="mentions")
+        session.add(ch)
+        await session.flush()
+    return ch
+
+
+# --- orgs -------------------------------------------------------------------------------
+
+
+async def create_org(name: str, description: str = "", *, workspace: str | None = None,
+                     settings_: dict[str, Any] | None = None, kind: str = "user",
+                     org_id: str | None = None) -> Org:
+    name = (name or "").strip()
+    if not name:
+        raise OrgError("org name is required")
+    if workspace:
+        try:
+            workspace = str(tools_base.check_workspace_path(workspace))
+        except tools_base.WorkspaceError as e:
+            raise OrgError(str(e)) from None
+    async with SessionLocal() as session:
+        org = Org(name=name, description=description, workspace=workspace, kind=kind,
+                  settings={**DEFAULT_ORG_SETTINGS, **(settings_ or {})})
+        if org_id:
+            org.id = org_id
+        session.add(org)
+        await session.flush()
+        session.add(Board(org_id=org.id, name="Main", columns=list(tasks.DEFAULT_COLUMNS)))
+        await _general(session, org.id)
+        await session.commit()
+    await bus.publish("org.created", org_to_dict(org), org_id=org.id)
+    return org
+
+
+async def update_org(org_id: str, patch: dict[str, Any]) -> Org:
+    async with SessionLocal() as session:
+        org = await session.get(Org, org_id)
+        if org is None:
+            raise OrgError("org not found")
+        if "name" in patch and patch["name"]:
+            org.name = str(patch["name"]).strip()
+        if "description" in patch and patch["description"] is not None:
+            org.description = str(patch["description"])
+        if "workspace" in patch:
+            ws = patch["workspace"]
+            try:
+                org.workspace = str(tools_base.check_workspace_path(ws)) if ws else None
+            except tools_base.WorkspaceError as e:
+                raise OrgError(str(e)) from None
+        if "status" in patch and patch["status"]:
+            if patch["status"] not in ("running", "paused"):
+                raise OrgError("status must be running or paused")
+            org.status = patch["status"]
+        if "settings" in patch and isinstance(patch["settings"], dict):
+            merged = {**(org.settings or {}), **patch["settings"]}
+            if merged.get("comm_policy") not in ("open", "structured"):
+                raise OrgError("comm_policy must be open or structured")
+            if merged.get("shell_approval", "ask") not in ("ask", "auto"):
+                raise OrgError("shell_approval must be ask or auto")
+            if merged.get("writing", "plain") not in ("plain", "ste"):
+                raise OrgError("writing must be plain or ste")
+            if merged.get("mode", "team") not in ("team", "flow"):
+                raise OrgError("mode must be team or flow")
+            if "max_concurrent" in patch["settings"]:
+                n = patch["settings"]["max_concurrent"]
+                if n is not None and (not isinstance(n, int) or isinstance(n, bool)
+                                      or not 0 <= n <= 64):
+                    raise OrgError("max_concurrent must be a whole number from 0 (no limit) to 64")
+                merged["max_concurrent"] = n or 0
+            if "task_policy" in patch["settings"]:
+                try:
+                    merged["task_policy"] = validate_task_policy(patch["settings"]["task_policy"])
+                except ValueError as e:
+                    raise OrgError(str(e)) from None
+            if "meetings" in patch["settings"]:
+                merged["meetings"] = _validate_meeting_settings(patch["settings"]["meetings"])
+            if "libraries" in patch["settings"]:
+                libs = _validate_libraries(patch["settings"]["libraries"])
+                if libs is None:
+                    merged.pop("libraries", None)
+                else:
+                    merged["libraries"] = libs
+            for key in ("default_model", "checker_model"):
+                if key in patch["settings"]:
+                    merged[key] = await _validate_model(patch["settings"][key], session)
+            org.settings = merged
+        if "layout" in patch and isinstance(patch["layout"], dict):
+            org.layout = patch["layout"]
+        await session.commit()
+    await bus.publish("org.updated", org_to_dict(org), org_id=org.id)
+    if "settings" in patch and "max_concurrent" in (patch.get("settings") or {}):
+        from app.agents.runtime import runtime
+
+        await runtime.slots.set_org_limit(org.id, (org.settings or {}).get("max_concurrent"))
+    if org.status == "running":
+        from app.agents import signals
+
+        async with SessionLocal() as session:
+            for aid in (await session.execute(select(Agent.id).where(
+                    Agent.org_id == org.id))).scalars():
+                signals.wake(aid)
+    return org
+
+
+async def delete_org(org_id: str) -> None:
+    from app.agents.runtime import runtime
+
+    async with SessionLocal() as session:
+        org = await session.get(Org, org_id)
+        if org is None:
+            raise OrgError("org not found")
+        if org.kind == "system":
+            raise OrgError("the system org cannot be deleted")
+        # Pause first so no new turn can start while agents are being stopped.
+        org.status = "paused"
+        await session.commit()
+        agent_ids = (await session.execute(select(Agent.id).where(
+            Agent.org_id == org_id))).scalars().all()
+    from app.services import oversight
+
+    await oversight.remove_watch(org_id)
+    from app.services import attachments as files
+
+    await asyncio.to_thread(files.delete_org_files, org_id)
+    for aid in agent_ids:
+        await runtime.stop_turn(aid)
+        await runtime.saver.adelete_thread(f"agent:{aid}")
+    async with SessionLocal() as session:
+        await session.execute(delete(Org).where(Org.id == org_id))
+        await session.commit()
+    await bus.publish("org.deleted", {"id": org_id}, org_id=org_id)
+
+
+# --- agents -------------------------------------------------------------------------------
+
+
+async def create_agent(org_id: str, data: dict[str, Any]) -> Agent:
+    name = _clean_name(data.get("name", ""))
+    preset = data.get("preset", "worker")
+    raw_tools = data.get("tools")
+    if raw_tools is None:
+        raw_tools = tools_base.WORKER_TOOLSET if preset == "worker" else tools_base.DEFAULT_TOOLSET
+    tool_entries = await _validate_tools(raw_tools, org_id)
+    model = await _validate_model(data.get("model"))
+    kind, runner = _validate_kind(data.get("kind"), data.get("runner"))
+    async with SessionLocal() as session:
+        org = await session.get(Org, org_id)
+        if org is None:
+            raise OrgError("org not found")
+        clash = await session.scalar(select(func.count()).select_from(Agent).where(
+            Agent.org_id == org_id, func.lower(Agent.name) == name.lower()))
+        if clash:
+            raise OrgError(f"an agent named '{name}' already exists in this org")
+        agent = Agent(
+            org_id=org_id, name=name, role=str(data.get("role", "")).strip(),
+            team=str(data.get("team", "")).strip(), persona=str(data.get("persona", "")),
+            model=model, tools=tool_entries, skills=list(data.get("skills") or []),
+            worktree=data.get("worktree") or None, limits=dict(data.get("limits") or {}),
+            permissions=_validate_permissions(data.get("permissions")),
+            libraries=_validate_libraries(data.get("libraries")),
+            kind=kind, runner=runner,
+            avatar={**default_avatar(name + org_id), **(data.get("avatar") or {})},
+            status=data.get("status", "active"), is_supervisor=bool(data.get("is_supervisor")),
+            meta_role=data.get("meta_role") or None,
+            life=life.new_life(data["life"], name + org_id) if isinstance(data.get("life"), dict) else {},
+        )
+        if agent.status not in AGENT_STATUSES:
+            raise OrgError(f"status must be one of {AGENT_STATUSES}")
+        session.add(agent)
+        await session.flush()
+        if org.kind != "system":
+            general = await _general(session, org_id)
+            general.members = sorted({*general.members, agent.id})
+        restored, restored_rels = await _restore_predecessor(session, org, agent)
+        await session.commit()
+    if agent.worktree:
+        try:
+            tools_base.agent_workdir(org, agent)
+        except tools_base.WorkspaceError as e:
+            async with SessionLocal() as session:
+                await session.execute(delete(Agent).where(Agent.id == agent.id))
+                await session.commit()
+            raise OrgError(str(e)) from None
+    await bus.publish("agent.created", agent_to_dict(agent), org_id=org_id, agent_id=agent.id)
+    for ch in restored:
+        await bus.publish("channel.updated", comms_channel_dict(ch), org_id=org_id)
+    for rel in restored_rels:
+        await bus.publish("relationship.changed", rel_to_dict(rel), org_id=org_id)
+    if agent.id in ((org.layout or {}).get("team") or {}):
+        await bus.publish("org.updated", org_to_dict(org), org_id=org_id)  # chart slot restored
+    # Reported by Zeus's create_agent.
+    agent.restored_channels = [ch.key for ch in restored]
+    agent.restored_relationships = len(restored_rels)
+    from app.services import workspaces
+
+    workspaces.schedule_sync(org_id)
+    return agent
+
+
+async def _restore_predecessor(session, org: Org, agent: Agent) -> tuple[list[Channel], list]:
+    """A recreated agent (same name as one deleted from this org) takes over its place:
+    channels, its spot on the org chart, and its reporting lines (issues #4 and #5)."""
+    former = dict((org.settings or {}).get("former_agents") or {})
+    record = former.pop(agent.name.lower(), None)
+    if not record:
+        return [], []
+    org.settings = {**(org.settings or {}), "former_agents": former}
+
+    restored = []
+    ids = record.get("channels") or []
+    for ch in (await session.execute(select(Channel).where(
+            Channel.id.in_(ids), Channel.org_id == org.id))).scalars():
+        if agent.id not in ch.members:
+            ch.members = sorted({*ch.members, agent.id})
+            restored.append(ch)
+
+    slot = record.get("slot")
+    if isinstance(slot, dict):
+        layout = dict(org.layout or {})
+        layout["team"] = {**dict(layout.get("team") or {}), agent.id: slot}
+        org.layout = layout
+
+    from app.services.comms import resolve_agent
+
+    rels = []
+    for r in record.get("relationships") or []:
+        other = await resolve_agent(session, org.id, r.get("other") or "") or \
+            await resolve_agent(session, org.id, r.get("otherName") or "")
+        if other is None or other.id == agent.id:
+            continue
+        a, b = (agent.id, other.id) if r.get("outgoing") else (other.id, agent.id)
+        exists = await session.scalar(select(func.count()).select_from(Relationship).where(
+            Relationship.org_id == org.id, Relationship.from_id == a, Relationship.to_id == b,
+            Relationship.kind == r.get("kind")))
+        if not exists and r.get("kind") in REL_KINDS:
+            rel = Relationship(org_id=org.id, from_id=a, to_id=b, kind=r["kind"],
+                               label=r.get("label") or "")
+            session.add(rel)
+            rels.append(rel)
+    await session.flush()
+    return restored, rels
+
+
+async def update_agent(agent_id: str, patch: dict[str, Any]) -> Agent:
+    async with SessionLocal() as session:
+        agent = await session.get(Agent, agent_id)
+        if agent is None:
+            raise OrgError("agent not found")
+        if "name" in patch and patch["name"] is not None:
+            name = _clean_name(patch["name"])
+            clash = await session.scalar(select(func.count()).select_from(Agent).where(
+                Agent.org_id == agent.org_id, func.lower(Agent.name) == name.lower(),
+                Agent.id != agent.id))
+            if clash:
+                raise OrgError(f"an agent named '{name}' already exists in this org")
+            agent.name = name
+        for field in ("role", "team", "persona"):
+            if field in patch and patch[field] is not None:
+                setattr(agent, field, str(patch[field]))
+        if "tools" in patch and patch["tools"] is not None:
+            agent.tools = await _validate_tools(patch["tools"], agent.org_id)
+        if "model" in patch and patch["model"] is not None:
+            agent.model = await _validate_model(patch["model"], session)
+        if "skills" in patch and patch["skills"] is not None:
+            agent.skills = list(patch["skills"])
+        if "libraries" in patch:  # null: back to the org's choice
+            agent.libraries = _validate_libraries(patch["libraries"])
+        if "kind" in patch or "runner" in patch:
+            kind = patch.get("kind", agent.kind)
+            changed = kind != agent.kind
+            runner = patch.get("runner", {} if changed else agent.runner)
+            kept = {} if changed else {k: v for k, v in (agent.runner or {}).items()
+                                       if k in RUNNER_STATE}
+            agent.kind, agent.runner = _validate_kind(kind, runner)
+            agent.runner = {**agent.runner, **kept}
+        if "worktree" in patch:
+            agent.worktree = patch["worktree"] or None
+            org = await session.get(Org, agent.org_id)
+            try:
+                tools_base.agent_workdir(org, agent)  # type: ignore[arg-type]
+            except tools_base.WorkspaceError as e:
+                raise OrgError(str(e)) from None
+        if "permissions" in patch and patch["permissions"] is not None:
+            agent.permissions = _validate_permissions(patch["permissions"])
+        if "limits" in patch and patch["limits"] is not None:
+            agent.limits = {**(agent.limits or {}), **patch["limits"]}
+        if "avatar" in patch and patch["avatar"] is not None:
+            agent.avatar = {**(agent.avatar or {}), **patch["avatar"]}
+        if "status" in patch and patch["status"]:
+            if patch["status"] not in AGENT_STATUSES:
+                raise OrgError(f"status must be one of {AGENT_STATUSES}")
+            agent.status = patch["status"]
+        if patch.get("meta_role"):
+            agent.meta_role = patch["meta_role"]
+        await session.commit()
+    await bus.publish("agent.updated", agent_to_dict(agent), org_id=agent.org_id,
+                      agent_id=agent.id)
+    if agent.status == "active":
+        from app.agents import signals
+
+        signals.wake(agent.id)
+    if "tools" in patch:  # one who now writes files may need a worktree
+        from app.services import workspaces
+
+        workspaces.schedule_sync(agent.org_id)
+    return agent
+
+
+async def delete_agent(agent_id: str) -> None:
+    from app.agents.runtime import runtime
+
+    async with SessionLocal() as session:
+        agent = await session.get(Agent, agent_id)
+        if agent is None:
+            raise OrgError("agent not found")
+        if agent.is_supervisor:
+            raise OrgError(f"{agent.name} is a built-in Pantheon agent and cannot be deleted")
+        org_id = agent.org_id
+    await runtime.stop_turn(agent_id)
+    await runtime.saver.adelete_thread(f"agent:{agent_id}")
+    from app.services import attachments as files
+
+    await files.delete_for_agent(agent_id)
+    await tasks.reassign_from(org_id, agent_id)
+    slot_freed = False
+    async with SessionLocal() as session:
+        left: list[str] = []
+        for ch in (await session.execute(select(Channel).where(
+                Channel.org_id == org_id))).scalars():
+            if agent_id in ch.members:
+                ch.members = [m for m in ch.members if m != agent_id]
+                if ch.kind == "channel":
+                    left.append(ch.id)
+        # Remember its place by name, so recreating the agent restores it (issues #4, #5):
+        # channels, its spot on the org chart, and its relationships (which cascade away).
+        org = await session.get(Org, org_id)
+        if org is not None:
+            names = dict((await session.execute(select(Agent.id, Agent.name).where(
+                Agent.org_id == org_id))).all())
+            rels = []
+            for r in (await session.execute(select(Relationship).where(
+                    Relationship.org_id == org_id, (Relationship.from_id == agent_id)
+                    | (Relationship.to_id == agent_id)))).scalars():
+                outgoing = r.from_id == agent_id
+                other = r.to_id if outgoing else r.from_id
+                rels.append({"kind": r.kind, "label": r.label, "outgoing": outgoing,
+                             "other": other, "otherName": names.get(other, "")})
+            layout = dict(org.layout or {})
+            team = dict(layout.get("team") or {})
+            slot = team.pop(agent_id, None)
+            if slot is not None:
+                org.layout = {**layout, "team": team}
+                slot_freed = True
+            if left or rels or slot is not None:
+                former = dict((org.settings or {}).get("former_agents") or {})
+                former[agent.name.lower()] = {"channels": left, "slot": slot,
+                                              "relationships": rels}
+                org.settings = {**(org.settings or {}), "former_agents": former}
+        await session.execute(delete(Agent).where(Agent.id == agent_id))
+        await session.commit()
+    await bus.publish("agent.deleted", {"id": agent_id}, org_id=org_id, agent_id=agent_id)
+    if slot_freed:
+        await bus.publish("org.updated", org_to_dict(org), org_id=org_id)
+
+
+# --- relationships -----------------------------------------------------------------------
+
+
+async def set_relationship(org_id: str, from_ref: str, to_ref: str, kind: str,
+                           label: str = "") -> Relationship:
+    from app.services.comms import resolve_agent
+
+    if kind not in REL_KINDS:
+        raise OrgError(f"kind must be one of {REL_KINDS}")
+    async with SessionLocal() as session:
+        a = await resolve_agent(session, org_id, from_ref)
+        b = await resolve_agent(session, org_id, to_ref)
+        if a is None or b is None:
+            raise OrgError(f"unknown agent '{from_ref if a is None else to_ref}'")
+        if a.id == b.id:
+            raise OrgError("an agent cannot relate to itself")
+        if kind == "manages":
+            # Reject management cycles (a manager chain must be a tree/forest).
+            managers: dict[str, list[str]] = {}
+            for r in (await session.execute(select(Relationship).where(
+                    Relationship.org_id == org_id, Relationship.kind == "manages"))).scalars():
+                managers.setdefault(r.to_id, []).append(r.from_id)
+            stack, seen = [a.id], set()
+            while stack:
+                cur = stack.pop()
+                if cur == b.id:
+                    raise OrgError(f"{a.name} managing {b.name} would create a management cycle")
+                if cur in seen:
+                    continue
+                seen.add(cur)
+                stack.extend(managers.get(cur, []))
+        existing = (await session.execute(select(Relationship).where(
+            Relationship.org_id == org_id, Relationship.from_id == a.id,
+            Relationship.to_id == b.id, Relationship.kind == kind))).scalar_one_or_none()
+        if existing is not None:
+            existing.label = label
+            rel = existing
+        else:
+            rel = Relationship(org_id=org_id, from_id=a.id, to_id=b.id, kind=kind, label=label)
+            session.add(rel)
+        await session.commit()
+    await bus.publish("relationship.changed", rel_to_dict(rel), org_id=org_id)
+    from app.services import workspaces
+
+    workspaces.schedule_sync(org_id)
+    return rel
+
+
+async def remove_relationship(org_id: str, rel_id: str) -> None:
+    async with SessionLocal() as session:
+        await session.execute(delete(Relationship).where(
+            Relationship.org_id == org_id, Relationship.id == rel_id))
+        await session.commit()
+    await bus.publish("relationship.removed", {"id": rel_id}, org_id=org_id)
+    from app.services import workspaces
+
+    workspaces.schedule_sync(org_id)
+
+
+# --- snapshot / import / export ---------------------------------------------------------------
+
+
+async def snapshot(org_id: str) -> dict[str, Any]:
+    async with SessionLocal() as session:
+        org = await session.get(Org, org_id)
+        if org is None:
+            raise OrgError("org not found")
+        agents = (await session.execute(select(Agent).where(Agent.org_id == org_id)
+                                        .order_by(Agent.created_at))).scalars().all()
+        rels = (await session.execute(select(Relationship).where(
+            Relationship.org_id == org_id))).scalars().all()
+        channels = (await session.execute(select(Channel).where(
+            Channel.org_id == org_id, Channel.kind == "channel"))).scalars().all()
+        boards = (await session.execute(select(Board).where(Board.org_id == org_id))).scalars().all()
+        servers = (await session.execute(select(McpServer).where(
+            McpServer.org_id == org_id))).scalars().all()
+    from app.services.comms import channel_to_dict
+
+    org_dict = org_to_dict(org)
+    team = (org_dict["layout"] or {}).get("team")
+    if isinstance(team, dict):  # drop chart slots of deleted agents (issue #4)
+        live = {a.id for a in agents}
+        org_dict["layout"] = {**org_dict["layout"],
+                              "team": {k: v for k, v in team.items() if k in live}}
+    return {
+        "org": org_dict,
+        "agents": [agent_to_dict(a) for a in agents],
+        "relationships": [rel_to_dict(r) for r in rels],
+        "channels": [channel_to_dict(c) for c in channels],
+        "boards": [tasks.board_to_dict(b) for b in boards],
+        "mcpServers": [{"id": s.id, "name": s.name, "transport": s.transport} for s in servers],
+    }
+
+
+async def export_org(org_id: str) -> dict[str, Any]:
+    """Portable definition (no runtime state, no secrets), keyed by agent name."""
+    snap = await snapshot(org_id)
+    names = {a["id"]: a["name"] for a in snap["agents"]}
+    return {
+        "version": 1,
+        "name": snap["org"]["name"],
+        "description": snap["org"]["description"],
+        # Where it ran (its folder, git, worktrees) belongs to this computer, not the
+        # definition: whoever makes an organization from it chooses its workspace.
+        "settings": {k: v for k, v in snap["org"]["settings"].items()
+                     if k not in ("default_model", "checker_model", "git", "workspace_host")},
+        "agents": [
+            {k: a[k] for k in ("name", "role", "team", "persona", "tools", "skills",
+                               "limits", "avatar", "permissions", "libraries", "kind",
+                               "runner")}
+            | ({"worktree": a["worktree"]} if a["worktree"] and not str(a["worktree"])
+               .replace("\\", "/").startswith(".pantheon/") else {})
+            | {"model": {k: v for k, v in a["model"].items() if k != "provider_id"}}
+            for a in snap["agents"] if not a["isSupervisor"]
+        ],
+        "relationships": [
+            {"from": names[r["fromId"]], "to": names[r["toId"]], "kind": r["kind"],
+             "label": r["label"]}
+            for r in snap["relationships"] if r["fromId"] in names and r["toId"] in names
+        ],
+        "channels": [
+            {"name": c["name"], "topic": c["topic"], "notify": c["notify"],
+             "members": [names.get(m, m) for m in c["members"]]}
+            for c in snap["channels"] if c["key"] != "#general"
+        ],
+        "flows": await _export_flows(org_id, names),
+    } | _export_skills(snap) | await _export_space(org_id, names)
+
+
+def _export_skills(snap: dict[str, Any]) -> dict[str, Any]:
+    """The user's own skills the agents use, so the file works on another computer."""
+    from app.services import skills
+
+    used = [str(n) for a in snap["agents"] if not a["isSupervisor"] for n in a["skills"] or []]
+    defs = skills.export(list(dict.fromkeys(used)))
+    return {"skillDefs": defs} if defs else {}
+
+
+async def _export_flows(org_id: str, names: dict[str, str]) -> list[dict[str, Any]]:
+    """The org's flows, their steps naming agents by name."""
+    from app.services import flows
+
+    out = []
+    for f in await flows.for_org(org_id):
+        g = f.graph or {}
+        out.append({"name": f.name, "description": f.description,
+                    "steps": [{"id": n["id"], "title": n["title"], "agent": names.get(n["agentId"], ""),
+                               "instructions": n.get("instructions", ""), "x": n.get("x", 0),
+                               "y": n.get("y", 0),
+                               **({"files": n["files"]} if n.get("files") else {})}
+                              for n in g.get("nodes") or []],
+                    "edges": g.get("edges") or []})
+    return out
+
+
+async def _export_space(org_id: str, names: dict[str, str]) -> dict[str, Any]:
+    from app.models import WorldObject
+
+    async with SessionLocal() as session:
+        org = await session.get(Org, org_id)
+        objects = (await session.execute(select(WorldObject).where(
+            WorldObject.org_id == org_id))).scalars().all()
+    out: dict[str, Any] = {}
+    layout = (org.layout or {}) if org else {}
+    if isinstance(office := layout.get("office"), dict):
+        office = json.loads(json.dumps(office))
+        for it in office.get("items") or []:
+            if aid := it.pop("agentId", None):
+                if aid in names:
+                    it["agent"] = names[aid]
+        out["office"] = office
+    if layout.get("extras"):
+        out["extras"] = [{k: v for k, v in e.items() if k != "id"} for e in layout["extras"]]
+    if layout.get("theme"):
+        out["theme"] = layout["theme"]
+    if objects:
+        out["objects"] = [
+            {"name": o.name, "asset": o.asset, "description": o.description, "state": o.state}
+            | ({"holder": names[o.holder_id]} if o.holder_id in names
+               else {"room": (o.place or {}).get("room", "")}) for o in objects]
+    return out
+
+
+async def _import_space(org_id: str, definition: dict[str, Any]) -> None:
+    """A template's physical space: office design, placed extras and movable objects.
+
+    Designs and objects refer to agents by name (``"agent": "Ada"``); ids are
+    assigned here.
+    """
+    from app.models import WorldObject
+
+    async with SessionLocal() as session:
+        ids = {a.name.lower(): a.id for a in (await session.execute(select(Agent).where(
+            Agent.org_id == org_id))).scalars()}
+        org = await session.get(Org, org_id)
+        assert org is not None
+        layout = dict(org.layout or {})
+        if isinstance(office := definition.get("office"), dict):
+            office = json.loads(json.dumps(office))
+            for i, it in enumerate(office.get("items") or []):
+                it.setdefault("id", f"it_{i}")
+                if who := it.pop("agent", None):
+                    it["agentId"] = ids.get(str(who).lower())
+            layout["office"] = office
+        if isinstance(extras := definition.get("extras"), list):
+            layout["extras"] = [{"id": f"ex_{i}", **e} for i, e in enumerate(extras)]
+        if isinstance(theme := definition.get("theme"), str) and theme in packs.theme_ids():
+            layout["theme"] = theme
+        org.layout = layout
+        for spec in definition.get("objects") or []:
+            holder = ids.get(str(spec.get("holder", "")).lower()) if spec.get("holder") else None
+            session.add(WorldObject(
+                org_id=org_id, name=str(spec["name"])[:80], asset=str(spec.get("asset") or ""),
+                description=str(spec.get("description") or ""), holder_id=holder,
+                place={} if holder else {"kind": "room", "room": spec.get("room") or ""},
+                state=spec.get("state") or {}))
+        for a_name, place in (definition.get("positions") or {}).items():
+            aid = ids.get(a_name.lower())
+            if aid:
+                agent = await session.get(Agent, aid)
+                if agent is not None:
+                    agent.location = {"kind": "room", "room": place}
+        await session.commit()
+
+
+async def import_org(definition: dict[str, Any], *, name: str | None = None,
+                     workspace: str | None = None) -> Org:
+    from app.services import comms, skills
+
+    if isinstance(definition.get("skillDefs"), dict):
+        skills.install(definition["skillDefs"])
+    org = await create_org(name or definition.get("name") or "New organization",
+                           definition.get("description", ""), workspace=workspace,
+                           settings_=definition.get("settings") or {})
+    try:
+        for a in definition.get("agents") or []:
+            await create_agent(org.id, a)
+        for r in definition.get("relationships") or []:
+            await set_relationship(org.id, r["from"], r["to"], r.get("kind", "manages"),
+                                   r.get("label", ""))
+        for c in definition.get("channels") or []:
+            await comms.create_channel(org.id, c["name"], c.get("members") or [],
+                                       topic=c.get("topic", ""), notify=c.get("notify", "all"))
+        await _import_space(org.id, definition)
+        from app.services import flows
+
+        for f in definition.get("flows") or []:
+            steps = list(f.get("steps") or [])
+            edges = list(f.get("edges") or [])
+            if not any("x" in s for s in steps):
+                steps = flows.layout(steps, edges)
+            await flows.create(org.id, f["name"], {"nodes": steps, "edges": edges},
+                               f.get("description") or "")
+        for act in definition.get("activities") or []:
+            from app.services import activities
+
+            await activities.create(org.id, act["title"], act.get("instructions", ""),
+                                    participants=act.get("participants") or [],
+                                    room=act.get("room"), schedule=act.get("schedule"),
+                                    created_by="template")
+    except Exception:
+        await delete_org(org.id)
+        raise
+    return org

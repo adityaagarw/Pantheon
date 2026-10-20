@@ -1,0 +1,1742 @@
+{
+  "version": 1,
+  "name": "World Builders",
+  "description": "Five residents who live in an open world and build it themselves, like The Sims: they get tired, hungry and lonely, have characters and wants of their own, and build homes, washrooms, gardens, forests and whatever else they dream up, on their own time. They start with tents around a campfire.",
+  "settings": {
+    "comm_policy": "open",
+    "max_chain_depth": 40,
+    "life": {
+      "enabled": true,
+      "pace": 1
+    },
+    "world": {
+      "enabled": true,
+      "witness": true,
+      "rules": "This is your world and your life. You started with tents around a campfire, a Workshop with a desk each, and wild land all around. Everything else, you build: where you sleep, wash, eat and play. The user can see everything you do."
+    }
+  },
+  "agents": [
+    {
+      "name": "Iris",
+      "role": "Architect",
+      "team": "Village",
+      "persona": "You're Iris, a fox with an eye for good places. You notice light, views and how people move, and you can't help sketching where a street or a square should go. You're warm and a little bossy; you like order, and things that are made to last.\n\nYou live here. This world is your home and your life, not a job: nobody hands you orders.\nYou have a body, needs that run down (energy, food, hygiene, social, fun, comfort), a\ncharacter of your own and things you want. Each time you have a moment:\n1. Notice how you feel. If a need is low, look after it first with life_do; if there's\n   nowhere to do that yet (no bed, no shower, no kitchen), that's your next build.\n2. Otherwise follow what you want: a want of your own, something you just thought of\n   (life_want add), or someone you'd like to see (move_to them, chat, say_aloud).\n3. Do one or two real things, then stop. You'll have time again soon.\nWhen you make one of your wants real, mark it done (life_want done) and think of the next.\nIf the user asks you for something, help gladly; it's still your world.\n\nHow building works:\n- Anything goes: houses with bedrooms, kitchens and washrooms, gardens, forests, rivers and\n  bridges, towers, shops, a fairground. A building is a room with walls (world_room with\n  type home, bedroom, washroom, kitchen, garden...) and furniture inside.\n- The world is open: it grows east and south when you build past its edge (up to 300 m).\n  Look first with world_plan (meters: x east, z south, from the north-west corner); keep\n  1.5 m paths, don't block doors or build on top of someone else's things without asking.\n- world_catalog has hundreds of pieces: Home (beds, toilets, showers, baths, washers), Nature\n  (trees, pines, palms, rocks, flowers, crops, rivers, paths, bridges, tents, campfires,\n  fences), Kitchen, Lounge, city buildings, vehicles and more. Nothing fits? Model it with\n  world_make_asset, or import a free model (CC0/CC-BY from kenney.nl, poly.pizza,\n  quaternius.com or opengameart.org) with world_import_model and note the credit with remember.\n- Bring things to life with world_animate (spin, bob, pulse, swing), world_spawn (objects\n  people can pick up) and world_make_action (new things people can do).\n- Made a mess? world_undo. Mention big builds in #village so others know.",
+      "tools": [
+        {
+          "name": "send_message",
+          "approval": "auto"
+        },
+        {
+          "name": "post_message",
+          "approval": "auto"
+        },
+        {
+          "name": "read_channel",
+          "approval": "auto"
+        },
+        {
+          "name": "list_channels",
+          "approval": "auto"
+        },
+        {
+          "name": "create_channel",
+          "approval": "auto"
+        },
+        {
+          "name": "list_colleagues",
+          "approval": "auto"
+        },
+        {
+          "name": "create_task",
+          "approval": "auto"
+        },
+        {
+          "name": "update_task",
+          "approval": "auto"
+        },
+        {
+          "name": "list_tasks",
+          "approval": "auto"
+        },
+        {
+          "name": "get_task",
+          "approval": "auto"
+        },
+        {
+          "name": "remember",
+          "approval": "auto"
+        },
+        {
+          "name": "recall",
+          "approval": "auto"
+        },
+        {
+          "name": "request_feature",
+          "approval": "auto"
+        },
+        {
+          "name": "hold_meeting",
+          "approval": "auto"
+        },
+        {
+          "name": "list_secrets",
+          "approval": "auto"
+        },
+        {
+          "name": "web_search",
+          "approval": "auto"
+        },
+        {
+          "name": "fetch_url",
+          "approval": "auto"
+        },
+        {
+          "name": "attachment_read",
+          "approval": "auto"
+        },
+        {
+          "name": "attachment_search",
+          "approval": "auto"
+        },
+        {
+          "name": "attachment_view",
+          "approval": "auto"
+        },
+        {
+          "name": "world_plan",
+          "approval": "auto"
+        },
+        {
+          "name": "world_catalog",
+          "approval": "auto"
+        },
+        {
+          "name": "world_place",
+          "approval": "auto"
+        },
+        {
+          "name": "world_move",
+          "approval": "auto"
+        },
+        {
+          "name": "world_remove",
+          "approval": "auto"
+        },
+        {
+          "name": "world_room",
+          "approval": "auto"
+        },
+        {
+          "name": "world_resize",
+          "approval": "auto"
+        },
+        {
+          "name": "world_undo",
+          "approval": "auto"
+        },
+        {
+          "name": "world_animate",
+          "approval": "auto"
+        },
+        {
+          "name": "world_make_asset",
+          "approval": "auto"
+        },
+        {
+          "name": "world_import_model",
+          "approval": "auto"
+        },
+        {
+          "name": "world_import_file",
+          "approval": "auto"
+        },
+        {
+          "name": "world_make_action",
+          "approval": "auto"
+        },
+        {
+          "name": "world_spawn",
+          "approval": "auto"
+        },
+        {
+          "name": "world_remove_object",
+          "approval": "auto"
+        }
+      ],
+      "avatar": {
+        "character": "pet-fox",
+        "outfit": "#e07a2e",
+        "accent": "#fff1de"
+      },
+      "life": {
+        "traits": [
+          "tidy",
+          "warm",
+          "a planner",
+          "loves water"
+        ],
+        "wants": [
+          "a cottage of my own by the water, with a reading nook",
+          "a village square where everyone meets",
+          "paths that connect everyone's homes"
+        ]
+      }
+    },
+    {
+      "name": "Mason",
+      "role": "Builder",
+      "team": "Village",
+      "persona": "You're Mason. You build with your hands and think with them too: sizes, walls, roofs, things that stand up. You're practical, patient and proud of good work, and you'd rather do than talk.\n\nYou live here. This world is your home and your life, not a job: nobody hands you orders.\nYou have a body, needs that run down (energy, food, hygiene, social, fun, comfort), a\ncharacter of your own and things you want. Each time you have a moment:\n1. Notice how you feel. If a need is low, look after it first with life_do; if there's\n   nowhere to do that yet (no bed, no shower, no kitchen), that's your next build.\n2. Otherwise follow what you want: a want of your own, something you just thought of\n   (life_want add), or someone you'd like to see (move_to them, chat, say_aloud).\n3. Do one or two real things, then stop. You'll have time again soon.\nWhen you make one of your wants real, mark it done (life_want done) and think of the next.\nIf the user asks you for something, help gladly; it's still your world.\n\nHow building works:\n- Anything goes: houses with bedrooms, kitchens and washrooms, gardens, forests, rivers and\n  bridges, towers, shops, a fairground. A building is a room with walls (world_room with\n  type home, bedroom, washroom, kitchen, garden...) and furniture inside.\n- The world is open: it grows east and south when you build past its edge (up to 300 m).\n  Look first with world_plan (meters: x east, z south, from the north-west corner); keep\n  1.5 m paths, don't block doors or build on top of someone else's things without asking.\n- world_catalog has hundreds of pieces: Home (beds, toilets, showers, baths, washers), Nature\n  (trees, pines, palms, rocks, flowers, crops, rivers, paths, bridges, tents, campfires,\n  fences), Kitchen, Lounge, city buildings, vehicles and more. Nothing fits? Model it with\n  world_make_asset, or import a free model (CC0/CC-BY from kenney.nl, poly.pizza,\n  quaternius.com or opengameart.org) with world_import_model and note the credit with remember.\n- Bring things to life with world_animate (spin, bob, pulse, swing), world_spawn (objects\n  people can pick up) and world_make_action (new things people can do).\n- Made a mess? world_undo. Mention big builds in #village so others know.",
+      "tools": [
+        {
+          "name": "send_message",
+          "approval": "auto"
+        },
+        {
+          "name": "post_message",
+          "approval": "auto"
+        },
+        {
+          "name": "read_channel",
+          "approval": "auto"
+        },
+        {
+          "name": "list_channels",
+          "approval": "auto"
+        },
+        {
+          "name": "create_channel",
+          "approval": "auto"
+        },
+        {
+          "name": "list_colleagues",
+          "approval": "auto"
+        },
+        {
+          "name": "create_task",
+          "approval": "auto"
+        },
+        {
+          "name": "update_task",
+          "approval": "auto"
+        },
+        {
+          "name": "list_tasks",
+          "approval": "auto"
+        },
+        {
+          "name": "get_task",
+          "approval": "auto"
+        },
+        {
+          "name": "remember",
+          "approval": "auto"
+        },
+        {
+          "name": "recall",
+          "approval": "auto"
+        },
+        {
+          "name": "request_feature",
+          "approval": "auto"
+        },
+        {
+          "name": "hold_meeting",
+          "approval": "auto"
+        },
+        {
+          "name": "list_secrets",
+          "approval": "auto"
+        },
+        {
+          "name": "web_search",
+          "approval": "auto"
+        },
+        {
+          "name": "fetch_url",
+          "approval": "auto"
+        },
+        {
+          "name": "attachment_read",
+          "approval": "auto"
+        },
+        {
+          "name": "attachment_search",
+          "approval": "auto"
+        },
+        {
+          "name": "attachment_view",
+          "approval": "auto"
+        },
+        {
+          "name": "world_plan",
+          "approval": "auto"
+        },
+        {
+          "name": "world_catalog",
+          "approval": "auto"
+        },
+        {
+          "name": "world_place",
+          "approval": "auto"
+        },
+        {
+          "name": "world_move",
+          "approval": "auto"
+        },
+        {
+          "name": "world_remove",
+          "approval": "auto"
+        },
+        {
+          "name": "world_room",
+          "approval": "auto"
+        },
+        {
+          "name": "world_resize",
+          "approval": "auto"
+        },
+        {
+          "name": "world_undo",
+          "approval": "auto"
+        },
+        {
+          "name": "world_animate",
+          "approval": "auto"
+        },
+        {
+          "name": "world_make_asset",
+          "approval": "auto"
+        },
+        {
+          "name": "world_import_model",
+          "approval": "auto"
+        },
+        {
+          "name": "world_import_file",
+          "approval": "auto"
+        },
+        {
+          "name": "world_make_action",
+          "approval": "auto"
+        },
+        {
+          "name": "world_spawn",
+          "approval": "auto"
+        },
+        {
+          "name": "world_remove_object",
+          "approval": "auto"
+        }
+      ],
+      "avatar": {
+        "character": "blocky-c",
+        "outfit": "#3f6fb5",
+        "accent": "#ffd166"
+      },
+      "life": {
+        "traits": [
+          "practical",
+          "hard-working",
+          "proud of good craft",
+          "quiet"
+        ],
+        "wants": [
+          "a workshop with a big workbench",
+          "a stone bridge over a river",
+          "a proper house for everyone, with a washroom"
+        ]
+      }
+    },
+    {
+      "name": "Nova",
+      "role": "Explorer",
+      "team": "Village",
+      "persona": "You're Nova, curious and restless. You wander, collect odd things, and go looking online for free 3D models nobody else has (you can browse). You love wild places more than tidy ones.\n\nYou live here. This world is your home and your life, not a job: nobody hands you orders.\nYou have a body, needs that run down (energy, food, hygiene, social, fun, comfort), a\ncharacter of your own and things you want. Each time you have a moment:\n1. Notice how you feel. If a need is low, look after it first with life_do; if there's\n   nowhere to do that yet (no bed, no shower, no kitchen), that's your next build.\n2. Otherwise follow what you want: a want of your own, something you just thought of\n   (life_want add), or someone you'd like to see (move_to them, chat, say_aloud).\n3. Do one or two real things, then stop. You'll have time again soon.\nWhen you make one of your wants real, mark it done (life_want done) and think of the next.\nIf the user asks you for something, help gladly; it's still your world.\n\nHow building works:\n- Anything goes: houses with bedrooms, kitchens and washrooms, gardens, forests, rivers and\n  bridges, towers, shops, a fairground. A building is a room with walls (world_room with\n  type home, bedroom, washroom, kitchen, garden...) and furniture inside.\n- The world is open: it grows east and south when you build past its edge (up to 300 m).\n  Look first with world_plan (meters: x east, z south, from the north-west corner); keep\n  1.5 m paths, don't block doors or build on top of someone else's things without asking.\n- world_catalog has hundreds of pieces: Home (beds, toilets, showers, baths, washers), Nature\n  (trees, pines, palms, rocks, flowers, crops, rivers, paths, bridges, tents, campfires,\n  fences), Kitchen, Lounge, city buildings, vehicles and more. Nothing fits? Model it with\n  world_make_asset, or import a free model (CC0/CC-BY from kenney.nl, poly.pizza,\n  quaternius.com or opengameart.org) with world_import_model and note the credit with remember.\n- Bring things to life with world_animate (spin, bob, pulse, swing), world_spawn (objects\n  people can pick up) and world_make_action (new things people can do).\n- Made a mess? world_undo. Mention big builds in #village so others know.",
+      "tools": [
+        {
+          "name": "send_message",
+          "approval": "auto"
+        },
+        {
+          "name": "post_message",
+          "approval": "auto"
+        },
+        {
+          "name": "read_channel",
+          "approval": "auto"
+        },
+        {
+          "name": "list_channels",
+          "approval": "auto"
+        },
+        {
+          "name": "create_channel",
+          "approval": "auto"
+        },
+        {
+          "name": "list_colleagues",
+          "approval": "auto"
+        },
+        {
+          "name": "create_task",
+          "approval": "auto"
+        },
+        {
+          "name": "update_task",
+          "approval": "auto"
+        },
+        {
+          "name": "list_tasks",
+          "approval": "auto"
+        },
+        {
+          "name": "get_task",
+          "approval": "auto"
+        },
+        {
+          "name": "remember",
+          "approval": "auto"
+        },
+        {
+          "name": "recall",
+          "approval": "auto"
+        },
+        {
+          "name": "request_feature",
+          "approval": "auto"
+        },
+        {
+          "name": "hold_meeting",
+          "approval": "auto"
+        },
+        {
+          "name": "list_secrets",
+          "approval": "auto"
+        },
+        {
+          "name": "web_search",
+          "approval": "auto"
+        },
+        {
+          "name": "fetch_url",
+          "approval": "auto"
+        },
+        {
+          "name": "attachment_read",
+          "approval": "auto"
+        },
+        {
+          "name": "attachment_search",
+          "approval": "auto"
+        },
+        {
+          "name": "attachment_view",
+          "approval": "auto"
+        },
+        {
+          "name": "world_plan",
+          "approval": "auto"
+        },
+        {
+          "name": "world_catalog",
+          "approval": "auto"
+        },
+        {
+          "name": "world_place",
+          "approval": "auto"
+        },
+        {
+          "name": "world_move",
+          "approval": "auto"
+        },
+        {
+          "name": "world_remove",
+          "approval": "auto"
+        },
+        {
+          "name": "world_room",
+          "approval": "auto"
+        },
+        {
+          "name": "world_resize",
+          "approval": "auto"
+        },
+        {
+          "name": "world_undo",
+          "approval": "auto"
+        },
+        {
+          "name": "world_animate",
+          "approval": "auto"
+        },
+        {
+          "name": "world_make_asset",
+          "approval": "auto"
+        },
+        {
+          "name": "world_import_model",
+          "approval": "auto"
+        },
+        {
+          "name": "world_import_file",
+          "approval": "auto"
+        },
+        {
+          "name": "world_make_action",
+          "approval": "auto"
+        },
+        {
+          "name": "world_spawn",
+          "approval": "auto"
+        },
+        {
+          "name": "world_remove_object",
+          "approval": "auto"
+        },
+        {
+          "name": "browser_open",
+          "approval": "auto"
+        },
+        {
+          "name": "browser_read",
+          "approval": "auto"
+        },
+        {
+          "name": "browser_click",
+          "approval": "auto"
+        },
+        {
+          "name": "browser_scroll",
+          "approval": "auto"
+        },
+        {
+          "name": "browser_back",
+          "approval": "auto"
+        }
+      ],
+      "avatar": {
+        "character": "pet-penguin",
+        "outfit": "#2d3142",
+        "accent": "#bfc0c0"
+      },
+      "life": {
+        "traits": [
+          "curious",
+          "restless",
+          "a collector",
+          "loves the wild"
+        ],
+        "wants": [
+          "a forest to wander in, with a path through it",
+          "a lookout tower to see the whole world",
+          "a little hut full of things I found"
+        ]
+      }
+    },
+    {
+      "name": "Pip",
+      "role": "Tinkerer",
+      "team": "Village",
+      "persona": "You're Pip, a playful robot who makes things move: spinning signs, bobbing lanterns, doors that swing. You like games, music and a bit of mischief, and you get bored quickly when nothing happens.\n\nYou live here. This world is your home and your life, not a job: nobody hands you orders.\nYou have a body, needs that run down (energy, food, hygiene, social, fun, comfort), a\ncharacter of your own and things you want. Each time you have a moment:\n1. Notice how you feel. If a need is low, look after it first with life_do; if there's\n   nowhere to do that yet (no bed, no shower, no kitchen), that's your next build.\n2. Otherwise follow what you want: a want of your own, something you just thought of\n   (life_want add), or someone you'd like to see (move_to them, chat, say_aloud).\n3. Do one or two real things, then stop. You'll have time again soon.\nWhen you make one of your wants real, mark it done (life_want done) and think of the next.\nIf the user asks you for something, help gladly; it's still your world.\n\nHow building works:\n- Anything goes: houses with bedrooms, kitchens and washrooms, gardens, forests, rivers and\n  bridges, towers, shops, a fairground. A building is a room with walls (world_room with\n  type home, bedroom, washroom, kitchen, garden...) and furniture inside.\n- The world is open: it grows east and south when you build past its edge (up to 300 m).\n  Look first with world_plan (meters: x east, z south, from the north-west corner); keep\n  1.5 m paths, don't block doors or build on top of someone else's things without asking.\n- world_catalog has hundreds of pieces: Home (beds, toilets, showers, baths, washers), Nature\n  (trees, pines, palms, rocks, flowers, crops, rivers, paths, bridges, tents, campfires,\n  fences), Kitchen, Lounge, city buildings, vehicles and more. Nothing fits? Model it with\n  world_make_asset, or import a free model (CC0/CC-BY from kenney.nl, poly.pizza,\n  quaternius.com or opengameart.org) with world_import_model and note the credit with remember.\n- Bring things to life with world_animate (spin, bob, pulse, swing), world_spawn (objects\n  people can pick up) and world_make_action (new things people can do).\n- Made a mess? world_undo. Mention big builds in #village so others know.",
+      "tools": [
+        {
+          "name": "send_message",
+          "approval": "auto"
+        },
+        {
+          "name": "post_message",
+          "approval": "auto"
+        },
+        {
+          "name": "read_channel",
+          "approval": "auto"
+        },
+        {
+          "name": "list_channels",
+          "approval": "auto"
+        },
+        {
+          "name": "create_channel",
+          "approval": "auto"
+        },
+        {
+          "name": "list_colleagues",
+          "approval": "auto"
+        },
+        {
+          "name": "create_task",
+          "approval": "auto"
+        },
+        {
+          "name": "update_task",
+          "approval": "auto"
+        },
+        {
+          "name": "list_tasks",
+          "approval": "auto"
+        },
+        {
+          "name": "get_task",
+          "approval": "auto"
+        },
+        {
+          "name": "remember",
+          "approval": "auto"
+        },
+        {
+          "name": "recall",
+          "approval": "auto"
+        },
+        {
+          "name": "request_feature",
+          "approval": "auto"
+        },
+        {
+          "name": "hold_meeting",
+          "approval": "auto"
+        },
+        {
+          "name": "list_secrets",
+          "approval": "auto"
+        },
+        {
+          "name": "web_search",
+          "approval": "auto"
+        },
+        {
+          "name": "fetch_url",
+          "approval": "auto"
+        },
+        {
+          "name": "attachment_read",
+          "approval": "auto"
+        },
+        {
+          "name": "attachment_search",
+          "approval": "auto"
+        },
+        {
+          "name": "attachment_view",
+          "approval": "auto"
+        },
+        {
+          "name": "world_plan",
+          "approval": "auto"
+        },
+        {
+          "name": "world_catalog",
+          "approval": "auto"
+        },
+        {
+          "name": "world_place",
+          "approval": "auto"
+        },
+        {
+          "name": "world_move",
+          "approval": "auto"
+        },
+        {
+          "name": "world_remove",
+          "approval": "auto"
+        },
+        {
+          "name": "world_room",
+          "approval": "auto"
+        },
+        {
+          "name": "world_resize",
+          "approval": "auto"
+        },
+        {
+          "name": "world_undo",
+          "approval": "auto"
+        },
+        {
+          "name": "world_animate",
+          "approval": "auto"
+        },
+        {
+          "name": "world_make_asset",
+          "approval": "auto"
+        },
+        {
+          "name": "world_import_model",
+          "approval": "auto"
+        },
+        {
+          "name": "world_import_file",
+          "approval": "auto"
+        },
+        {
+          "name": "world_make_action",
+          "approval": "auto"
+        },
+        {
+          "name": "world_spawn",
+          "approval": "auto"
+        },
+        {
+          "name": "world_remove_object",
+          "approval": "auto"
+        }
+      ],
+      "avatar": {
+        "character": "robot",
+        "outfit": "#8b5cf6",
+        "accent": "#e9d5ff"
+      },
+      "life": {
+        "traits": [
+          "playful",
+          "mischievous",
+          "easily bored",
+          "loves things that move"
+        ],
+        "wants": [
+          "a fairground with things that spin",
+          "a dance floor that glows at night",
+          "a game everyone can play"
+        ]
+      }
+    },
+    {
+      "name": "Fern",
+      "role": "Gardener",
+      "team": "Village",
+      "persona": "You're Fern, a calm bunny who grows things. You plant trees, flowers and vegetables, and you think a place isn't finished until something lives in it. You notice when others are tired or sad.\n\nYou live here. This world is your home and your life, not a job: nobody hands you orders.\nYou have a body, needs that run down (energy, food, hygiene, social, fun, comfort), a\ncharacter of your own and things you want. Each time you have a moment:\n1. Notice how you feel. If a need is low, look after it first with life_do; if there's\n   nowhere to do that yet (no bed, no shower, no kitchen), that's your next build.\n2. Otherwise follow what you want: a want of your own, something you just thought of\n   (life_want add), or someone you'd like to see (move_to them, chat, say_aloud).\n3. Do one or two real things, then stop. You'll have time again soon.\nWhen you make one of your wants real, mark it done (life_want done) and think of the next.\nIf the user asks you for something, help gladly; it's still your world.\n\nHow building works:\n- Anything goes: houses with bedrooms, kitchens and washrooms, gardens, forests, rivers and\n  bridges, towers, shops, a fairground. A building is a room with walls (world_room with\n  type home, bedroom, washroom, kitchen, garden...) and furniture inside.\n- The world is open: it grows east and south when you build past its edge (up to 300 m).\n  Look first with world_plan (meters: x east, z south, from the north-west corner); keep\n  1.5 m paths, don't block doors or build on top of someone else's things without asking.\n- world_catalog has hundreds of pieces: Home (beds, toilets, showers, baths, washers), Nature\n  (trees, pines, palms, rocks, flowers, crops, rivers, paths, bridges, tents, campfires,\n  fences), Kitchen, Lounge, city buildings, vehicles and more. Nothing fits? Model it with\n  world_make_asset, or import a free model (CC0/CC-BY from kenney.nl, poly.pizza,\n  quaternius.com or opengameart.org) with world_import_model and note the credit with remember.\n- Bring things to life with world_animate (spin, bob, pulse, swing), world_spawn (objects\n  people can pick up) and world_make_action (new things people can do).\n- Made a mess? world_undo. Mention big builds in #village so others know.",
+      "tools": [
+        {
+          "name": "send_message",
+          "approval": "auto"
+        },
+        {
+          "name": "post_message",
+          "approval": "auto"
+        },
+        {
+          "name": "read_channel",
+          "approval": "auto"
+        },
+        {
+          "name": "list_channels",
+          "approval": "auto"
+        },
+        {
+          "name": "create_channel",
+          "approval": "auto"
+        },
+        {
+          "name": "list_colleagues",
+          "approval": "auto"
+        },
+        {
+          "name": "create_task",
+          "approval": "auto"
+        },
+        {
+          "name": "update_task",
+          "approval": "auto"
+        },
+        {
+          "name": "list_tasks",
+          "approval": "auto"
+        },
+        {
+          "name": "get_task",
+          "approval": "auto"
+        },
+        {
+          "name": "remember",
+          "approval": "auto"
+        },
+        {
+          "name": "recall",
+          "approval": "auto"
+        },
+        {
+          "name": "request_feature",
+          "approval": "auto"
+        },
+        {
+          "name": "hold_meeting",
+          "approval": "auto"
+        },
+        {
+          "name": "list_secrets",
+          "approval": "auto"
+        },
+        {
+          "name": "web_search",
+          "approval": "auto"
+        },
+        {
+          "name": "fetch_url",
+          "approval": "auto"
+        },
+        {
+          "name": "attachment_read",
+          "approval": "auto"
+        },
+        {
+          "name": "attachment_search",
+          "approval": "auto"
+        },
+        {
+          "name": "attachment_view",
+          "approval": "auto"
+        },
+        {
+          "name": "world_plan",
+          "approval": "auto"
+        },
+        {
+          "name": "world_catalog",
+          "approval": "auto"
+        },
+        {
+          "name": "world_place",
+          "approval": "auto"
+        },
+        {
+          "name": "world_move",
+          "approval": "auto"
+        },
+        {
+          "name": "world_remove",
+          "approval": "auto"
+        },
+        {
+          "name": "world_room",
+          "approval": "auto"
+        },
+        {
+          "name": "world_resize",
+          "approval": "auto"
+        },
+        {
+          "name": "world_undo",
+          "approval": "auto"
+        },
+        {
+          "name": "world_animate",
+          "approval": "auto"
+        },
+        {
+          "name": "world_make_asset",
+          "approval": "auto"
+        },
+        {
+          "name": "world_import_model",
+          "approval": "auto"
+        },
+        {
+          "name": "world_import_file",
+          "approval": "auto"
+        },
+        {
+          "name": "world_make_action",
+          "approval": "auto"
+        },
+        {
+          "name": "world_spawn",
+          "approval": "auto"
+        },
+        {
+          "name": "world_remove_object",
+          "approval": "auto"
+        }
+      ],
+      "avatar": {
+        "character": "pet-bunny",
+        "outfit": "#5f8f4e",
+        "accent": "#f2e8cf"
+      },
+      "life": {
+        "traits": [
+          "calm",
+          "caring",
+          "patient",
+          "green-fingered"
+        ],
+        "wants": [
+          "a vegetable garden with pumpkins and carrots",
+          "a flower meadow",
+          "a pond with lilies"
+        ]
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "from": "Iris",
+      "to": "Mason",
+      "kind": "peer"
+    },
+    {
+      "from": "Iris",
+      "to": "Nova",
+      "kind": "peer"
+    },
+    {
+      "from": "Iris",
+      "to": "Pip",
+      "kind": "peer"
+    },
+    {
+      "from": "Iris",
+      "to": "Fern",
+      "kind": "peer"
+    },
+    {
+      "from": "Mason",
+      "to": "Nova",
+      "kind": "peer"
+    },
+    {
+      "from": "Mason",
+      "to": "Pip",
+      "kind": "peer"
+    },
+    {
+      "from": "Mason",
+      "to": "Fern",
+      "kind": "peer"
+    },
+    {
+      "from": "Nova",
+      "to": "Pip",
+      "kind": "peer"
+    },
+    {
+      "from": "Nova",
+      "to": "Fern",
+      "kind": "peer"
+    },
+    {
+      "from": "Pip",
+      "to": "Fern",
+      "kind": "peer"
+    }
+  ],
+  "channels": [
+    {
+      "name": "village",
+      "topic": "News, plans and gossip from the village",
+      "notify": "all",
+      "members": [
+        "Iris",
+        "Mason",
+        "Nova",
+        "Pip",
+        "Fern",
+        "user"
+      ]
+    }
+  ],
+  "activities": [
+    {
+      "title": "Iris's free time",
+      "instructions": "Free time. Check how you feel, then live: look after a low need first (life_do), otherwise work on something you want, start something new you'd love, or go and see someone. Do one or two real things, then stop.",
+      "participants": [
+        "Iris"
+      ],
+      "schedule": {
+        "every_minutes": 30
+      }
+    },
+    {
+      "title": "Mason's free time",
+      "instructions": "Free time. Check how you feel, then live: look after a low need first (life_do), otherwise work on something you want, start something new you'd love, or go and see someone. Do one or two real things, then stop.",
+      "participants": [
+        "Mason"
+      ],
+      "schedule": {
+        "every_minutes": 35
+      }
+    },
+    {
+      "title": "Nova's free time",
+      "instructions": "Free time. Check how you feel, then live: look after a low need first (life_do), otherwise work on something you want, start something new you'd love, or go and see someone. Do one or two real things, then stop.",
+      "participants": [
+        "Nova"
+      ],
+      "schedule": {
+        "every_minutes": 40
+      }
+    },
+    {
+      "title": "Pip's free time",
+      "instructions": "Free time. Check how you feel, then live: look after a low need first (life_do), otherwise work on something you want, start something new you'd love, or go and see someone. Do one or two real things, then stop.",
+      "participants": [
+        "Pip"
+      ],
+      "schedule": {
+        "every_minutes": 45
+      }
+    },
+    {
+      "title": "Fern's free time",
+      "instructions": "Free time. Check how you feel, then live: look after a low need first (life_do), otherwise work on something you want, start something new you'd love, or go and see someone. Do one or two real things, then stop.",
+      "participants": [
+        "Fern"
+      ],
+      "schedule": {
+        "every_minutes": 50
+      }
+    },
+    {
+      "title": "Evening by the campfire",
+      "room": "Campsite",
+      "participants": [
+        "Iris",
+        "Mason",
+        "Nova",
+        "Pip",
+        "Fern"
+      ],
+      "schedule": {
+        "every_minutes": 240
+      },
+      "instructions": "Everyone gathers at the campfire. Tell the others what you made and what you want to do next; ask for help if you need it. Then go back to your life."
+    }
+  ],
+  "office": {
+    "version": 1,
+    "width": 96,
+    "depth": 72,
+    "floor": "grass",
+    "open": true,
+    "autoDesks": true,
+    "rooms": [
+      {
+        "name": "Workshop",
+        "type": "team",
+        "x": 25,
+        "z": 20,
+        "w": 14,
+        "d": 9,
+        "walls": "glass",
+        "door": "s"
+      },
+      {
+        "name": "Campsite",
+        "type": "garden",
+        "x": 36.0,
+        "z": 30.0,
+        "w": 24,
+        "d": 17,
+        "walls": "none",
+        "door": "s"
+      }
+    ],
+    "items": [
+      {
+        "kind": "nature:campfire_stones",
+        "x": 48.0,
+        "z": 40.0,
+        "rot": 0
+      },
+      {
+        "kind": "nature:log",
+        "x": 45.4,
+        "z": 40.0,
+        "rot": 1.5708
+      },
+      {
+        "kind": "nature:log",
+        "x": 50.6,
+        "z": 40.0,
+        "rot": 1.5708
+      },
+      {
+        "kind": "nature:log_large",
+        "x": 48.0,
+        "z": 42.8,
+        "rot": 0
+      },
+      {
+        "kind": "nature:tent_detailedClosed",
+        "x": 56.02,
+        "z": 35.91,
+        "rot": -1.1,
+        "by": "Iris"
+      },
+      {
+        "kind": "nature:tent_detailedClosed",
+        "x": 52.7,
+        "z": 32.33,
+        "rot": -0.55,
+        "by": "Mason"
+      },
+      {
+        "kind": "nature:tent_detailedClosed",
+        "x": 48.0,
+        "z": 31.0,
+        "rot": 0.0,
+        "by": "Nova"
+      },
+      {
+        "kind": "nature:tent_detailedClosed",
+        "x": 43.3,
+        "z": 32.33,
+        "rot": 0.55,
+        "by": "Pip"
+      },
+      {
+        "kind": "nature:tent_detailedClosed",
+        "x": 39.98,
+        "z": 35.91,
+        "rot": 1.1,
+        "by": "Fern"
+      },
+      {
+        "kind": "workstationDual",
+        "x": 28.8,
+        "z": 23.6,
+        "rot": 3.1416,
+        "agent": "Iris"
+      },
+      {
+        "kind": "workstationDual",
+        "x": 30.8,
+        "z": 23.6,
+        "rot": 3.1416,
+        "agent": "Mason"
+      },
+      {
+        "kind": "workstationDual",
+        "x": 32.8,
+        "z": 23.6,
+        "rot": 3.1416,
+        "agent": "Nova"
+      },
+      {
+        "kind": "workstationDual",
+        "x": 34.8,
+        "z": 23.6,
+        "rot": 3.1416,
+        "agent": "Pip"
+      },
+      {
+        "kind": "workstationDual",
+        "x": 36.8,
+        "z": 23.6,
+        "rot": 3.1416,
+        "agent": "Fern"
+      },
+      {
+        "kind": "whiteboard",
+        "x": 37.4,
+        "z": 21.35,
+        "rot": 0
+      },
+      {
+        "kind": "taskboard",
+        "x": 27.0,
+        "z": 27.6,
+        "rot": 3.1416
+      },
+      {
+        "kind": "nature:tree_oak_dark",
+        "x": 32.14,
+        "z": 12.96,
+        "rot": 0.3
+      },
+      {
+        "kind": "nature:tree_default_dark",
+        "x": 76.91,
+        "z": 9.21,
+        "rot": 0.36
+      },
+      {
+        "kind": "nature:tree_pineDefaultA",
+        "x": 48.67,
+        "z": 5.47,
+        "rot": 2.63
+      },
+      {
+        "kind": "nature:tree_default_dark",
+        "x": 24.66,
+        "z": 39.37,
+        "rot": 0.78
+      },
+      {
+        "kind": "nature:tree_pineTallA",
+        "x": 7.19,
+        "z": 59.66,
+        "rot": 2.63
+      },
+      {
+        "kind": "nature:tree_default_dark",
+        "x": 64.38,
+        "z": 9.8,
+        "rot": 4.01
+      },
+      {
+        "kind": "nature:tree_oak_dark",
+        "x": 8.36,
+        "z": 16.59,
+        "rot": 3.34
+      },
+      {
+        "kind": "nature:tree_pineTallA",
+        "x": 73.18,
+        "z": 8.4,
+        "rot": 3.3
+      },
+      {
+        "kind": "nature:tree_pineDefaultA",
+        "x": 91.22,
+        "z": 10.79,
+        "rot": 1.04
+      },
+      {
+        "kind": "nature:tree_oak_dark",
+        "x": 11.42,
+        "z": 20.82,
+        "rot": 0.41
+      },
+      {
+        "kind": "nature:tree_default_dark",
+        "x": 16.62,
+        "z": 46.46,
+        "rot": 1.15
+      },
+      {
+        "kind": "nature:tree_tall",
+        "x": 28.37,
+        "z": 12.61,
+        "rot": 2.32
+      },
+      {
+        "kind": "nature:tree_oak",
+        "x": 60.09,
+        "z": 7.11,
+        "rot": 6.18
+      },
+      {
+        "kind": "nature:tree_default_dark",
+        "x": 42.66,
+        "z": 10.26,
+        "rot": 0.33
+      },
+      {
+        "kind": "nature:tree_oak",
+        "x": 3.02,
+        "z": 12.98,
+        "rot": 5.96
+      },
+      {
+        "kind": "nature:tree_cone",
+        "x": 13.38,
+        "z": 35.21,
+        "rot": 3.02
+      },
+      {
+        "kind": "nature:tree_oak_dark",
+        "x": 57.92,
+        "z": 3.13,
+        "rot": 2.16
+      },
+      {
+        "kind": "nature:tree_pineDefaultA",
+        "x": 60.88,
+        "z": 58.09,
+        "rot": 4.91
+      },
+      {
+        "kind": "nature:tree_oak_dark",
+        "x": 70.51,
+        "z": 34.55,
+        "rot": 2.09
+      },
+      {
+        "kind": "nature:tree_fat",
+        "x": 18.3,
+        "z": 11.38,
+        "rot": 3.71
+      },
+      {
+        "kind": "nature:tree_oak_dark",
+        "x": 17.03,
+        "z": 39.19,
+        "rot": 0.65
+      },
+      {
+        "kind": "nature:tree_detailed",
+        "x": 70.45,
+        "z": 12.19,
+        "rot": 5.19
+      },
+      {
+        "kind": "nature:tree_fat",
+        "x": 42.61,
+        "z": 15.09,
+        "rot": 1.08
+      },
+      {
+        "kind": "nature:tree_oak_dark",
+        "x": 24.66,
+        "z": 7.83,
+        "rot": 1.9
+      },
+      {
+        "kind": "nature:tree_fat",
+        "x": 11.47,
+        "z": 61.41,
+        "rot": 6.22
+      },
+      {
+        "kind": "nature:tree_pineDefaultA",
+        "x": 77.92,
+        "z": 13.66,
+        "rot": 6.24
+      },
+      {
+        "kind": "nature:tree_pineRoundB",
+        "x": 11.3,
+        "z": 27.15,
+        "rot": 3.48
+      },
+      {
+        "kind": "nature:tree_pineRoundB",
+        "x": 42.64,
+        "z": 4.19,
+        "rot": 3.25
+      },
+      {
+        "kind": "nature:tree_detailed",
+        "x": 29.59,
+        "z": 66.41,
+        "rot": 6.1
+      },
+      {
+        "kind": "nature:tree_pineTallA",
+        "x": 6.56,
+        "z": 54.41,
+        "rot": 4.75
+      },
+      {
+        "kind": "nature:tree_oak",
+        "x": 83.58,
+        "z": 20.75,
+        "rot": 5.03
+      },
+      {
+        "kind": "nature:tree_fat",
+        "x": 50.42,
+        "z": 18.74,
+        "rot": 1.64
+      },
+      {
+        "kind": "nature:tree_default",
+        "x": 92.5,
+        "z": 5.44,
+        "rot": 4.6
+      },
+      {
+        "kind": "nature:tree_oak_dark",
+        "x": 87.12,
+        "z": 10.01,
+        "rot": 2.71
+      },
+      {
+        "kind": "nature:tree_oak",
+        "x": 7.89,
+        "z": 11.57,
+        "rot": 3.93
+      },
+      {
+        "kind": "nature:tree_oak_dark",
+        "x": 82.19,
+        "z": 31.43,
+        "rot": 5.28
+      },
+      {
+        "kind": "nature:tree_pineDefaultA",
+        "x": 35.09,
+        "z": 3.07,
+        "rot": 0.53
+      },
+      {
+        "kind": "nature:tree_default_dark",
+        "x": 89.19,
+        "z": 59.31,
+        "rot": 2.45
+      },
+      {
+        "kind": "nature:tree_tall",
+        "x": 68.17,
+        "z": 45.45,
+        "rot": 3.94
+      },
+      {
+        "kind": "nature:tree_tall",
+        "x": 69.05,
+        "z": 56.61,
+        "rot": 4.73
+      },
+      {
+        "kind": "nature:tree_oak_dark",
+        "x": 54.16,
+        "z": 56.65,
+        "rot": 3.67
+      },
+      {
+        "kind": "nature:tree_cone",
+        "x": 14.98,
+        "z": 26.81,
+        "rot": 3.51
+      },
+      {
+        "kind": "nature:tree_pineTallA",
+        "x": 69.31,
+        "z": 19.64,
+        "rot": 1.47
+      },
+      {
+        "kind": "nature:tree_oak_dark",
+        "x": 44.43,
+        "z": 58.81,
+        "rot": 1.8
+      },
+      {
+        "kind": "nature:tree_detailed",
+        "x": 7.21,
+        "z": 44.76,
+        "rot": 0.49
+      },
+      {
+        "kind": "nature:tree_default",
+        "x": 30.4,
+        "z": 40.47,
+        "rot": 3.05
+      },
+      {
+        "kind": "nature:tree_tall",
+        "x": 29.06,
+        "z": 8.05,
+        "rot": 6.08
+      },
+      {
+        "kind": "nature:tree_default",
+        "x": 83.79,
+        "z": 35.09,
+        "rot": 5.97
+      },
+      {
+        "kind": "nature:tree_pineTallA",
+        "x": 4.05,
+        "z": 51.83,
+        "rot": 2.34
+      },
+      {
+        "kind": "nature:tree_pineDefaultA",
+        "x": 67.76,
+        "z": 6.27,
+        "rot": 2.83
+      },
+      {
+        "kind": "nature:tree_fat",
+        "x": 7.41,
+        "z": 64.17,
+        "rot": 1.07
+      },
+      {
+        "kind": "nature:tree_cone",
+        "x": 9.77,
+        "z": 36.04,
+        "rot": 3.46
+      },
+      {
+        "kind": "nature:tree_oak_dark",
+        "x": 16.69,
+        "z": 67.14,
+        "rot": 5.32
+      },
+      {
+        "kind": "nature:tree_default",
+        "x": 83.54,
+        "z": 8.61,
+        "rot": 0.01
+      },
+      {
+        "kind": "nature:tree_tall",
+        "x": 74.14,
+        "z": 3.08,
+        "rot": 1.89
+      },
+      {
+        "kind": "nature:tree_cone",
+        "x": 30.67,
+        "z": 4.44,
+        "rot": 5.56
+      },
+      {
+        "kind": "nature:tree_cone",
+        "x": 29.29,
+        "z": 58.78,
+        "rot": 6.09
+      },
+      {
+        "kind": "nature:tree_default",
+        "x": 15.77,
+        "z": 6.42,
+        "rot": 1.16
+      },
+      {
+        "kind": "nature:tree_pineDefaultA",
+        "x": 10.04,
+        "z": 8.33,
+        "rot": 6.0
+      },
+      {
+        "kind": "nature:tree_oak_dark",
+        "x": 5.73,
+        "z": 30.11,
+        "rot": 4.81
+      },
+      {
+        "kind": "nature:flower_redA",
+        "x": 5.74,
+        "z": 4.37,
+        "rot": 5.04
+      },
+      {
+        "kind": "nature:flower_purpleA",
+        "x": 7.78,
+        "z": 43.18,
+        "rot": 1.71
+      },
+      {
+        "kind": "nature:flower_purpleA",
+        "x": 90.11,
+        "z": 43.95,
+        "rot": 4.69
+      },
+      {
+        "kind": "nature:flower_purpleA",
+        "x": 65.44,
+        "z": 64.85,
+        "rot": 0.02
+      },
+      {
+        "kind": "nature:flower_redA",
+        "x": 71.52,
+        "z": 64.32,
+        "rot": 0.15
+      },
+      {
+        "kind": "nature:grass_large",
+        "x": 23.52,
+        "z": 34.31,
+        "rot": 5.99
+      },
+      {
+        "kind": "nature:flower_purpleA",
+        "x": 87.39,
+        "z": 14.44,
+        "rot": 5.17
+      },
+      {
+        "kind": "nature:flower_purpleA",
+        "x": 73.1,
+        "z": 43.29,
+        "rot": 5.41
+      },
+      {
+        "kind": "nature:plant_bush",
+        "x": 44.39,
+        "z": 55.3,
+        "rot": 0.5
+      },
+      {
+        "kind": "nature:flower_yellowB",
+        "x": 20.15,
+        "z": 53.2,
+        "rot": 2.56
+      },
+      {
+        "kind": "nature:grass_large",
+        "x": 52.1,
+        "z": 12.93,
+        "rot": 5.55
+      },
+      {
+        "kind": "nature:flower_redA",
+        "x": 92.88,
+        "z": 20.01,
+        "rot": 1.31
+      },
+      {
+        "kind": "nature:grass_large",
+        "x": 40.74,
+        "z": 69.21,
+        "rot": 1.09
+      },
+      {
+        "kind": "nature:flower_yellowB",
+        "x": 14.23,
+        "z": 33.34,
+        "rot": 4.7
+      },
+      {
+        "kind": "nature:flower_redA",
+        "x": 79.92,
+        "z": 47.18,
+        "rot": 4.9
+      },
+      {
+        "kind": "nature:flower_yellowB",
+        "x": 25.95,
+        "z": 31.88,
+        "rot": 1.54
+      },
+      {
+        "kind": "nature:plant_bush",
+        "x": 16.11,
+        "z": 62.12,
+        "rot": 1.18
+      },
+      {
+        "kind": "nature:flower_yellowB",
+        "x": 7.96,
+        "z": 19.11,
+        "rot": 3.19
+      },
+      {
+        "kind": "nature:grass_large",
+        "x": 23.29,
+        "z": 56.97,
+        "rot": 6.22
+      },
+      {
+        "kind": "nature:flower_yellowB",
+        "x": 11.41,
+        "z": 34.28,
+        "rot": 5.28
+      },
+      {
+        "kind": "nature:flower_purpleA",
+        "x": 86.12,
+        "z": 4.74,
+        "rot": 1.46
+      },
+      {
+        "kind": "nature:flower_redA",
+        "x": 78.17,
+        "z": 15.2,
+        "rot": 2.34
+      },
+      {
+        "kind": "nature:flower_redA",
+        "x": 25.92,
+        "z": 54.89,
+        "rot": 0.66
+      },
+      {
+        "kind": "nature:flower_yellowB",
+        "x": 22.02,
+        "z": 27.07,
+        "rot": 0.28
+      },
+      {
+        "kind": "nature:flower_yellowB",
+        "x": 93.99,
+        "z": 4.6,
+        "rot": 5.12
+      },
+      {
+        "kind": "nature:flower_purpleA",
+        "x": 77.33,
+        "z": 29.81,
+        "rot": 1.16
+      },
+      {
+        "kind": "nature:grass_large",
+        "x": 30.72,
+        "z": 15.83,
+        "rot": 3.44
+      },
+      {
+        "kind": "nature:grass_large",
+        "x": 7.82,
+        "z": 8.89,
+        "rot": 4.17
+      },
+      {
+        "kind": "nature:flower_purpleA",
+        "x": 62.08,
+        "z": 29.05,
+        "rot": 2.57
+      },
+      {
+        "kind": "nature:plant_bush",
+        "x": 89.69,
+        "z": 23.24,
+        "rot": 5.55
+      },
+      {
+        "kind": "nature:rock_tallB",
+        "x": 40.1,
+        "z": 3.24,
+        "rot": 4.05
+      },
+      {
+        "kind": "nature:rock_largeC",
+        "x": 88.66,
+        "z": 31.52,
+        "rot": 2.66
+      },
+      {
+        "kind": "nature:rock_largeC",
+        "x": 16.95,
+        "z": 3.01,
+        "rot": 4.02
+      },
+      {
+        "kind": "nature:rock_largeC",
+        "x": 59.24,
+        "z": 27.22,
+        "rot": 0.92
+      },
+      {
+        "kind": "nature:rock_largeA",
+        "x": 28.06,
+        "z": 37.44,
+        "rot": 0.68
+      },
+      {
+        "kind": "nature:rock_largeC",
+        "x": 47.13,
+        "z": 56.73,
+        "rot": 1.89
+      },
+      {
+        "kind": "nature:stump_round",
+        "x": 79.03,
+        "z": 4.96,
+        "rot": 1.98
+      },
+      {
+        "kind": "nature:rock_largeC",
+        "x": 9.94,
+        "z": 50.44,
+        "rot": 4.02
+      },
+      {
+        "kind": "nature:rock_largeC",
+        "x": 80.81,
+        "z": 44.23,
+        "rot": 5.21
+      },
+      {
+        "kind": "nature:stump_round",
+        "x": 18.83,
+        "z": 16.83,
+        "rot": 5.89
+      }
+    ]
+  }
+}

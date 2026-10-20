@@ -13,13 +13,32 @@ These files are part of the Pantheon source tree.
 
 | Component | Where | License | Source |
 |---|---|---|---|
-| three.js r186 | `server/app/stage/vendor/three/` | MIT | [threejs.org](https://threejs.org), license at `vendor/three/LICENSE` |
-| KaTeX 0.16.22 (incl. its fonts) | `server/app/stage/vendor/katex/` | MIT | [katex.org](https://katex.org), license at `vendor/katex/LICENSE` |
-| *Mini Characters* 3D models | `web/public/models/people/`, `web/public/thumbs/` | CC0 1.0 | [Kenney](https://kenney.nl) |
-| *Furniture Kit* 3D models | `web/public/models/furniture/`, `web/public/thumbs/` | CC0 1.0 | [Kenney](https://kenney.nl) |
-| *RobotExpressive* | `web/public/models/robot.glb` | CC0 1.0 | Tomás Laulhé ([Quaternius](https://quaternius.com)), modified by Don McCurdy |
+| three.js r186 (incl. the WebGPU and TSL builds) | `packs/three/` | MIT | [threejs.org](https://threejs.org), license at `packs/three/LICENSE` |
+| KaTeX 0.16.22 (incl. its fonts) | `packs/katex/` | MIT | [katex.org](https://katex.org), license at `packs/katex/LICENSE` |
+| GSAP 3.15.0 with its plugins | `packs/gsap/` | GreenSock standard "no charge" license | [gsap.com](https://gsap.com/standard-license) |
+| PixiJS 8.22.0 and pixi-filters | `packs/pixi/` | MIT | [pixijs.com](https://pixijs.com) |
+| D3 7 | `packs/d3/` | ISC | [d3js.org](https://d3js.org) |
+| Rough.js 4 | `packs/rough/` | MIT | [roughjs.com](https://roughjs.com) |
+| postprocessing 6 | `packs/postprocessing/` | Zlib | [pmndrs/postprocessing](https://github.com/pmndrs/postprocessing) |
+| troika-three-text | `packs/troika/` | MIT | [protectwise/troika](https://github.com/protectwise/troika) |
+| Inter, Fraunces and Space Grotesk fonts | `engine/app/stage/lib/fonts/` | SIL Open Font License 1.1 | licenses in that folder |
+| Lucide icons | `engine/app/stage/lib/icons/` | ISC | [lucide.dev](https://lucide.dev) |
+| Open Peeps (via react-peeps) | `engine/app/stage/lib/peeps/` | CC0 1.0 (art), MIT (react-peeps) | [openpeeps.com](https://www.openpeeps.com) |
+| *Mini Characters* 3D models | `packs/office-classic/models/people/`, `packs/office-classic/thumbs/` | CC0 1.0 | [Kenney](https://kenney.nl) |
+| *Furniture Kit* 3D models | `packs/office-classic/models/furniture/`, `packs/office-classic/thumbs/` | CC0 1.0 | [Kenney](https://kenney.nl) |
+| *Factory Kit* 3D models | `packs/office-classic/models/factory/`, `packs/office-classic/thumbs/factory/` | CC0 1.0 | [Kenney](https://kenney.nl) |
+| *Modular Space Kit* 3D models | `packs/office-classic/models/space/`, `packs/office-classic/thumbs/space/` | CC0 1.0 | [Kenney](https://kenney.nl) |
+| *City Kit Commercial* 3D models | `packs/office-classic/models/city/`, `packs/office-classic/thumbs/city/` | CC0 1.0 | [Kenney](https://kenney.nl) |
+| *Car Kit* 3D models | `packs/office-classic/models/cars/`, `packs/office-classic/thumbs/cars/` | CC0 1.0 | [Kenney](https://kenney.nl) |
+| *Cube Pets* 3D models | `packs/office-classic/models/pets/`, `packs/office-classic/thumbs/pets/` | CC0 1.0 | [Kenney](https://kenney.nl) |
+| *Blocky Characters* 3D models | `packs/office-classic/models/blocky/`, `packs/office-classic/thumbs/blocky/` | CC0 1.0 | [Kenney](https://kenney.nl) |
+| *Mini Dungeon* 3D models | `packs/office-classic/models/dungeon/`, `packs/office-classic/thumbs/dungeon/` | CC0 1.0 | [Kenney](https://kenney.nl) |
+| *Nature Kit* 3D models | `packs/office-classic/models/nature/`, `packs/office-classic/thumbs/nature/` | CC0 1.0 | [Kenney](https://kenney.nl) |
+| *RobotExpressive* | `packs/office-classic/models/robot.glb` | CC0 1.0 | Tomás Laulhé ([Quaternius](https://quaternius.com)), modified by Don McCurdy |
+| Role ideas and review practices in the agent prompts of some organization templates (rewritten for Pantheon, no files copied) | `server/app/templates/` | MIT, Copyright (c) 2025 AgentLand Contributors | [agency-agents](https://github.com/msitarzewski/agency-agents) |
+| Ideas and adapted prompt wording from Harness 2 (propose-probe-compose team tuning, the experience library, the separate how-it-works and field-know-how editors, its selection criteria, skill checks, deliverable checking and tool-loop warnings; rewritten for Pantheon, no files copied) | `engine/app/services/tuning.py`, `experience.py`, `skills.py`, `filecheck.py`, `acceptance.py`, `engine/app/agents/nudges.py`, `engine/bench/swarmbench/external.py`, `rubric.py` | Apache-2.0, Copyright 2026 Google LLC | [google-research/harness2](https://github.com/google-research/harness2) |
 
-The 3D asset credits are also in `web/public/models/LICENSE.txt`.
+The 3D asset credits are also in `packs/office-classic/LICENSE.txt`.
 
 ## Bundled at build time
 
@@ -31,6 +50,7 @@ These are copied into the built application (and the Docker images) from their p
 | Geist and Geist Mono fonts (self-hosted by `next/font`) | SIL Open Font License 1.1 | [vercel/geist-font](https://github.com/vercel/geist-font) |
 | Next.js, React, React Three Fiber, drei, React Flow, Zustand and the other npm packages below | see table | see table |
 | libvips (inside the prebuilt `sharp` binaries that Next.js uses for images) | LGPL-3.0-or-later | [libvips](https://github.com/libvips/libvips). It is dynamically linked and unmodified; its source is available from the project. |
+| FFmpeg (inside the `av` (PyAV) wheels the engine bundles, for preparing videos for models) | GPL-2.0-or-later as built (it includes x264 and x265, which are GPL); FFmpeg itself is LGPL-2.1-or-later | [PyAV](https://github.com/PyAV-Org/PyAV) (BSD-3-Clause), [FFmpeg](https://ffmpeg.org/download.html#get-sources), [x264](https://code.videolan.org/videolan/x264), [x265](https://bitbucket.org/multicoreware/x265_git). Unmodified, as published on PyPI; the source of the exact FFmpeg build is linked from the PyAV release it came with ([pyav-ffmpeg](https://github.com/PyAV-Org/pyav-ffmpeg)). Distributing an installer that includes it is distributing GPL software: its license terms apply to that part. |
 
 ## Downloaded at run time
 
@@ -45,6 +65,8 @@ or first used.
 | `trycua/cua-xfce` image ([cua](https://github.com/trycua/cua)) | MIT (cua); the desktop's packages under their own licenses | Optional computer-use sandbox |
 | Chromium, installed by Playwright | BSD-3-Clause and others ([Chromium licenses](https://www.chromium.org/chromium-os/licensing/)) | Agents' browser |
 | [BAAI/bge-small-en-v1.5](https://huggingface.co/BAAI/bge-small-en-v1.5) (via fastembed) | MIT | Embeddings for memory and file search |
+| [JobBench](https://huggingface.co/datasets/JobBench/job-bench) tasks, when you import them | MIT | Benchmarks (`swarmbench import jobbench`) |
+| [LAB](https://github.com/harveyai/harvey-labs) tasks by Harvey, when you import them | MIT | Benchmarks (`swarmbench import lab`) |
 
 ## Services Pantheon connects to
 
@@ -175,7 +197,7 @@ reusing the voice elsewhere.
 | [xxhash](https://github.com/ifduyue/python-xxhash) | 4.0.1 | BSD-2-Clause |
 | [zstandard](https://github.com/indygreg/python-zstandard) | 0.25.0 | BSD-3-Clause |
 
-## npm packages (frontend runtime, 414)
+## npm packages (frontend runtime, 439)
 
 Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the list reflects the machine it was generated on.
 
@@ -204,6 +226,10 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | [@floating-ui/dom](https://github.com/floating-ui/floating-ui) | 1.8.0 | MIT |
 | [@floating-ui/react-dom](https://github.com/floating-ui/floating-ui) | 2.1.9 | MIT |
 | [@floating-ui/utils](https://github.com/floating-ui/floating-ui) | 0.2.12 | MIT |
+| [@formulajs/formulajs](https://github.com/git@github.com:formulajs/formulajs) | 2.9.3 | MIT |
+| [@fortune-sheet/core](https://github.com/ruilisi/fortune-sheet) | 1.0.4 | MIT |
+| @fortune-sheet/formula-parser | 0.2.13 | MIT |
+| [@fortune-sheet/react](https://github.com/ruilisi/fortune-sheet) | 1.0.4 | MIT |
 | [@iconify/types](https://github.com/iconify/iconify) | 2.0.0 | MIT |
 | [@iconify/utils](https://github.com/iconify/iconify) | 3.1.7 | MIT |
 | [@img/colour](https://github.com/lovell/colour) | 1.1.0 | MIT |
@@ -213,6 +239,8 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | [@mermaid-js/parser](https://github.com/mermaid-js/mermaid) | 0.6.3 | MIT |
 | [@mermaid-js/parser](https://github.com/mermaid-js/mermaid) | 1.2.1 | MIT |
 | @monogrid/gainmap-js | 3.4.0 | MIT |
+| [@napi-rs/canvas](https://github.com/Brooooooklyn/canvas) | 1.0.10 | MIT |
+| [@napi-rs/canvas-win32-x64-msvc](https://github.com/Brooooooklyn/canvas) | 1.0.10 | MIT |
 | [@napi-rs/wasm-runtime](https://github.com/napi-rs/napi-rs) | 1.2.4 | MIT |
 | [@next/env](https://github.com/vercel/next.js) | 16.3.5 | MIT |
 | [@next/swc-win32-x64-msvc](https://github.com/vercel/next.js) | 16.3.5 | MIT |
@@ -302,6 +330,7 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | [@types/react](https://github.com/DefinitelyTyped/DefinitelyTyped) | 19.3.0 | MIT |
 | [@types/react-dom](https://github.com/DefinitelyTyped/DefinitelyTyped) | 19.3.0 | MIT |
 | [@types/react-reconciler](https://github.com/DefinitelyTyped/DefinitelyTyped) | 0.28.9 | MIT |
+| [@types/regenerator-runtime](https://github.com/DefinitelyTyped/DefinitelyTyped) | 0.13.8 | MIT |
 | [@types/stats.js](https://github.com/DefinitelyTyped/DefinitelyTyped) | 0.17.4 | MIT |
 | [@types/three](https://github.com/DefinitelyTyped/DefinitelyTyped) | 0.186.0 | MIT |
 | [@types/trusted-types](https://github.com/DefinitelyTyped/DefinitelyTyped) | 2.0.7 | MIT |
@@ -319,6 +348,7 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | [bail](https://github.com/wooorm/bail) | 2.0.2 | MIT |
 | base64-js | 1.5.1 | MIT |
 | [baseline-browser-mapping](https://github.com/web-platform-dx/baseline-browser-mapping) | 2.11.24 | Apache-2.0 |
+| bessel | 1.0.2 | Apache-2.0 |
 | [bidi-js](https://github.com/lojjic/bidi-js) | 1.1.0 | MIT |
 | [binary-extensions](https://github.com/sindresorhus/binary-extensions) | 2.3.0 | MIT |
 | [braces](https://github.com/micromatch/braces) | 3.0.3 | MIT |
@@ -339,6 +369,7 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | [classcat](https://github.com/jorgebucaran/classcat) | 5.0.5 | MIT |
 | [client-only](https://reactjs.org/) | 0.0.1 | MIT |
 | [clsx](https://github.com/lukeed/clsx) | 1.1.1 | MIT |
+| [clsx](https://github.com/lukeed/clsx) | 2.1.1 | MIT |
 | [comma-separated-tokens](https://github.com/wooorm/comma-separated-tokens) | 2.0.3 | MIT |
 | [commander](https://github.com/tj/commander.js) | 7.2.0 | MIT |
 | [commander](https://github.com/tj/commander.js) | 8.3.0 | MIT |
@@ -421,6 +452,7 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | ieee754 | 1.2.1 | BSD-3-Clause |
 | [image-blob-reduce](https://github.com/nodeca/image-blob-reduce) | 3.0.1 | MIT |
 | immediate | 3.0.6 | MIT |
+| [immer](https://github.com/immerjs/immer) | 9.0.21 | MIT |
 | immutable | 4.3.9 | MIT |
 | immutable | 5.1.9 | MIT |
 | [import-meta-resolve](https://github.com/wooorm/import-meta-resolve) | 4.2.0 | MIT |
@@ -442,17 +474,23 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | [its-fine](https://github.com/pmndrs/its-fine) | 2.0.0 | MIT |
 | [jotai](https://github.com/pmndrs/jotai) | 2.11.0 | MIT |
 | [jotai-scope](https://github.com/jotaijs/jotai-scope) | 0.7.2 | MIT |
+| [js-tokens](https://github.com/lydell/js-tokens) | 4.0.0 | MIT |
+| [jstat](http://github.com/jstat/jstat) | 1.9.6 | MIT |
 | [katex](https://github.com/KaTeX/KaTeX) | 0.16.47 | MIT |
 | [khroma](https://github.com/fabiospampinato/khroma) | 2.1.0 | MIT |
 | [langium](https://github.com/eclipse-langium/langium) | 3.3.1 | MIT |
 | [layout-base](https://github.com/iVis-at-Bilkent/layout-base) | 1.0.2 | MIT |
 | [layout-base](https://github.com/iVis-at-Bilkent/layout-base) | 2.0.1 | MIT |
 | [lie](https://github.com/calvinmetcalf/lie) | 3.3.0 | MIT |
+| [lodash](https://github.com/lodash/lodash) | 4.18.1 | MIT |
 | [lodash-es](https://github.com/lodash/lodash) | 4.17.21 | MIT |
 | [lodash.debounce](https://github.com/lodash/lodash) | 4.0.8 | MIT |
 | [lodash.throttle](https://github.com/lodash/lodash) | 4.1.1 | MIT |
 | [longest-streak](https://github.com/wooorm/longest-streak) | 3.1.0 | MIT |
+| loose-envify | 1.4.0 | MIT |
 | maath | 0.10.8 | MIT |
+| [make-cancellable-promise](https://github.com/wojtekmaj/make-cancellable-promise) | 2.0.0 | MIT |
+| [make-event-props](https://github.com/wojtekmaj/make-event-props) | 2.0.0 | MIT |
 | marked | 16.4.2 | MIT |
 | [mdast-util-from-markdown](https://github.com/syntax-tree/mdast-util-from-markdown) | 2.0.3 | MIT |
 | [mdast-util-mdx-expression](https://github.com/syntax-tree/mdast-util-mdx-expression) | 2.0.1 | MIT |
@@ -462,6 +500,7 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | [mdast-util-to-hast](https://github.com/syntax-tree/mdast-util-to-hast) | 13.2.1 | MIT |
 | [mdast-util-to-markdown](https://github.com/syntax-tree/mdast-util-to-markdown) | 2.1.2 | MIT |
 | [mdast-util-to-string](https://github.com/syntax-tree/mdast-util-to-string) | 4.0.0 | MIT |
+| [merge-refs](https://github.com/wojtekmaj/merge-refs) | 2.0.0 | MIT |
 | [mermaid](https://github.com/mermaid-js/mermaid) | 11.17.2 | MIT |
 | [meshline](https://github.com/pmndrs/meshline#readme) | 3.3.1 | MIT |
 | [meshoptimizer](https://github.com/zeux/meshoptimizer) | 1.1.1 | MIT |
@@ -494,6 +533,7 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | [next](https://github.com/vercel/next.js) | 16.3.5 | MIT |
 | node-addon-api | 7.1.1 | MIT |
 | [normalize-path](https://github.com/jonschlinkert/normalize-path) | 3.0.0 | MIT |
+| [numeral](https://github.com/adamwdraper/Numeral-js) | 2.0.6 | MIT |
 | [object-assign](https://github.com/sindresorhus/object-assign) | 4.1.1 | MIT |
 | [open-color](https://github.com/yeun/open-color) | 1.9.1 | MIT |
 | [package-manager-detector](https://github.com/antfu-collective/package-manager-detector) | 1.8.0 | MIT |
@@ -501,6 +541,7 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | [parse-entities](https://github.com/wooorm/parse-entities) | 4.0.2 | MIT |
 | [path-data-parser](https://github.com/pshihn/path-data-parser) | 0.1.0 | MIT |
 | [path-key](https://github.com/sindresorhus/path-key) | 3.1.1 | MIT |
+| [pdfjs-dist](https://github.com/mozilla/pdf.js) | 6.3.289 | Apache-2.0 |
 | [perfect-freehand](https://github.com/steveruizok/perfect-freehand) | 1.2.0 | MIT |
 | [pica](https://github.com/nodeca/pica) | 7.1.1 | MIT |
 | [picocolors](https://github.com/alexeyraspopov/picocolors) | 1.1.1 | ISC |
@@ -522,12 +563,14 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | [react](https://github.com/react/react) | 19.2.8 | MIT |
 | [react-dom](https://github.com/react/react) | 19.2.8 | MIT |
 | [react-markdown](https://github.com/remarkjs/react-markdown) | 10.1.0 | MIT |
+| [react-pdf](https://github.com/wojtekmaj/react-pdf) | 11.0.0 | MIT |
 | [react-remove-scroll](https://github.com/theKashey/react-remove-scroll) | 2.7.2 | MIT |
 | [react-remove-scroll-bar](https://github.com/theKashey/react-remove-scroll-bar) | 2.3.8 | MIT |
 | [react-style-singleton](https://github.com/theKashey/react-style-singleton) | 2.2.3 | MIT |
 | [react-use-measure](https://github.com/pmndrs/react-use-measure) | 2.1.7 | MIT |
 | readdirp | 3.6.0 | MIT |
 | [readdirp](https://github.com/paulmillr/readdirp) | 5.1.1 | MIT |
+| [regenerator-runtime](https://github.com/facebook/regenerator/tree/main/packages/runtime) | 0.14.1 | MIT |
 | [remark-parse](https://github.com/remarkjs/remark/tree/main/packages/remark-parse) | 11.0.0 | MIT |
 | [remark-rehype](https://github.com/remarkjs/remark-rehype) | 11.1.2 | MIT |
 | [require-from-string](https://github.com/floatdrop/require-from-string) | 2.0.2 | MIT |
@@ -559,6 +602,8 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | [three](https://github.com/mrdoob/three.js) | 0.186.0 | MIT |
 | [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh) | 0.8.3 | MIT |
 | [three-stdlib](https://github.com/pmndrs/three-stdlib) | 2.36.1 | MIT |
+| [tiny-emitter](https://github.com/scottcorgan/tiny-emitter) | 2.1.0 | MIT |
+| [tiny-invariant](https://github.com/alexreardon/tiny-invariant) | 1.3.3 | MIT |
 | [tinyexec](https://github.com/tinylibs/tinyexec) | 1.3.1 | MIT |
 | [to-regex-range](https://github.com/micromatch/to-regex-range) | 5.0.1 | MIT |
 | [trim-lines](https://github.com/wooorm/trim-lines) | 3.0.1 | MIT |
@@ -580,6 +625,7 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | [use-sync-external-store](https://github.com/react/react) | 1.7.0 | MIT |
 | [utility-types](https://github.com/piotrwitek/utility-types) | 3.11.0 | MIT |
 | [uuid](https://github.com/uuidjs/uuid) | 14.0.2 | MIT |
+| [uuid](https://github.com/uuidjs/uuid) | 8.3.2 | MIT |
 | [vfile](https://github.com/vfile/vfile) | 6.0.3 | MIT |
 | [vfile-message](https://github.com/vfile/vfile-message) | 4.0.3 | MIT |
 | [vscode-jsonrpc](https://github.com/Microsoft/vscode-languageserver-node) | 8.2.0 | MIT |
@@ -588,6 +634,7 @@ Platform-specific binaries (e.g. `@img/sharp-*`) vary by operating system; the l
 | [vscode-languageserver-textdocument](https://github.com/Microsoft/vscode-languageserver-node) | 1.0.15 | MIT |
 | [vscode-languageserver-types](https://github.com/Microsoft/vscode-languageserver-node) | 3.17.5 | MIT |
 | [vscode-uri](https://github.com/microsoft/vscode-uri) | 3.0.8 | MIT |
+| [warning](https://github.com/BerkeleyTrue/warning) | 4.0.3 | MIT |
 | webgl-constants | 1.1.1 | MIT |
 | [webgl-sdf-generator](https://github.com/lojjic/webgl-sdf-generator) | 1.1.1 | MIT |
 | webworkify | 1.5.0 | MIT |

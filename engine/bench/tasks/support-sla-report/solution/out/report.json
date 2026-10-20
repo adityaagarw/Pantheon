@@ -1,0 +1,1615 @@
+{
+  "as_of": "2026-04-01T01:00:00+02:00",
+  "weeks": [
+    {
+      "region": "Americas",
+      "week": "2026-W08",
+      "tickets": 1,
+      "duplicates": 0,
+      "first_response_breaches": 0,
+      "resolution_breaches": 0,
+      "median_first_response_minutes": 0,
+      "p90_resolution_minutes": 1117
+    },
+    {
+      "region": "Americas",
+      "week": "2026-W09",
+      "tickets": 48,
+      "duplicates": 4,
+      "first_response_breaches": 15,
+      "resolution_breaches": 16,
+      "median_first_response_minutes": 32,
+      "p90_resolution_minutes": 2229
+    },
+    {
+      "region": "EMEA",
+      "week": "2026-W09",
+      "tickets": 20,
+      "duplicates": 3,
+      "first_response_breaches": 2,
+      "resolution_breaches": 6,
+      "median_first_response_minutes": 0,
+      "p90_resolution_minutes": 1266
+    },
+    {
+      "region": "APAC",
+      "week": "2026-W09",
+      "tickets": 21,
+      "duplicates": 5,
+      "first_response_breaches": 9,
+      "resolution_breaches": 4,
+      "median_first_response_minutes": 45,
+      "p90_resolution_minutes": 2700
+    },
+    {
+      "region": "Americas",
+      "week": "2026-W10",
+      "tickets": 34,
+      "duplicates": 6,
+      "first_response_breaches": 9,
+      "resolution_breaches": 13,
+      "median_first_response_minutes": 0,
+      "p90_resolution_minutes": 1965
+    },
+    {
+      "region": "EMEA",
+      "week": "2026-W10",
+      "tickets": 22,
+      "duplicates": 1,
+      "first_response_breaches": 4,
+      "resolution_breaches": 8,
+      "median_first_response_minutes": 46,
+      "p90_resolution_minutes": 2818
+    },
+    {
+      "region": "APAC",
+      "week": "2026-W10",
+      "tickets": 35,
+      "duplicates": 5,
+      "first_response_breaches": 7,
+      "resolution_breaches": 9,
+      "median_first_response_minutes": 0,
+      "p90_resolution_minutes": 1848
+    },
+    {
+      "region": "Americas",
+      "week": "2026-W11",
+      "tickets": 24,
+      "duplicates": 4,
+      "first_response_breaches": 3,
+      "resolution_breaches": 8,
+      "median_first_response_minutes": 0,
+      "p90_resolution_minutes": 1778
+    },
+    {
+      "region": "EMEA",
+      "week": "2026-W11",
+      "tickets": 11,
+      "duplicates": 0,
+      "first_response_breaches": 2,
+      "resolution_breaches": 4,
+      "median_first_response_minutes": 54,
+      "p90_resolution_minutes": 5708
+    },
+    {
+      "region": "APAC",
+      "week": "2026-W11",
+      "tickets": 29,
+      "duplicates": 3,
+      "first_response_breaches": 6,
+      "resolution_breaches": 9,
+      "median_first_response_minutes": 21,
+      "p90_resolution_minutes": 1620
+    },
+    {
+      "region": "Americas",
+      "week": "2026-W12",
+      "tickets": 35,
+      "duplicates": 10,
+      "first_response_breaches": 10,
+      "resolution_breaches": 12,
+      "median_first_response_minutes": 24,
+      "p90_resolution_minutes": 1878
+    },
+    {
+      "region": "EMEA",
+      "week": "2026-W12",
+      "tickets": 22,
+      "duplicates": 1,
+      "first_response_breaches": 4,
+      "resolution_breaches": 4,
+      "median_first_response_minutes": 9,
+      "p90_resolution_minutes": 2194
+    },
+    {
+      "region": "APAC",
+      "week": "2026-W12",
+      "tickets": 21,
+      "duplicates": 1,
+      "first_response_breaches": 4,
+      "resolution_breaches": 5,
+      "median_first_response_minutes": 0,
+      "p90_resolution_minutes": 1945
+    },
+    {
+      "region": "Americas",
+      "week": "2026-W13",
+      "tickets": 42,
+      "duplicates": 7,
+      "first_response_breaches": 9,
+      "resolution_breaches": 5,
+      "median_first_response_minutes": 12,
+      "p90_resolution_minutes": 1801
+    },
+    {
+      "region": "EMEA",
+      "week": "2026-W13",
+      "tickets": 24,
+      "duplicates": 2,
+      "first_response_breaches": 7,
+      "resolution_breaches": 5,
+      "median_first_response_minutes": 14,
+      "p90_resolution_minutes": 1876
+    },
+    {
+      "region": "APAC",
+      "week": "2026-W13",
+      "tickets": 19,
+      "duplicates": 3,
+      "first_response_breaches": 3,
+      "resolution_breaches": 2,
+      "median_first_response_minutes": 27,
+      "p90_resolution_minutes": 2160
+    },
+    {
+      "region": "Americas",
+      "week": "2026-W14",
+      "tickets": 2,
+      "duplicates": 0,
+      "first_response_breaches": 0,
+      "resolution_breaches": 0,
+      "median_first_response_minutes": 19,
+      "p90_resolution_minutes": null
+    },
+    {
+      "region": "APAC",
+      "week": "2026-W14",
+      "tickets": 1,
+      "duplicates": 0,
+      "first_response_breaches": 0,
+      "resolution_breaches": 0,
+      "median_first_response_minutes": null,
+      "p90_resolution_minutes": null
+    }
+  ],
+  "breaches": [
+    {
+      "ticket": "T-1007",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "normal",
+      "minutes_over": 6115
+    },
+    {
+      "ticket": "T-1010",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 839
+    },
+    {
+      "ticket": "T-1010",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 5986
+    },
+    {
+      "ticket": "T-1017",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "urgent",
+      "minutes_over": 1140
+    },
+    {
+      "ticket": "T-1017",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "urgent",
+      "minutes_over": 660
+    },
+    {
+      "ticket": "T-1021",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 733
+    },
+    {
+      "ticket": "T-1021",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 37203
+    },
+    {
+      "ticket": "T-1023",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 13980
+    },
+    {
+      "ticket": "T-1023",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 12780
+    },
+    {
+      "ticket": "T-1025",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 2661
+    },
+    {
+      "ticket": "T-1025",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 1461
+    },
+    {
+      "ticket": "T-1029",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 300
+    },
+    {
+      "ticket": "T-1029",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 408
+    },
+    {
+      "ticket": "T-1032",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 4483
+    },
+    {
+      "ticket": "T-1035",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "normal",
+      "minutes_over": 1830
+    },
+    {
+      "ticket": "T-1037",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 10829
+    },
+    {
+      "ticket": "T-1038",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "normal",
+      "minutes_over": 30
+    },
+    {
+      "ticket": "T-1043",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "high",
+      "minutes_over": 342
+    },
+    {
+      "ticket": "T-1044",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "high",
+      "minutes_over": 10822
+    },
+    {
+      "ticket": "T-1044",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "high",
+      "minutes_over": 9982
+    },
+    {
+      "ticket": "T-1047",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "normal",
+      "minutes_over": 164
+    },
+    {
+      "ticket": "T-1050",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "urgent",
+      "minutes_over": 74
+    },
+    {
+      "ticket": "T-1051",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 300
+    },
+    {
+      "ticket": "T-1051",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 417
+    },
+    {
+      "ticket": "T-1052",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 7740
+    },
+    {
+      "ticket": "T-1053",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "normal",
+      "minutes_over": 679
+    },
+    {
+      "ticket": "T-1062",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 10799
+    },
+    {
+      "ticket": "T-1063",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 9643
+    },
+    {
+      "ticket": "T-1063",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 8443
+    },
+    {
+      "ticket": "T-1065",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "urgent",
+      "minutes_over": 775
+    },
+    {
+      "ticket": "T-1065",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "urgent",
+      "minutes_over": 74
+    },
+    {
+      "ticket": "T-1066",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "low",
+      "minutes_over": 7440
+    },
+    {
+      "ticket": "T-1069",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "normal",
+      "minutes_over": 1920
+    },
+    {
+      "ticket": "T-1071",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 540
+    },
+    {
+      "ticket": "T-1073",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "normal",
+      "minutes_over": 1380
+    },
+    {
+      "ticket": "T-1073",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "normal",
+      "minutes_over": 300
+    },
+    {
+      "ticket": "T-1075",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 6780
+    },
+    {
+      "ticket": "T-1076",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "urgent",
+      "minutes_over": 98
+    },
+    {
+      "ticket": "T-1078",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 2338
+    },
+    {
+      "ticket": "T-1086",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "normal",
+      "minutes_over": 5886
+    },
+    {
+      "ticket": "T-1086",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "normal",
+      "minutes_over": 3486
+    },
+    {
+      "ticket": "T-1088",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 13020
+    },
+    {
+      "ticket": "T-1088",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 11100
+    },
+    {
+      "ticket": "T-1091",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "high",
+      "minutes_over": 1191
+    },
+    {
+      "ticket": "T-1091",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "high",
+      "minutes_over": 560
+    },
+    {
+      "ticket": "T-1092",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "normal",
+      "minutes_over": 840
+    },
+    {
+      "ticket": "T-1097",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 300
+    },
+    {
+      "ticket": "T-1097",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 2340
+    },
+    {
+      "ticket": "T-1103",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "normal",
+      "minutes_over": 87
+    },
+    {
+      "ticket": "T-1105",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "normal",
+      "minutes_over": 8605
+    },
+    {
+      "ticket": "T-1105",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "normal",
+      "minutes_over": 6205
+    },
+    {
+      "ticket": "T-1107",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 1047
+    },
+    {
+      "ticket": "T-1113",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 12480
+    },
+    {
+      "ticket": "T-1113",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 10560
+    },
+    {
+      "ticket": "T-1114",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 80
+    },
+    {
+      "ticket": "T-1114",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 2663
+    },
+    {
+      "ticket": "T-1117",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 6780
+    },
+    {
+      "ticket": "T-1121",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 7480
+    },
+    {
+      "ticket": "T-1122",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 840
+    },
+    {
+      "ticket": "T-1127",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 161
+    },
+    {
+      "ticket": "T-1127",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 786
+    },
+    {
+      "ticket": "T-1130",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 282
+    },
+    {
+      "ticket": "T-1131",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "normal",
+      "minutes_over": 12096
+    },
+    {
+      "ticket": "T-1131",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "normal",
+      "minutes_over": 8736
+    },
+    {
+      "ticket": "T-1133",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 60
+    },
+    {
+      "ticket": "T-1134",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "normal",
+      "minutes_over": 7080
+    },
+    {
+      "ticket": "T-1135",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 14224
+    },
+    {
+      "ticket": "T-1141",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 1971
+    },
+    {
+      "ticket": "T-1150",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 21
+    },
+    {
+      "ticket": "T-1154",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 237
+    },
+    {
+      "ticket": "T-1154",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 1321
+    },
+    {
+      "ticket": "T-1155",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 2817
+    },
+    {
+      "ticket": "T-1158",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 295
+    },
+    {
+      "ticket": "T-1158",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 44502
+    },
+    {
+      "ticket": "T-1160",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "normal",
+      "minutes_over": 35
+    },
+    {
+      "ticket": "T-1161",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "normal",
+      "minutes_over": 80
+    },
+    {
+      "ticket": "T-1168",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "high",
+      "minutes_over": 625
+    },
+    {
+      "ticket": "T-1169",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "normal",
+      "minutes_over": 762
+    },
+    {
+      "ticket": "T-1178",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 900
+    },
+    {
+      "ticket": "T-1179",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 7669
+    },
+    {
+      "ticket": "T-1186",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 7387
+    },
+    {
+      "ticket": "T-1189",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 10860
+    },
+    {
+      "ticket": "T-1189",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 8940
+    },
+    {
+      "ticket": "T-1196",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "urgent",
+      "minutes_over": 892
+    },
+    {
+      "ticket": "T-1196",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "urgent",
+      "minutes_over": 120
+    },
+    {
+      "ticket": "T-1200",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 1240
+    },
+    {
+      "ticket": "T-1200",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 789
+    },
+    {
+      "ticket": "T-1201",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 60
+    },
+    {
+      "ticket": "T-1205",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 3300
+    },
+    {
+      "ticket": "T-1205",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 1380
+    },
+    {
+      "ticket": "T-1210",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "urgent",
+      "minutes_over": 6360
+    },
+    {
+      "ticket": "T-1210",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "urgent",
+      "minutes_over": 5520
+    },
+    {
+      "ticket": "T-1216",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 60
+    },
+    {
+      "ticket": "T-1218",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "low",
+      "minutes_over": 10620
+    },
+    {
+      "ticket": "T-1218",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "low",
+      "minutes_over": 3900
+    },
+    {
+      "ticket": "T-1221",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 208
+    },
+    {
+      "ticket": "T-1221",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 15887
+    },
+    {
+      "ticket": "T-1225",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 191
+    },
+    {
+      "ticket": "T-1225",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 1948
+    },
+    {
+      "ticket": "T-1226",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "low",
+      "minutes_over": 2610
+    },
+    {
+      "ticket": "T-1233",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "urgent",
+      "minutes_over": 120
+    },
+    {
+      "ticket": "T-1234",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "normal",
+      "minutes_over": 840
+    },
+    {
+      "ticket": "T-1242",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 600
+    },
+    {
+      "ticket": "T-1244",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "low",
+      "minutes_over": 6300
+    },
+    {
+      "ticket": "T-1250",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 595
+    },
+    {
+      "ticket": "T-1252",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "high",
+      "minutes_over": 1410
+    },
+    {
+      "ticket": "T-1252",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "high",
+      "minutes_over": 570
+    },
+    {
+      "ticket": "T-1254",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 1698
+    },
+    {
+      "ticket": "T-1255",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 780
+    },
+    {
+      "ticket": "T-1264",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "normal",
+      "minutes_over": 5160
+    },
+    {
+      "ticket": "T-1266",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 600
+    },
+    {
+      "ticket": "T-1269",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 9900
+    },
+    {
+      "ticket": "T-1270",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 10020
+    },
+    {
+      "ticket": "T-1270",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 8820
+    },
+    {
+      "ticket": "T-1278",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 300
+    },
+    {
+      "ticket": "T-1278",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 12060
+    },
+    {
+      "ticket": "T-1280",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "normal",
+      "minutes_over": 180
+    },
+    {
+      "ticket": "T-1281",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 636
+    },
+    {
+      "ticket": "T-1284",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 10440
+    },
+    {
+      "ticket": "T-1286",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 6270
+    },
+    {
+      "ticket": "T-1288",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 60
+    },
+    {
+      "ticket": "T-1289",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "normal",
+      "minutes_over": 4080
+    },
+    {
+      "ticket": "T-1289",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "normal",
+      "minutes_over": 1920
+    },
+    {
+      "ticket": "T-1291",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 690
+    },
+    {
+      "ticket": "T-1299",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "low",
+      "minutes_over": 720
+    },
+    {
+      "ticket": "T-1301",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "normal",
+      "minutes_over": 45
+    },
+    {
+      "ticket": "T-1303",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 1110
+    },
+    {
+      "ticket": "T-1305",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 443
+    },
+    {
+      "ticket": "T-1305",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 23429
+    },
+    {
+      "ticket": "T-1307",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "normal",
+      "minutes_over": 3349
+    },
+    {
+      "ticket": "T-1308",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 4418
+    },
+    {
+      "ticket": "T-1310",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 11722
+    },
+    {
+      "ticket": "T-1310",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 10522
+    },
+    {
+      "ticket": "T-1319",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "high",
+      "minutes_over": 201
+    },
+    {
+      "ticket": "T-1324",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 4591
+    },
+    {
+      "ticket": "T-1325",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "normal",
+      "minutes_over": 600
+    },
+    {
+      "ticket": "T-1325",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "normal",
+      "minutes_over": 1634
+    },
+    {
+      "ticket": "T-1327",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 6720
+    },
+    {
+      "ticket": "T-1328",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 2460
+    },
+    {
+      "ticket": "T-1329",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 9480
+    },
+    {
+      "ticket": "T-1333",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "low",
+      "minutes_over": 900
+    },
+    {
+      "ticket": "T-1342",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "normal",
+      "minutes_over": 2103
+    },
+    {
+      "ticket": "T-1354",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "high",
+      "minutes_over": 1332
+    },
+    {
+      "ticket": "T-1354",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "high",
+      "minutes_over": 715
+    },
+    {
+      "ticket": "T-1359",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 6240
+    },
+    {
+      "ticket": "T-1361",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "normal",
+      "minutes_over": 20
+    },
+    {
+      "ticket": "T-1361",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "normal",
+      "minutes_over": 1157
+    },
+    {
+      "ticket": "T-1364",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "urgent",
+      "minutes_over": 10770
+    },
+    {
+      "ticket": "T-1365",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "normal",
+      "minutes_over": 300
+    },
+    {
+      "ticket": "T-1368",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 600
+    },
+    {
+      "ticket": "T-1373",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "normal",
+      "minutes_over": 4228
+    },
+    {
+      "ticket": "T-1374",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "low",
+      "minutes_over": 120
+    },
+    {
+      "ticket": "T-1375",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "normal",
+      "minutes_over": 5760
+    },
+    {
+      "ticket": "T-1380",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 90
+    },
+    {
+      "ticket": "T-1381",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 2190
+    },
+    {
+      "ticket": "T-1382",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "urgent",
+      "minutes_over": 6600
+    },
+    {
+      "ticket": "T-1384",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 3300
+    },
+    {
+      "ticket": "T-1384",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 1380
+    },
+    {
+      "ticket": "T-1386",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 3659
+    },
+    {
+      "ticket": "T-1386",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 5228
+    },
+    {
+      "ticket": "T-1389",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 785
+    },
+    {
+      "ticket": "T-1390",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 10721
+    },
+    {
+      "ticket": "T-1390",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 8801
+    },
+    {
+      "ticket": "T-1394",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "low",
+      "minutes_over": 1200
+    },
+    {
+      "ticket": "T-1398",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 1393
+    },
+    {
+      "ticket": "T-1398",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 2036
+    },
+    {
+      "ticket": "T-1401",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 789
+    },
+    {
+      "ticket": "T-1401",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 505
+    },
+    {
+      "ticket": "T-1406",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "normal",
+      "minutes_over": 7380
+    },
+    {
+      "ticket": "T-1407",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "normal",
+      "minutes_over": 2763
+    },
+    {
+      "ticket": "T-1408",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 3566
+    },
+    {
+      "ticket": "T-1408",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 5347
+    },
+    {
+      "ticket": "T-1409",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "urgent",
+      "minutes_over": 234
+    },
+    {
+      "ticket": "T-1411",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 556
+    },
+    {
+      "ticket": "T-1411",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 11236
+    },
+    {
+      "ticket": "T-1414",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "normal",
+      "minutes_over": 1094
+    },
+    {
+      "ticket": "T-1416",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 3158
+    },
+    {
+      "ticket": "T-1416",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 4965
+    },
+    {
+      "ticket": "T-1418",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 921
+    },
+    {
+      "ticket": "T-1418",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 270
+    },
+    {
+      "ticket": "T-1420",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "low",
+      "minutes_over": 7380
+    },
+    {
+      "ticket": "T-1420",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "low",
+      "minutes_over": 660
+    },
+    {
+      "ticket": "T-1421",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "normal",
+      "minutes_over": 11640
+    },
+    {
+      "ticket": "T-1421",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "normal",
+      "minutes_over": 9480
+    },
+    {
+      "ticket": "T-1426",
+      "kind": "first_response",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 663
+    },
+    {
+      "ticket": "T-1429",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "low",
+      "minutes_over": 1680
+    },
+    {
+      "ticket": "T-1430",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "urgent",
+      "minutes_over": 10140
+    },
+    {
+      "ticket": "T-1430",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "urgent",
+      "minutes_over": 9300
+    },
+    {
+      "ticket": "T-1432",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "low",
+      "minutes_over": 30
+    },
+    {
+      "ticket": "T-1435",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 193
+    },
+    {
+      "ticket": "T-1435",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 38889
+    },
+    {
+      "ticket": "T-1436",
+      "kind": "resolution",
+      "plan": "starter",
+      "priority": "high",
+      "minutes_over": 1380
+    },
+    {
+      "ticket": "T-1440",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "normal",
+      "minutes_over": 78
+    },
+    {
+      "ticket": "T-1443",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "normal",
+      "minutes_over": 270
+    },
+    {
+      "ticket": "T-1443",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "normal",
+      "minutes_over": 8820
+    },
+    {
+      "ticket": "T-1444",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "low",
+      "minutes_over": 3420
+    },
+    {
+      "ticket": "T-1445",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "urgent",
+      "minutes_over": 120
+    },
+    {
+      "ticket": "T-1449",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 1496
+    },
+    {
+      "ticket": "T-1451",
+      "kind": "first_response",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 387
+    },
+    {
+      "ticket": "T-1451",
+      "kind": "resolution",
+      "plan": "enterprise",
+      "priority": "urgent",
+      "minutes_over": 1393
+    },
+    {
+      "ticket": "T-1459",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 996
+    },
+    {
+      "ticket": "T-1459",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "high",
+      "minutes_over": 1836
+    },
+    {
+      "ticket": "T-1465",
+      "kind": "first_response",
+      "plan": "business",
+      "priority": "urgent",
+      "minutes_over": 1020
+    },
+    {
+      "ticket": "T-1465",
+      "kind": "resolution",
+      "plan": "business",
+      "priority": "urgent",
+      "minutes_over": 10920
+    }
+  ]
+}

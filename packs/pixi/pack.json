@@ -1,0 +1,15 @@
+{
+  "id": "pixi",
+  "name": "PixiJS",
+  "version": "8.22.0",
+  "description": "GPU 2D rendering, with the pixi-filters effects.",
+  "libraries": [
+    {
+      "id": "pixi",
+      "name": "PixiJS",
+      "summary": "GPU 2D: thousands of particles, glow, bloom, displacement and blur.",
+      "imports": { "pixi.js": "pixi.js", "pixi-filters": "pixi-filters.js" },
+      "docs": "docs.md"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "id": "office-classic",
+  "name": "Classic office",
+  "version": "1.0.0",
+  "description": "Pantheon's original office: furniture and fittings, 57 characters (people, blocky folk, animals, fantasy, a robot) and seven office themes. Kenney and Quaternius models, CC0.",
+  "license": "CC0-1.0",
+  "core": true,
+  "office": "office.json"
+}

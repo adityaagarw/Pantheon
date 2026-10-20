@@ -1,0 +1,10 @@
+{
+  "id": "month-end-close",
+  "title": "Close the month: bank reconciliation, aging, fees and FX",
+  "category": "finance-ops",
+  "difficulty": "hard",
+  "workflow": "parallel-fanout",
+  "summary": "Two bank statements in different formats, a ledger, FX rates and a long close policy: match payments (exact, multi, partial, fees, overpayments, aliases, ambiguous), age what is open, compute fees, FX gain/loss and cash. Graded on this month and on a hidden second month.",
+  "time_limit_minutes": 60,
+  "protected_files": ["CLOSE_POLICY.md", "data/2026-03/bank_northwind.csv", "data/2026-03/bank_eurobank.csv", "data/2026-03/ledger.csv", "data/2026-03/fx.csv", "data/2026-03/counterparties.json", "data/2026-03/opening_balances.json"]
+}

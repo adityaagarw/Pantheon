@@ -1,0 +1,16 @@
+{
+  "id": "postprocessing",
+  "name": "postprocessing",
+  "version": "6",
+  "description": "Cinematic 3D effects for three.js: bloom, depth of field, vignette, grain.",
+  "requires": ["three"],
+  "libraries": [
+    {
+      "id": "postprocessing",
+      "name": "postprocessing",
+      "summary": "Cinematic 3D: bloom, depth of field, vignette, grain, tone mapping.",
+      "imports": { "postprocessing": "postprocessing.js" },
+      "docs": "docs.md"
+    }
+  ]
+}

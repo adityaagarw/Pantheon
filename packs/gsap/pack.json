@@ -1,0 +1,15 @@
+{
+  "id": "gsap",
+  "name": "GSAP",
+  "version": "3.15.0",
+  "description": "The motion engine: timelines, easing and every GSAP plugin, already registered.",
+  "libraries": [
+    {
+      "id": "gsap",
+      "name": "GSAP",
+      "summary": "Timelines, easing, SVG drawing and morphing, text splitting, dragging.",
+      "imports": { "gsap": "gsap.js" },
+      "docs": "docs.md"
+    }
+  ]
+}

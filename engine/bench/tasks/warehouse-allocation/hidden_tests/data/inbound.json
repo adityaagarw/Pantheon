@@ -1,0 +1,26 @@
+[
+  {
+    "warehouse": "W2",
+    "sku": "S9",
+    "qty": 3,
+    "arrives": "2026-06-10"
+  },
+  {
+    "warehouse": "W1",
+    "sku": "S9",
+    "qty": 4,
+    "arrives": "2026-06-08"
+  },
+  {
+    "warehouse": "W3",
+    "sku": "S3",
+    "qty": 5,
+    "arrives": "2026-06-12"
+  },
+  {
+    "warehouse": "W1",
+    "sku": "S3",
+    "qty": 1,
+    "arrives": "2026-06-12"
+  }
+]

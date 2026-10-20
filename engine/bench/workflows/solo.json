@@ -1,0 +1,12 @@
+{
+  "name": "solo",
+  "summary": "Baseline. One agent does all the work. Use it to compare a swarm with a single agent.",
+  "roles": [
+    {"name": "engineer", "job": "Does all the work: reads, plans, changes, tests and checks."}
+  ],
+  "steps": [
+    {"id": "do", "role": "engineer", "do": "Do the task from start to end. Run the tests before you stop."}
+  ],
+  "rules": [],
+  "artifacts": []
+}

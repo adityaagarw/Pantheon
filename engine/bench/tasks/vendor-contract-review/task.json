@@ -1,0 +1,34 @@
+{
+  "id": "vendor-contract-review",
+  "title": "Review vendor contracts against the procurement policy",
+  "category": "legal-ops",
+  "difficulty": "hard",
+  "workflow": "review-extract-check",
+  "summary": "Twelve contracts in different styles, with amendments and termination letters: a register of term ends (with renewals), notice deadlines (days, weeks, months, business days with holidays), fees and liability caps in USD, policy violations and actions, plus a memo for the CFO.",
+  "time_limit_minutes": 45,
+  "protected_files": [
+    "PROCUREMENT_POLICY.md",
+    "contracts/CT-101.md",
+    "contracts/CT-102.md",
+    "contracts/CT-103.md",
+    "contracts/CT-104-amendment-1.md",
+    "contracts/CT-104.md",
+    "contracts/CT-105.md",
+    "contracts/CT-106.md",
+    "contracts/CT-107.md",
+    "contracts/CT-108.md",
+    "contracts/CT-109-termination.md",
+    "contracts/CT-109.md",
+    "contracts/CT-110.md",
+    "contracts/CT-111-termination.md",
+    "contracts/CT-111.md",
+    "contracts/CT-112.md"
+  ],
+  "agent_tests_dir": null,
+  "weights": {
+    "hidden_tests": 85,
+    "agent_tests": 0,
+    "safety": 5,
+    "process": 10
+  }
+}

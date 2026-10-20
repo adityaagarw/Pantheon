@@ -1,0 +1,21 @@
+{
+  "DC-ATL": {
+    "MUG-01": 120,
+    "TEE-M": 40,
+    "CAP-RED": 5
+  },
+  "DC-LON": {
+    "MUG-01": 15,
+    "TEE-M": 60,
+    "TEE-L": 12
+  },
+  "DC-RTM": {
+    "MUG-01": 30,
+    "TEE-L": 50,
+    "CAP-RED": 22
+  },
+  "DC-SIN": {
+    "MUG-01": 8,
+    "TEE-M": 9
+  }
+}

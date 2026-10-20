@@ -1,0 +1,8 @@
+{
+  "id": "templates-classic",
+  "name": "Classic templates",
+  "version": "1.0.0",
+  "description": "Pantheon 1's eighteen organization templates: consulting, support, data, design, finance, games, IT operations, manufacturing, marketing, research, sales, security, software, startup, tutors and a living world. Off by default: switch it on to see them when you make an organization.",
+  "enabled": false,
+  "templates": ["templates/*.json"]
+}

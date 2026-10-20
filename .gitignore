@@ -15,6 +15,7 @@ build/
 node_modules/
 .next/
 out/
+!engine/bench/tasks/*/solution/out/
 *.tsbuildinfo
 web/test-results/
 web/playwright-report/
@@ -35,8 +36,22 @@ artifacts/
 .DS_Store
 Thumbs.db
 
+# workspace folders shared from this computer (written by Pantheon Host, host/mounts.py)
+docker-compose.override.yml
+
 # local isolated checkouts
 .worktrees/
 
 # copied from node_modules on install
 web/public/excalidraw/
+
+# Kronos's worktrees and change log (kronos/runner.py)
+.kronos/
+
+# v2
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/binaries/
+apps/desktop/src-tauri/runtime/
+engine/.secrets/
+ui/dist/
+ui/public/excalidraw/

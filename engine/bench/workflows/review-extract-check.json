@@ -1,0 +1,23 @@
+{
+  "name": "review-extract-check",
+  "summary": "For reviewing many documents against rules. Reviewers split the documents and extract facts with quotes, an analyst applies the rules, a writer writes the deliverables, and a checker re-derives every value on their own.",
+  "roles": [
+    {"name": "lead", "job": "Splits the documents between reviewers and fixes the fields every extract must have."},
+    {"name": "reviewer", "job": "Reads its documents (with their amendments and letters) and extracts each fact with the sentence it comes from. Use several reviewers."},
+    {"name": "analyst", "job": "Applies the rules to the extracts: dates, conversions, violations, actions."},
+    {"name": "writer", "job": "Writes the deliverables from the analysis."},
+    {"name": "checker", "job": "Works out every value again from the documents and the rules, without looking at the analysis first, then compares."}
+  ],
+  "steps": [
+    {"id": "split", "role": "lead", "do": "Assign the documents to reviewers and list the fields to extract."},
+    {"id": "extract", "role": "reviewer", "do": "Each reviewer extracts the facts of its documents, quoting the text, at the same time as the others.", "after": ["split"], "output": "worklog/EXTRACTS.md"},
+    {"id": "analyze", "role": "analyst", "do": "Apply the rules to every extract.", "after": ["extract"]},
+    {"id": "write", "role": "writer", "do": "Write the deliverables.", "after": ["analyze"]},
+    {"id": "check", "role": "checker", "do": "Re-derive every value independently and send differences back.", "after": ["write"], "output": "worklog/CHECK.md"}
+  ],
+  "rules": [
+    "Every extracted fact quotes the sentence it comes from.",
+    "The checker works from the documents, not from the analysis."
+  ],
+  "artifacts": ["worklog/EXTRACTS.md", "worklog/CHECK.md"]
+}

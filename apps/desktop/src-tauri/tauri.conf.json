@@ -1,0 +1,40 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Pantheon Studio",
+  "version": "2.0.1",
+  "identifier": "ai.pantheon.studio",
+  "build": {
+    "beforeDevCommand": "npm --prefix ../../ui run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm --prefix ../../ui run build",
+    "frontendDist": "../../../ui/dist"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "category": "DeveloperTool",
+    "shortDescription": "Organizations of AI agents you can see, steer and trust"
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDU1MDVDOTJGQjc3QzBFQjUKUldTMURueTNMOGtGVmFlekxDSVJhV2xjTHpxVkZZVnhpZU44WThYYjJlbGVjMWdGU1Z5NDVLa0IK",
+      "endpoints": [
+        "https://github.com/adityaagarw/Pantheon/releases/latest/download/latest.json"
+      ]
+    }
+  }
+}

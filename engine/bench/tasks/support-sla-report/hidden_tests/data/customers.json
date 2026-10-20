@@ -1,0 +1,122 @@
+{
+  "cust-01": {
+    "plan": "enterprise",
+    "region": "EMEA"
+  },
+  "cust-02": {
+    "plan": "starter",
+    "region": "Americas"
+  },
+  "cust-03": {
+    "plan": "enterprise",
+    "region": "APAC"
+  },
+  "cust-04": {
+    "plan": "enterprise",
+    "region": "EMEA"
+  },
+  "cust-05": {
+    "plan": "business",
+    "region": "EMEA"
+  },
+  "cust-06": {
+    "plan": "business",
+    "region": "APAC"
+  },
+  "cust-07": {
+    "plan": "starter",
+    "region": "APAC"
+  },
+  "cust-08": {
+    "plan": "business",
+    "region": "Americas"
+  },
+  "cust-09": {
+    "plan": "starter",
+    "region": "APAC"
+  },
+  "cust-10": {
+    "plan": "enterprise",
+    "region": "EMEA"
+  },
+  "cust-11": {
+    "plan": "business",
+    "region": "EMEA"
+  },
+  "cust-12": {
+    "plan": "business",
+    "region": "EMEA"
+  },
+  "cust-13": {
+    "plan": "enterprise",
+    "region": "APAC"
+  },
+  "cust-14": {
+    "plan": "enterprise",
+    "region": "APAC"
+  },
+  "cust-15": {
+    "plan": "starter",
+    "region": "Americas"
+  },
+  "cust-16": {
+    "plan": "business",
+    "region": "EMEA"
+  },
+  "cust-17": {
+    "plan": "starter",
+    "region": "EMEA"
+  },
+  "cust-18": {
+    "plan": "business",
+    "region": "Americas"
+  },
+  "cust-19": {
+    "plan": "starter",
+    "region": "EMEA"
+  },
+  "cust-20": {
+    "plan": "business",
+    "region": "Americas"
+  },
+  "cust-21": {
+    "plan": "business",
+    "region": "Americas"
+  },
+  "cust-22": {
+    "plan": "starter",
+    "region": "EMEA"
+  },
+  "cust-23": {
+    "plan": "business",
+    "region": "EMEA"
+  },
+  "cust-24": {
+    "plan": "enterprise",
+    "region": "APAC"
+  },
+  "cust-25": {
+    "plan": "starter",
+    "region": "EMEA"
+  },
+  "cust-26": {
+    "plan": "business",
+    "region": "EMEA"
+  },
+  "cust-27": {
+    "plan": "enterprise",
+    "region": "EMEA"
+  },
+  "cust-28": {
+    "plan": "enterprise",
+    "region": "EMEA"
+  },
+  "cust-29": {
+    "plan": "business",
+    "region": "EMEA"
+  },
+  "cust-30": {
+    "plan": "business",
+    "region": "Americas"
+  }
+}

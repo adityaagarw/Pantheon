@@ -1,0 +1,15 @@
+{
+  "id": "katex",
+  "name": "KaTeX",
+  "version": "0.16.22",
+  "description": "Fast math typesetting. The Stage uses it for s.tex and $...$ in captions.",
+  "libraries": [
+    {
+      "id": "katex",
+      "name": "KaTeX",
+      "core": true,
+      "summary": "LaTeX math; used by s.tex() and captions.",
+      "imports": { "katex": "katex.mjs" }
+    }
+  ]
+}

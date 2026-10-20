@@ -1,0 +1,21 @@
+{
+  "name": "parallel-fanout",
+  "summary": "For work that splits into independent parts. A lead fixes the interfaces, workers build parts at the same time, an integrator joins them.",
+  "roles": [
+    {"name": "lead", "job": "Splits the work into independent parts. Writes the shared interface and who owns which files."},
+    {"name": "worker", "job": "Builds one part and its tests. Changes only the files it owns. Use one worker for each part."},
+    {"name": "integrator", "job": "Joins the parts, connects shared code (registry, CLI) and runs all tests."},
+    {"name": "tester", "job": "Tests the full system against the spec, not against the code."}
+  ],
+  "steps": [
+    {"id": "split", "role": "lead", "do": "Write the plan: the parts, the owner of each file, and the shared interface.", "output": "worklog/PLAN.md"},
+    {"id": "build-parts", "role": "worker", "do": "Each worker builds its part with tests, at the same time as the other workers.", "after": ["split"]},
+    {"id": "integrate", "role": "integrator", "do": "Join the parts. Fix conflicts. Run all tests.", "after": ["build-parts"]},
+    {"id": "system-test", "role": "tester", "do": "Check each rule in the spec end to end. Send problems to the owner.", "after": ["integrate"], "output": "worklog/REVIEW.md"}
+  ],
+  "rules": [
+    "Workers must not change files that other workers own.",
+    "Workers must work at the same time, not one after the other."
+  ],
+  "artifacts": ["worklog/PLAN.md", "worklog/REVIEW.md"]
+}

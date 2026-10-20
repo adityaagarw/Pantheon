@@ -1,0 +1,15 @@
+{
+  "name": "pantheon-studio-desktop",
+  "version": "2.0.0-dev",
+  "private": true,
+  "license": "Apache-2.0",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build --config src-tauri/tauri.bundle.json",
+    "icon": "python icon/make_icon.py && tauri icon icon/icon.png",
+    "bundle-engine": "python ../../scripts/bundle_engine.py"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

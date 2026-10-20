@@ -1,0 +1,20 @@
+[
+  {
+    "warehouse": "DC-RTM",
+    "sku": "BAG-01",
+    "qty": 40,
+    "arrives": "2026-06-15"
+  },
+  {
+    "warehouse": "DC-ATL",
+    "sku": "BAG-01",
+    "qty": 25,
+    "arrives": "2026-06-09"
+  },
+  {
+    "warehouse": "DC-LON",
+    "sku": "CAP-RED",
+    "qty": 10,
+    "arrives": "2026-06-11"
+  }
+]

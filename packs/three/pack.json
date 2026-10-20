@@ -1,0 +1,21 @@
+{
+  "id": "three",
+  "name": "three.js",
+  "version": "r186",
+  "description": "3D graphics for the web. The Stage library is built on it.",
+  "libraries": [
+    {
+      "id": "three",
+      "name": "three.js",
+      "core": true,
+      "summary": "3D scenes; the Stage draws with it (THREE is always in scope). WebGPU and TSL too.",
+      "imports": {
+        "three": "three.module.js",
+        "three/addons/": "addons/",
+        "three/examples/jsm/": "addons/",
+        "three/webgpu": "three.webgpu.js",
+        "three/tsl": "three.tsl.js"
+      }
+    }
+  ]
+}

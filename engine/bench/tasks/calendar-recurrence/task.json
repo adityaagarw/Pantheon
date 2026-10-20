@@ -1,0 +1,14 @@
+{
+  "id": "calendar-recurrence",
+  "title": "Expand recurring calendar events across time zones",
+  "category": "library",
+  "difficulty": "hard",
+  "workflow": "parallel-fanout",
+  "summary": "Recurrence rules (an RFC 5545 subset) expanded in local time across clock changes (gaps and overlaps), the start always first, COUNT before exclusions, BYSETPOS, ordinals within a month or a year, skipped month days; calendar files with folding, escapes, overrides and cancellations; an agenda with exact output. Little code, many exact rules.",
+  "time_limit_minutes": 35,
+  "protected_files": [
+    "RECUR.md",
+    "calrule/zones.py",
+    "calrule/errors.py"
+  ]
+}

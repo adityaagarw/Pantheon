@@ -1,0 +1,233 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
+  --color-bg: #0b0c10;
+  --color-panel: #12141a;
+  --color-panel-2: #171a22;
+  /* Always opaque, for what floats over other content (drawers, dialogs, menus): inside
+     the Studio the panel colours turn to glass. */
+  --color-surface: #12141a;
+  --color-line: #242833;
+  --color-line-2: #2f3441;
+  --color-ink: #e7e9ee;
+  --color-ink-2: #a4aab8;
+  --color-ink-3: #6b7282;
+  --color-accent: #8b7cff;
+  --color-accent-2: #6d5dfc;
+  --color-ok: #3ecf8e;
+  --color-warn: #f5b454;
+  --color-bad: #f2667a;
+  --color-info: #5cc8ff;
+}
+
+html,
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  color-scheme: dark;
+}
+
+/* Phones: fill the visible viewport (not behind the browser toolbars), and keep
+   form fields at 16px so iOS doesn't zoom in when one is focused. */
+@media (max-width: 767px) {
+  html,
+  body {
+    height: 100dvh;
+    overflow: hidden;
+  }
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2f3441 transparent;
+}
+
+/* Dropdown lists: Windows draws the list on white, so an option's colour must be opaque
+   (inside the Studio --color-panel-2 is nearly clear glass, which left light text on
+   white). */
+select option,
+select optgroup {
+  background-color: #171a22;
+  color: #e7e9ee;
+}
+
+::selection {
+  background: rgba(139, 124, 255, 0.35);
+}
+
+.prose-pantheon {
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.prose-pantheon p {
+  margin: 0.35em 0;
+}
+.prose-pantheon ul,
+.prose-pantheon ol {
+  padding-left: 1.25em;
+  margin: 0.35em 0;
+}
+.prose-pantheon ul {
+  list-style: disc;
+}
+.prose-pantheon ol {
+  list-style: decimal;
+}
+.prose-pantheon code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+.prose-pantheon pre {
+  background: #0e1016;
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  padding: 0.7em 0.85em;
+  overflow-x: auto;
+  margin: 0.5em 0;
+}
+.prose-pantheon pre code {
+  background: none;
+  padding: 0;
+}
+.prose-pantheon a {
+  color: var(--color-info);
+  text-decoration: underline;
+}
+.prose-pantheon h1,
+.prose-pantheon h2,
+.prose-pantheon h3 {
+  font-weight: 600;
+  margin: 0.6em 0 0.3em;
+}
+.prose-pantheon blockquote {
+  border-left: 3px solid var(--color-line-2);
+  padding-left: 0.75em;
+  color: var(--color-ink-2);
+}
+.prose-pantheon .md-table {
+  overflow-x: auto;
+  margin: 0.5em 0;
+}
+.prose-pantheon table {
+  border-collapse: collapse;
+}
+.prose-pantheon th,
+.prose-pantheon td {
+  border: 1px solid var(--color-line);
+  padding: 0.25em 0.5em;
+  /* Whole words: "anywhere" let a table squeeze a column to a letter a line. */
+  overflow-wrap: break-word;
+}
+.prose-pantheon td.md-long {
+  min-width: 22ch;
+}
+.prose-pantheon th {
+  background: rgba(255, 255, 255, 0.04);
+}
+.prose-pantheon del {
+  opacity: 0.7;
+}
+.prose-pantheon li:has(> input[type="checkbox"]) {
+  list-style: none;
+  margin-left: -1.1em;
+}
+.prose-pantheon input[type="checkbox"] {
+  margin-right: 0.4em;
+  vertical-align: -1px;
+}
+/* A document's scale: the Stage's Markdown documents. */
+.prose-doc {
+  font-size: 15px;
+  line-height: 1.7;
+  max-width: 76ch;
+  margin: 0 auto;
+}
+.prose-doc h1 {
+  font-size: 1.85em;
+  margin: 0.2em 0 0.5em;
+  letter-spacing: -0.01em;
+}
+.prose-doc h2 {
+  font-size: 1.4em;
+  margin: 1.3em 0 0.4em;
+  padding-bottom: 0.2em;
+  border-bottom: 1px solid var(--color-line);
+}
+.prose-doc h3 {
+  font-size: 1.15em;
+  margin: 1.1em 0 0.3em;
+}
+.prose-doc h4 {
+  font-weight: 600;
+  margin: 1em 0 0.25em;
+}
+.prose-doc p {
+  margin: 0.6em 0;
+}
+.prose-doc hr {
+  border: 0;
+  border-top: 1px solid var(--color-line);
+  margin: 1.5em 0;
+}
+.prose-doc img {
+  max-width: 100%;
+  border-radius: 6px;
+}
+/* Tables break out of the reading column to the panel's full width (the panel is the
+   container): at least as wide as the text, wider ones centred on it, scrolling past that. */
+.doc-panel {
+  container-type: inline-size;
+}
+.doc-panel .prose-doc .md-table {
+  width: 100cqw;
+  margin-left: calc((100% - 100cqw) / 2);
+}
+.doc-panel .prose-doc table {
+  min-width: min(100cqw, 76ch);
+  margin: 0 auto;
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(139, 124, 255, 0.55);
+  }
+  100% {
+    box-shadow: 0 0 0 8px rgba(139, 124, 255, 0);
+  }
+}
+.pulse-ring {
+  animation: pulse-ring 1.4s ease-out infinite;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+

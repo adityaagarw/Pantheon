@@ -1,0 +1,11 @@
+2025-02-02 * (1002) Landlord | February rent
+    expenses:rent             $1,200.00
+    bank
+
+2025-02-14 ! Bistro ; reimbursable:
+    expenses:eating out         45.50 EUR
+    assets:wallet:eur
+
+2025-02-10 * Employer | salary
+    bank                      $2,500.00
+    income:salary

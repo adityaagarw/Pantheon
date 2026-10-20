@@ -1,0 +1,22 @@
+{
+  "name": "contract-first",
+  "summary": "For changes that cut across a codebase. An architect fixes the shared shapes and who owns what, builders work at the same time on their parts, a compatibility tester guards what must not change, a reviewer checks the whole against the spec.",
+  "roles": [
+    {"name": "architect", "job": "Reads the spec and the code, decides the shared shapes (data, functions, modules) and gives each builder its files."},
+    {"name": "builder", "job": "Builds one part with its tests, only in the files it owns. Use one builder per part."},
+    {"name": "compat-tester", "job": "Records how the existing behaviour looks before changes, and checks it again after every merge."},
+    {"name": "reviewer", "job": "Checks every rule of the spec end to end and sends problems to the builder who owns them."}
+  ],
+  "steps": [
+    {"id": "design", "role": "architect", "do": "Write the shared shapes, the parts and their owners.", "output": "worklog/DESIGN.md"},
+    {"id": "baseline", "role": "compat-tester", "do": "Record the current behaviour that must not change, before any change lands.", "after": ["design"]},
+    {"id": "build", "role": "builder", "do": "Each builder builds its part with tests, at the same time as the others.", "after": ["design"]},
+    {"id": "compat", "role": "compat-tester", "do": "Compare the recorded behaviour with the new code. Report every difference.", "after": ["build", "baseline"], "output": "worklog/COMPAT.md"},
+    {"id": "review", "role": "reviewer", "do": "Check the spec rule by rule.", "after": ["compat"], "output": "worklog/REVIEW.md"}
+  ],
+  "rules": [
+    "Builders change only the files they own; shared shapes change only through the architect.",
+    "The baseline is recorded before the first change."
+  ],
+  "artifacts": ["worklog/DESIGN.md", "worklog/COMPAT.md", "worklog/REVIEW.md"]
+}

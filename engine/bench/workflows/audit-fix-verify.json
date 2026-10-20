@@ -1,0 +1,20 @@
+{
+  "name": "audit-fix-verify",
+  "summary": "For security work. Audit all the code, fix each finding, then attack the fix.",
+  "roles": [
+    {"name": "auditor", "job": "Reads ALL the code, not only the parts in the report. Lists each security problem with its risk."},
+    {"name": "fixer", "job": "Fixes each finding with a standard, safe method."},
+    {"name": "attacker", "job": "Writes tests that try to exploit each finding. The tests must fail on the old code and pass on the fixed code."}
+  ],
+  "steps": [
+    {"id": "audit", "role": "auditor", "do": "Check the report findings. Then review every function for other problems: injection, path handling, access control, secrets and crypto.", "output": "worklog/AUDIT.md"},
+    {"id": "fix", "role": "fixer", "do": "Fix each finding in AUDIT.md. Keep the normal features working.", "after": ["audit"]},
+    {"id": "attack", "role": "attacker", "do": "Write an exploit test for each finding. Run all tests. Send problems back to the fixer.", "after": ["audit"]},
+    {"id": "sign-off", "role": "auditor", "do": "Check that each finding has a fix and a test. Write the result.", "after": ["fix", "attack"], "output": "worklog/REVIEW.md"}
+  ],
+  "rules": [
+    "The fixer and the attacker can work at the same time.",
+    "Do not invent your own crypto. Use the standard library."
+  ],
+  "artifacts": ["worklog/AUDIT.md", "worklog/REVIEW.md"]
+}

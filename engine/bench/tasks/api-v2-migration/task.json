@@ -1,0 +1,13 @@
+{
+  "id": "api-v2-migration",
+  "title": "Ship API v2 with a data migration, without changing v1",
+  "category": "migration",
+  "difficulty": "hard",
+  "workflow": "contract-first",
+  "summary": "A storage schema change with an idempotent migration over messy legacy data, v2 endpoints (minor-unit money, stable keyset paging, ordered validation, idempotency keys that survive restarts, cancel rules), v1 kept byte for byte (checked against recorded responses), and an SDK with safe retries.",
+  "time_limit_minutes": 60,
+  "protected_files": [
+    "API_V2.md",
+    "data/orders.jsonl"
+  ]
+}

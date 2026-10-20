@@ -1,0 +1,15 @@
+{
+  "id": "support-sla-report",
+  "title": "Rebuild the support SLA report from the policy",
+  "category": "ops-analytics",
+  "difficulty": "hard",
+  "workflow": "parallel-fanout",
+  "summary": "Business-time arithmetic across three regions (fixed offsets, hours, holidays), 24x7 enterprise urgent, pauses while pending, reopened tickets, derived priorities, duplicate detection, weekly medians and nearest-rank p90s, and a breach list. Graded on this export and a hidden next month.",
+  "time_limit_minutes": 60,
+  "protected_files": [
+    "SLA_POLICY.md",
+    "data/tickets.jsonl",
+    "data/customers.json",
+    "data/as_of.txt"
+  ]
+}

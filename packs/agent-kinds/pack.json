@@ -1,0 +1,7 @@
+{
+  "id": "agent-kinds",
+  "name": "Agents from anywhere",
+  "version": "1.0.0",
+  "description": "Any AI tool or agent platform as a member of an organization: command-line agents (Claude Code, Codex, Hermes Agent, or any command) and agents behind an HTTP API (Grok and other OpenAI-compatible endpoints, A2A agents, plain webhooks). They get the same messages, tasks and flow steps as Pantheon's own agents, and Pantheon's tools through MCP.",
+  "module": "plugin.py"
+}
