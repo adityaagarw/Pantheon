@@ -23,7 +23,9 @@ everything that happened.
 [Tour](#a-tour) · [Built on research](#built-on-research) · [Benchmarks](#benchmarks-built-in) ·
 [Architecture](#how-its-built) · [Develop](#run-it-from-source)
 
-<img src="docs/images/office.png" alt="A four-agent legal desk at work in Pantheon Studio's 3D office: a speech bubble, live activity, tasks moving on the board and the timeline filling up" width="100%">
+<a href="https://pantheonstudio.si/#watch"><img src="docs/images/launch.gif" alt="A product launch in Pantheon: one brief, a team of four agents (a creative lead, a designer, a copywriter and a social designer) building at once in the 3D office, the landing page on desktop and phone, six social cards, one review against the brief, ready in 34 minutes" width="100%"></a>
+
+<sub>One brief, four agents, a launch ready in 34 minutes. <a href="https://pantheonstudio.si/#watch">Watch the films with sound</a>.</sub>
 
 </div>
 
@@ -179,6 +181,8 @@ Operations center, Industrial, Research lab, Space station), **57 animated chara
 an office designer with 180+ pieces of furniture.
 
 The **Timeline** is a DVR for the organization: scrub back, play at 1×–300×, return to live.
+
+<img src="docs/images/office.png" alt="A four-agent legal desk at work in Pantheon Studio's 3D office: a speech bubble, live activity, tasks moving on the board and the timeline filling up" width="100%">
 
 <details>
 <summary><b>Living worlds</b>: agents with bodies, needs, and the power to build</summary>
