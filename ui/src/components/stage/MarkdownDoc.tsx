@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Markdown } from "@/components/Markdown";
 import { Button, cx } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
+import { sendQuote } from "@/lib/quote";
 import type { MarkdownData, StageDoc } from "@/lib/types";
 import { useOrg } from "@/store/org";
 
@@ -12,8 +13,21 @@ const MODE_KEY = "stage.md.mode";
 
 /** A Markdown document shared with agents: write on the left, read on the right. What an
  * agent changes arrives live; if you were typing at the time, you choose whose text stays. */
-export default function MarkdownDoc({ docId, onView }: { docId: string; onView?: (text: string) => void }) {
+export default function MarkdownDoc({
+  docId,
+  title,
+  agentName,
+  onView,
+}: {
+  docId: string;
+  title?: string;
+  /** Who is told what the user is looking at and has selected. */
+  agentName?: string;
+  onView?: (text: string) => void;
+}) {
   const [text, setText] = useState<string | null>(null);
+  /** The passage the user selected, which the agent is told about. */
+  const [pointing, setPointing] = useState<{ a: number; b: number; text: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [state, setState] = useState<"saved" | "saving" | "unsaved">("saved");
   const [theirs, setTheirs] = useState<{ text: string; version: number; by: string } | null>(null);
@@ -132,10 +146,54 @@ export default function MarkdownDoc({ docId, onView }: { docId: string; onView?:
     if (!theirs) timer.current = setTimeout(() => void save(), 700);
   };
 
-  // Tell the agent where in the document the user is: the section around the cursor.
+  /** Tell the agent which passage the user selected (source offsets): its lines, section and text. */
+  const point = (from: number, to: number) => {
+    const src = textRef.current;
+    const before = src.slice(0, from);
+    const passage = src.slice(from, to).replace(/\s+$/, "");
+    const a = before.split("\n").length;
+    const b = a + passage.split("\n").length - 1;
+    const heading = [...before.matchAll(/^#{1,6}\s+(.+)$/gm)].pop()?.[1];
+    const lines = a === b ? `line ${a}` : `lines ${a}-${b}`;
+    const shown = passage.length > 1500 ? `${passage.slice(0, 1500)}…` : passage;
+    setPointing({ a, b, text: passage });
+    onView?.(
+      `they've selected ${lines}${heading ? ` (in the section "${heading.trim()}")` : ""}, so "this" or "here" means this passage:\n"""\n${shown}\n"""\n`,
+    );
+  };
+
+  /** A selection made in the Read view: found in the source for its lines, if it can be. */
+  const pointInPreview = () => {
+    const sel = (window.getSelection()?.toString() ?? "").trim();
+    if (!sel) {
+      if (pointing) {
+        setPointing(null);
+        onView?.("reading it");
+      }
+      return;
+    }
+    const src = textRef.current;
+    const rows = sel.split("\n").map((l) => l.trim()).filter(Boolean);
+    // Rendered text has no Markdown marks; a short plain run of it still finds its place.
+    const probe = (l: string, end: boolean) => (end ? l.slice(-24) : l.slice(0, 24));
+    const from = src.indexOf(probe(rows[0], false));
+    const last = from < 0 ? -1 : src.indexOf(probe(rows[rows.length - 1], true), from);
+    if (from >= 0 && last >= 0) {
+      const lineStart = src.lastIndexOf("\n", from - 1) + 1;
+      const lineEnd = src.indexOf("\n", last);
+      point(lineStart, lineEnd < 0 ? src.length : lineEnd);
+    } else {
+      setPointing({ a: 0, b: 0, text: sel });
+      onView?.(`they've selected this passage, so "this" or "here" means it:\n"""\n${sel.slice(0, 1500)}\n"""\n`);
+    }
+  };
+
+  // Tell the agent where in the document the user is: the selection, else the section around the cursor.
   const where = () => {
     const el = area.current;
     if (!el || !onView) return;
+    if (el.selectionEnd > el.selectionStart) return point(el.selectionStart, el.selectionEnd);
+    setPointing(null);
     const before = el.value.slice(0, el.selectionStart);
     const line = before.split("\n").length;
     const heading = [...before.matchAll(/^#{1,6}\s+(.+)$/gm)].pop()?.[1];
@@ -275,6 +333,22 @@ export default function MarkdownDoc({ docId, onView }: { docId: string; onView?:
           </>
         )}
         <div className="ml-auto flex shrink-0 items-center gap-2 pl-2">
+          {pointing && onView && (
+            <span
+              className="flex items-center gap-1.5 rounded bg-accent/15 px-1.5 py-0.5 text-[11px] text-ink"
+              title={`${agentName ?? "Your agent"} is told about this selection, so "this" or "here" means it`}
+            >
+              ◉ {pointing.a ? (pointing.a === pointing.b ? `Line ${pointing.a}` : `Lines ${pointing.a}–${pointing.b}`) : "Selection"} shared with {agentName ?? "the agent"}
+              <button
+                className="text-ink-2 underline hover:text-ink cursor-pointer"
+                title="Also put it in the message box"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => sendQuote({ source: title ?? "the document", text: pointing.text, lines: pointing.a ? [pointing.a, pointing.b] : undefined })}
+              >
+                quote
+              </button>
+            </span>
+          )}
           <span className={cx("text-[11px]", state === "saved" ? "text-ink-3" : "text-warn")}>
             {state === "saving" ? "Saving…" : state === "unsaved" ? "Unsaved" : "Saved"} · {words} words
           </span>
@@ -313,6 +387,7 @@ export default function MarkdownDoc({ docId, onView }: { docId: string; onView?:
             onKeyDown={onKey}
             onKeyUp={where}
             onClick={where}
+            onSelect={where}
             onBlur={() => void save()}
             placeholder={"# Title\n\nWrite in Markdown. Your agents can read and edit this too."}
             className={cx(
@@ -322,7 +397,7 @@ export default function MarkdownDoc({ docId, onView }: { docId: string; onView?:
           />
         )}
         {shown !== "edit" && (
-          <div className="doc-panel min-h-0 flex-1 overflow-y-auto px-6 py-5">
+          <div className="doc-panel min-h-0 flex-1 overflow-y-auto px-6 py-5" onMouseUp={() => setTimeout(pointInPreview)}>
             {text.trim() ? <Markdown className="prose-doc">{text}</Markdown> : <div className="text-sm text-ink-3">Nothing written yet.</div>}
           </div>
         )}

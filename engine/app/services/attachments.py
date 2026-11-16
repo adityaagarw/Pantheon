@@ -5,7 +5,7 @@ organization (``agent_id`` NULL). Uploads are stored on disk under
 ``data/uploads/<org>/<id>/``; the database keeps the metadata and, for
 documents, searchable chunks.
 
-* Documents (PDF, Word, Excel, text/code/CSV/Markdown/JSON...) are converted to
+* Documents (PDF, Word .docx and .doc, Excel, text/code/CSV/Markdown/JSON...) are converted to
   text once, chunked and embedded, so agents can read them (``attachment_read``)
   and search them by meaning (``attachment_search``); the passages most relevant
   to a new message are also recalled into the turn automatically.
@@ -37,7 +37,7 @@ from app.core.config import settings
 from app.core.db import SessionLocal
 from app.events import bus
 from app.models import Attachment, AttachmentChunk
-from app.services import embeddings, textsearch
+from app.services import embeddings, textsearch, worddoc
 
 log = logging.getLogger(__name__)
 
@@ -139,11 +139,13 @@ def classify(name: str, mime: str, data: bytes) -> tuple[str, str]:
     if data[:5] == b"%PDF-":
         return "document", "application/pdf"
     if data[:2] == b"PK":
-        if ext in (".docx", ".xlsx"):
+        if ext in (".docx", ".doc", ".xlsx"):  # a .docx renamed .doc is still a .docx
             return "document", ("application/vnd.openxmlformats-officedocument."
-                                + ("wordprocessingml.document" if ext == ".docx"
-                                   else "spreadsheetml.sheet"))
+                                + ("spreadsheetml.sheet" if ext == ".xlsx"
+                                   else "wordprocessingml.document"))
         return "other", mime or "application/zip"
+    if data[:8] == worddoc.MAGIC and ext in (".doc", ".dot"):  # Word 97-2003
+        return "document", "application/msword"
     if ext in TEXT_EXT or mime.startswith("text/") or mime in ("application/json",
                                                                 "application/xml"):
         return "document", mime if mime.startswith("text/") else "text/plain"
@@ -221,6 +223,11 @@ def extract(kind: str, mime: str, data: bytes) -> tuple[str, dict[str, Any]]:
         text, info = _pdf_text(data)
     elif mime.endswith("wordprocessingml.document"):
         text, info = _docx_text(data)
+    elif mime == "application/msword":
+        try:
+            text, info = worddoc.text(data)
+        except worddoc.DocError as e:
+            raise AttachmentError(str(e)) from None
     elif mime.endswith("spreadsheetml.sheet"):
         text, info = _xlsx_text(data)
     else:

@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { api } from "@/lib/api";
 import { clock } from "@/lib/format";
+import { registerQuoteTarget } from "@/lib/quote";
 import type { Agent, AttachmentBrief, AttachmentInfo, Message } from "@/lib/types";
 import { LiveTalk, type LiveState } from "@/lib/liveTalk";
 import { canListen, listen, speak, stopSpeaking, voiceStatus, VoiceSetupError, type Listener, type VoiceStatus } from "@/lib/voice";
@@ -76,7 +77,9 @@ function MessageRow({ m, agents, grouped, compact }: { m: Message; agents: Recor
           </div>
         )}
         {m.senderType === "agent" && m.meta?.thinking === true && <ThinkingBlock messageId={m.id} />}
-        <Markdown className="text-ink">{m.content}</Markdown>
+        <div data-quote={m.senderType === "user" ? "my earlier message" : `${name}'s message`}>
+          <Markdown className="text-ink">{m.content}</Markdown>
+        </div>
         {Array.isArray(m.meta?.attachments) && m.meta.attachments.length > 0 && <MessageAttachments items={m.meta.attachments as AttachmentBrief[]} />}
       </div>
     </div>
@@ -352,6 +355,26 @@ export function Composer({
   const [expanded, setExpanded] = useState(false);
   const [steerOn, setSteerOn] = useState(true);
   const box = useRef<HTMLTextAreaElement>(null);
+  // Text the user selected elsewhere and quoted (lib/quote) lands here, ready for their question.
+  const quoteTarget = useRef<ReturnType<typeof registerQuoteTarget> | null>(null);
+  useEffect(() => {
+    const target = registerQuoteTarget((q) => {
+      setTextState((v) => {
+        const next = v.trim() ? `${v.replace(/\s+$/, "")}\n\n${q}` : q;
+        saveDraft(key, next);
+        return next;
+      });
+      requestAnimationFrame(() => {
+        const el = box.current;
+        if (!el) return;
+        el.focus();
+        el.setSelectionRange(el.value.length, el.value.length);
+        el.scrollTop = el.scrollHeight;
+      });
+    }, () => box.current, live?.agentName);
+    quoteTarget.current = target;
+    return target.dispose;
+  }, [key, live?.agentName]);
   useLayoutEffect(() => {
     // Grow with the text (up to half the screen); the expand button gives more room.
     const el = box.current;
@@ -535,6 +558,7 @@ export function Composer({
           disabled={disabled}
           placeholder={placeholder ?? "Message…"}
           onChange={(e) => setText(e.target.value)}
+          onFocus={() => quoteTarget.current?.focused()}
           onPaste={(e) => {
             if (!attach) return;
             const pasted = Array.from(e.clipboardData.files);

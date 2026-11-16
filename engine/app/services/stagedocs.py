@@ -29,10 +29,10 @@ from app.core.db import SessionLocal
 from app.core.ids import new_id
 from app.events import bus
 from app.models import Attachment, StageDoc
-from app.services import formulas
+from app.services import formulas, worddoc
 from app.services import secrets as secrets_svc
 
-KINDS = ("sheet", "pdf", "notebook", "markdown")
+KINDS = ("sheet", "pdf", "notebook", "markdown", "word")
 MAX_CELLS = 200_000
 MAX_TEXT = 2_000_000
 _locks: dict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
@@ -63,6 +63,8 @@ def summary(d: StageDoc) -> str:
         return f"{len(sheets)} sheet(s), {n} cells"
     if d.kind == "pdf":
         return f"{data.get('name', 'PDF')}, {data.get('pages') or '?'} pages"
+    if d.kind == "word":
+        return f"{data.get('name') or 'Word document'}, {round((data.get('size') or 0) / 1024)} KB"
     if d.kind == "markdown":
         text = data.get("text") or ""
         return f"{len(text.split())} words, {text.count(chr(10)) + 1 if text else 0} lines"
@@ -84,6 +86,7 @@ async def create(org_id: str, kind: str, title: str, data: dict[str, Any] | None
         data = {"sheet": {"sheets": [{"name": "Sheet1", "cells": {}}]},
                 "notebook": {"cells": [_new_cell("code", "", by_name)]},
                 "markdown": {"text": ""},
+                "word": {},
                 "pdf": {}}[kind]
     d = StageDoc(org_id=org_id, kind=kind, title=(title.strip() or kind.title())[:200], data=data,
                  created_by=created_by, updated_by=by_name)
@@ -161,6 +164,10 @@ async def delete_doc(doc_id: str) -> None:
     async with SessionLocal() as session:
         await session.execute(delete(StageDoc).where(StageDoc.id == doc_id))
         await session.commit()
+    if d.kind == "word":
+        from app.services import worddocs
+
+        worddocs.cleanup(d)
     if d.kind == "notebook":
         from app.services import notebook_kernel
 
@@ -758,5 +765,110 @@ def read_markdown(d: StageDoc, start: int = 1, lines: int = 400) -> str:
     return f"{head}\n\n{body}{more}"
 
 
+def where_is_markdown(d: StageDoc, passage: str) -> tuple[int, int] | None:
+    """Which lines the user's selection covers, as md_read numbers them. A selection made in
+    the Read view has no Markdown marks, so lines are matched on what they say."""
+    lines = ((d.data or {}).get("text") or "").splitlines()
+    want = [ln.strip() for ln in passage.splitlines() if ln.strip()]
+    if not lines or not want:
+        return None
+    a = 0
+    for ln in want:
+        if len(ln) < 4:
+            continue
+        if hit := [i for i, r in enumerate(lines) if ln[:60] in r]:
+            a = hit[0] + 1
+            break
+    if not a:
+        return None
+    b = a
+    for ln in reversed(want[1:]):
+        if len(ln) < 4:
+            continue
+        if hit := [i for i, r in enumerate(lines) if i + 1 >= a and ln[-60:] in r]:
+            b = hit[-1] + 1
+            break
+    return a, b
+
+
 def markdown_from_file(raw: bytes) -> dict[str, Any]:
+    """A Markdown document's content from a .md file, or from a Word document (.docx, .doc)."""
+    if raw[:4] == b"PK\x03\x04" or raw[:8] == worddoc.MAGIC:
+        return {"text": word_markdown(raw)[:MAX_TEXT]}
     return {"text": raw.decode("utf-8-sig", errors="replace")[:MAX_TEXT]}
+
+
+def _md_table(rows: list[list[str]]) -> str:
+    width = max(len(r) for r in rows)
+    cells = [[c.replace("|", "\\|").replace("\n", " ").strip() for c in r] + [""] * (width - len(r))
+             for r in rows]
+    out = ["| " + " | ".join(cells[0]) + " |", "|" + " --- |" * width]
+    out += ["| " + " | ".join(r) + " |" for r in cells[1:]]
+    return "\n".join(out)
+
+
+def word_markdown(raw: bytes) -> str:
+    """A Word document as Markdown: headings, lists, quotes and tables kept, in order."""
+    if raw[:8] == worddoc.MAGIC:
+        try:
+            text, _ = worddoc.text(raw)
+        except worddoc.DocError as e:
+            raise DocError(str(e)) from None
+        # The .doc reader gives tables as " | "-separated rows; two or more in a row are a table.
+        blocks: list[str] = []
+        lines = text.split("\n")
+        i = 0
+        while i < len(lines):
+            j = i
+            while j < len(lines) and " | " in lines[j]:
+                j += 1
+            if j - i >= 2:
+                blocks.append(_md_table([re.split(r" \| ?", ln.rstrip(" |")) for ln in lines[i:j]]))
+                i = j
+            else:
+                if lines[i].strip():
+                    blocks.append(lines[i].strip())
+                i += 1
+        return "\n\n".join(blocks)
+
+    from docx import Document
+    from docx.table import Table
+    from docx.text.paragraph import Paragraph
+
+    try:
+        doc = Document(io.BytesIO(raw))
+    except Exception:
+        raise DocError("not a Word document (.docx or .doc)") from None
+    blocks = []
+    for el in doc.element.body.iterchildren():
+        tag = el.tag.rsplit("}", 1)[-1]
+        if tag == "tbl":
+            rows = [[c.text for c in row.cells] for row in Table(el, doc).rows]
+            if rows:
+                blocks.append(_md_table(rows))
+            continue
+        if tag != "p":
+            continue
+        p = Paragraph(el, doc)
+        text = p.text.strip()
+        if not text:
+            continue
+        style = (p.style.name if p.style is not None else "") or ""
+        level = re.fullmatch(r"Heading (\d)", style)
+        if style == "Title":
+            text = f"# {text}"
+        elif level:
+            text = f"{'#' * min(6, int(level.group(1)) + 1)} {text}"
+        elif style.startswith("List Number"):
+            text = f"1. {text}"
+        elif style.startswith("List") or (el.pPr is not None and el.pPr.numPr is not None):
+            text = f"- {text}"
+        elif style in ("Quote", "Intense Quote"):
+            text = f"> {text}"
+        blocks.append(text)
+    # A list's items sit together, without blank lines between them.
+    out = ""
+    for b in blocks:
+        tight = out and b[:2] in ("- ", "1.") and out.rsplit("\n", 1)[-1][:2] in ("- ", "1.")
+        out += ("\n" if tight else "\n\n" if out else "") + b
+    return out

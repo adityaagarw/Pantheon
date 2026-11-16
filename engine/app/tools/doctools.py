@@ -63,7 +63,77 @@ def _err(e: Exception) -> ToolError:
     return ToolError(str(e))
 
 
-@dtool("doc_list", "The spreadsheets, PDFs and notebooks on this organization's Stage.", obj({}))
+KINDS = {"sheet": "spreadsheet", "pdf": "PDF", "notebook": "notebook",
+         "markdown": "Markdown document", "word": "Word document"}
+
+
+def _passage(a: dict[str, Any]) -> str:
+    """The passage the user highlighted, or "" when they have highlighted nothing.
+
+    Both editors wrap a real selection in triple quotes; what they say otherwise ("reading it",
+    "editing line 12") is where they are, not what they mean. A long selection reaches us cut
+    short with an ellipsis."""
+    text = str(a.get("text") or "")
+    _, _, rest = text.partition('"""')
+    if rest == text:  # no quotes at all: nothing is selected
+        return ""
+    return rest.partition('"""')[0].strip().rstrip("…").strip()
+
+
+async def _selected(ctx: ToolContext, kind: str, ref: str) -> str:
+    """What the user has highlighted in the document they have open, and where it is.
+
+    The Stage keeps one attention per agent (services/stage.py), refreshed while the document
+    stays open, so an agent can ask mid-turn what "this" or "here" in a message means."""
+    from app.services import stage, worddocs
+
+    unit = "paragraph" if kind == "word" else "line"
+    reader = "word_read" if kind == "word" else "md_read"
+    a = stage.attention(ctx.agent.id) or {}
+    asked = ref or str(a.get("docId") or "")
+    if not asked:
+        return ("No selection: the user has no document open with you on the Stage. Ask them to "
+                "open one and highlight the passage.")
+    title, doc_id = str(a.get("title") or ""), str(a.get("docId") or "")
+    if not ref and a.get("kind") not in (None, kind):  # they highlighted in another kind of file
+        shown = _passage(a)
+        back = (" For their Markdown document use md_read with selection: true."
+                if a.get("kind") == "markdown" else "")
+        return (f"No selection: the user has the {KINDS.get(str(a.get('kind')), a.get('kind'))} "
+                f"'{title}' ({doc_id}) open, not a {KINDS[kind]}."
+                + (f" What they highlighted there:\n\"\"\"\n{shown}\n\"\"\"" if shown else "") + back)
+    d = await _doc(ctx, asked, kind)
+    if a.get("kind") != kind or doc_id != d.id:
+        at = (f"they have the {KINDS.get(str(a.get('kind')), a.get('kind'))} '{title}' "
+              f"({doc_id}) open instead" if doc_id else "no document is open on the Stage")
+        return f"No selection in '{d.title}' ({d.id}): {at}."
+    passage = _passage(a)
+    if not passage:
+        return (f"No selection: the user has '{d.title}' ({d.id}) open but has not highlighted "
+                f"anything ({a.get('text') or 'they are just reading it'}).")
+    shown = f'"""\n{passage}\n"""'
+    found = (worddocs.where_is(d, passage) if kind == "word"
+             else docs.where_is_markdown(d, passage))
+    if not found:
+        return (f"'{d.title}' ({d.id}): the user has this selected, but it is no longer in the "
+                f"document, so it has no {unit} numbers (they may have edited it since):\n{shown}")
+    first, last = found
+    where = f"{unit} {first}" if first == last else f"{unit}s {first}-{last}"
+    return (f"'{d.title}' ({d.id}): the user has {where} selected, counted the way {reader} "
+            f"counts them — {where} is what \"this\" or \"here\" means:\n{shown}")
+
+
+@dtool("word_selection", "What the user has highlighted in the Word document they have open: "
+       "the passage and the paragraph numbers it spans, counted the way word_read counts them, "
+       "so \"this\" or \"here\" in their message means this. doc: one particular document; "
+       "leave it out for whichever one they are pointing at. Says \"no selection\" when they "
+       "have highlighted nothing.", obj({"doc": S}))
+async def word_selection(args: dict, ctx: ToolContext) -> str:
+    return await _selected(ctx, "word", str(args.get("doc") or ""))
+
+
+@dtool("doc_list", "The spreadsheets, PDFs, notebooks, Markdown and Word documents on this "
+       "organization's Stage.", obj({}))
 async def doc_list(args: dict, ctx: ToolContext) -> str:
     found = await docs.for_org(ctx.org.id)
     if not found:
@@ -297,7 +367,7 @@ async def notebook_run(args: dict, ctx: ToolContext) -> str | ToolOutput:
 
 @dtool("md_new", "Create a Markdown document on the Stage (notes, a plan, a report, a spec) "
        "that the user reads and edits with you live. text: its first content; from_file: an "
-       ".md file from Files or your workspace to open.",
+       ".md or Word (.docx, .doc) file from Files or your workspace to open.",
        obj({"title": S, "text": S, "from_file": S}, ["title"]))
 async def md_new(args: dict, ctx: ToolContext) -> str:
     data = {"text": ""}
@@ -310,7 +380,10 @@ async def md_new(args: dict, ctx: ToolContext) -> str:
             if not path.is_file():
                 raise ToolError(f"no file '{args['from_file']}' in Files or your workspace") from None
             raw = path.read_bytes()
-        data = docs.markdown_from_file(raw)
+        try:
+            data = docs.markdown_from_file(raw)
+        except DocError as e:
+            raise _err(e) from None
     d = await docs.create(ctx.org.id, "markdown", args["title"], data, created_by=ctx.agent.id,
                           by_name=ctx.agent.name)
     if args.get("text"):
@@ -322,9 +395,12 @@ async def md_new(args: dict, ctx: ToolContext) -> str:
 
 
 @dtool("md_read", "Read a Markdown document on the Stage (the user may have edited it). "
-       "start: the first line to read (for long documents).",
-       obj({"doc": S, "start": I}, ["doc"]))
+       "start: the first line to read (for long documents). selection: true for just the passage "
+       "the user has highlighted, with the lines it spans.",
+       obj({"doc": S, "start": I, "selection": B}, ["doc"]))
 async def md_read(args: dict, ctx: ToolContext) -> str:
+    if args.get("selection"):
+        return await _selected(ctx, "markdown", args["doc"])
     return docs.read_markdown(await _doc(ctx, args["doc"], "markdown"), int(args.get("start") or 1))
 
 
@@ -344,3 +420,84 @@ async def md_write(args: dict, ctx: ToolContext) -> str:
     except DocError as e:
         raise _err(e) from None
     return f"Updated '{d.title}' ({docs.summary(d)})."
+
+
+# --- Word -----------------------------------------------------------------------------------
+
+
+@dtool("word_new", "Create a Word document (.docx) on the Stage that the user reads and edits "
+       "with you live, in a page editor like Word's. from_file: a .docx or .doc from Files or "
+       "your workspace to open (formatting kept); text: its first paragraphs ('# ' headings, "
+       "'- ' bullets).",
+       obj({"title": S, "from_file": S, "text": S}, ["title"]))
+async def word_new(args: dict, ctx: ToolContext) -> str:
+    from app.services import worddocs
+
+    raw, name = None, ""
+    if args.get("from_file"):
+        try:
+            a = await _file(ctx, args["from_file"])
+            raw, name = att.file_path(a).read_bytes(), a.name
+        except ToolError:
+            path = resolve_in_workspace(ctx, args["from_file"])
+            if not path.is_file():
+                raise ToolError(f"no file '{args['from_file']}' in Files or your workspace") from None
+            raw, name = path.read_bytes(), path.name
+    try:
+        d = await worddocs.create(ctx.org.id, args["title"], raw, name=name,
+                                  created_by=ctx.agent.id, by_name=ctx.agent.name)
+        if args.get("text"):
+            d = await worddocs.edit(d.id, ctx.agent.name, append=args["text"])
+    except DocError as e:
+        raise _err(e) from None
+    return f"Created Word document '{d.title}' ({d.id}): {docs.summary(d)}."
+
+
+@dtool("word_read", "Read a Word document on the Stage (the user may have edited it): numbered "
+       "paragraphs with their style, tables, and the open comments people left in it (who, "
+       "which paragraphs, the text each is on, replies); a paragraph with a comment ends with "
+       "[comment <id>]. start: the first paragraph to read. selection: true for just the "
+       "passage the user has highlighted, with its paragraph numbers. comments: true for the "
+       "comments alone, with who left them and what they are on.",
+       obj({"doc": S, "start": I, "selection": B, "comments": B}, ["doc"]))
+async def word_read(args: dict, ctx: ToolContext) -> str:
+    from app.services import worddocs
+
+    if args.get("selection"):
+        return await _selected(ctx, "word", args["doc"])
+    if args.get("comments"):
+        try:
+            return worddocs.comments_only(await _doc(ctx, args["doc"], "word"))
+        except DocError as e:
+            raise _err(e) from None
+    try:
+        return worddocs.read(await _doc(ctx, args["doc"], "word"), int(args.get("start") or 1))
+    except DocError as e:
+        raise _err(e) from None
+
+
+@dtool("word_write", "Change a Word document the user sees live, keeping its formatting: find "
+       "(exact text within one paragraph, from word_read) and replace it (empty deletes it); or "
+       "append paragraphs ('# ' headings, '- ' bullets, one per line) at the end, or after "
+       "paragraph number `after`. resolve: a comment's id from word_read, to mark it resolved "
+       "once you have done what it asks (alone, or with the edit that does it). reply: a "
+       "comment's id with text: what to say back to the person who left it.",
+       obj({"doc": S, "find": S, "replace": S, "append": S, "after": I, "resolve": S,
+            "reply": S, "text": S}, ["doc"]))
+async def word_write(args: dict, ctx: ToolContext) -> str:
+    from app.services import worddocs
+
+    d = await _doc(ctx, args["doc"], "word")
+    try:
+        d = await worddocs.edit(d.id, ctx.agent.name, find=args.get("find"),
+                                replace=args.get("replace") or "", append=args.get("append"),
+                                after=int(args["after"]) if args.get("after") else None,
+                                resolve_comment=str(args.get("resolve") or "") or None,
+                                reply_to=str(args.get("reply") or "") or None,
+                                reply_text=str(args.get("text") or ""))
+    except DocError as e:
+        raise _err(e) from None
+    done = f"; comment {args['resolve']} is resolved" if args.get("resolve") else ""
+    if args.get("reply"):
+        done += f", and answered what comment {args['reply']} asked"
+    return f"Updated '{d.title}' ({docs.summary(d)}){done}."

@@ -288,6 +288,22 @@ export const api = {
     req<{ version: number }>("PUT", `/docs/${id}/cells`, { changes, sheetNames }),
   /** Saves a Markdown document; 409 (ApiError) when it changed since `base`. */
   saveStageText: (id: string, text: string, base?: number) => req<{ version: number }>("PUT", `/docs/${id}/text`, { text, base }),
+  /** A Word document's .docx and the version it is. */
+  wordFile: async (id: string): Promise<{ data: ArrayBuffer; version: number }> => {
+    const res = await fetch(`${engineHttp()}/api/v1/docs/${id}/word`, { cache: "no-store" });
+    if (!res.ok) throw new ApiError(res.status, (await res.text()) || `HTTP ${res.status}`);
+    return { data: await res.arrayBuffer(), version: Number(res.headers.get("X-Doc-Version") ?? 0) };
+  },
+  /** Saves a Word document's .docx; 409 (ApiError) when it changed since `base`. */
+  saveWord: async (id: string, data: ArrayBuffer, base?: number): Promise<{ version: number }> => {
+    const res = await fetch(`${engineHttp()}/api/v1/docs/${id}/word${base === undefined ? "" : `?base=${base}`}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
+      body: data,
+    });
+    if (!res.ok) throw new ApiError(res.status, (await res.text()) || `HTTP ${res.status}`);
+    return (await res.json()) as { version: number };
+  },
   pdfView: (id: string, b: { page?: number; highlight?: string; note?: string; clear?: boolean }) => post<StageDoc>(`/docs/${id}/pdf`, b),
   addNotebookCell: (id: string, b: { source?: string; type?: "code" | "markdown"; after?: string }) => post<NotebookCell>(`/docs/${id}/cells`, b),
   editNotebookCell: (id: string, cellId: string, b: { source?: string; type?: "code" | "markdown"; to?: number }) =>

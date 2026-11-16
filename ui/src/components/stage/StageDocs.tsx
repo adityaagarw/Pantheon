@@ -15,9 +15,10 @@ const SheetEditor = dynamic(() => import("./SheetEditor"), { ssr: false, loading
 const PdfViewer = dynamic(() => import("./PdfViewer"), { ssr: false, loading: Loading });
 const NotebookView = dynamic(() => import("./NotebookView"), { ssr: false, loading: Loading });
 const MarkdownDoc = dynamic(() => import("./MarkdownDoc"), { ssr: false, loading: Loading });
+const WordDoc = dynamic(() => import("./WordDoc"), { ssr: false, loading: Loading });
 
-export const DOC_ICON: Record<StageDocKind, string> = { sheet: "▦", pdf: "📄", notebook: "📓", markdown: "📝" };
-const KIND_LABEL: Record<StageDocKind, string> = { sheet: "Spreadsheet", pdf: "PDF", notebook: "Notebook", markdown: "Markdown" };
+export const DOC_ICON: Record<StageDocKind, string> = { sheet: "▦", pdf: "📄", notebook: "📓", markdown: "📝", word: "🗎" };
+const KIND_LABEL: Record<StageDocKind, string> = { sheet: "Spreadsheet", pdf: "PDF", notebook: "Notebook", markdown: "Markdown", word: "Word" };
 
 /** Which kind of document a file opens as, if any. */
 export function docKindFor(name: string): StageDocKind | null {
@@ -26,6 +27,7 @@ export function docKindFor(name: string): StageDocKind | null {
   if (n.endsWith(".xlsx") || n.endsWith(".xlsm") || n.endsWith(".csv") || n.endsWith(".tsv")) return "sheet";
   if (n.endsWith(".ipynb")) return "notebook";
   if (n.endsWith(".md") || n.endsWith(".markdown")) return "markdown";
+  if (n.endsWith(".docx") || n.endsWith(".doc")) return "word";
   return null;
 }
 
@@ -55,7 +57,7 @@ export function DocView({
   const agentId = chatAgentId ?? docAgent(doc, agents);
   useAttention(agentId, agentId ? { kind: doc.kind, docId: doc.id, title: doc.title, text: where } : null, [agentId, doc.id, doc.title, where]);
   const onView = useCallback((t: string) => setWhere(t), []);
-  const exportLabel = doc.kind === "sheet" ? ".xlsx" : doc.kind === "notebook" ? ".ipynb" : doc.kind === "markdown" ? ".md" : "PDF";
+  const exportLabel = doc.kind === "sheet" ? ".xlsx" : doc.kind === "notebook" ? ".ipynb" : doc.kind === "markdown" ? ".md" : doc.kind === "word" ? ".docx" : "PDF";
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex flex-wrap items-center gap-2 border-b border-line bg-panel px-3 py-2 text-sm">
@@ -103,8 +105,10 @@ export function DocView({
           <SheetEditor key={doc.id} docId={doc.id} onSelection={onView} />
         ) : doc.kind === "pdf" ? (
           <PdfViewer key={doc.id} docId={doc.id} onView={onView} />
+        ) : doc.kind === "word" ? (
+          <WordDoc key={doc.id} docId={doc.id} title={doc.title} agentName={agentId ? agents[agentId]?.name : undefined} onView={agentId ? onView : undefined} />
         ) : doc.kind === "markdown" ? (
-          <MarkdownDoc key={doc.id} docId={doc.id} onView={onView} />
+          <MarkdownDoc key={doc.id} docId={doc.id} title={doc.title} agentName={agentId ? agents[agentId]?.name : undefined} onView={agentId ? onView : undefined} />
         ) : (
           <NotebookView key={doc.id} docId={doc.id} onView={onView} />
         )}
@@ -149,12 +153,13 @@ export function NewDocMenu({ orgId, count, onCreated }: { orgId: string; count: 
         <div className="absolute right-0 top-5 z-30 w-64 rounded-lg border border-line-2 bg-surface p-1.5 text-sm normal-case tracking-normal shadow-2xl">
           <MenuItem onClick={() => void make({ kind: "sheet", title: `Sheet ${count + 1}` })}>▦ New spreadsheet</MenuItem>
           <MenuItem onClick={() => void make({ kind: "notebook", title: `Notebook ${count + 1}` })}>📓 New notebook</MenuItem>
-          <MenuItem onClick={() => void make({ kind: "markdown", title: `Document ${count + 1}` })}>📝 New Markdown document</MenuItem>
+          <MenuItem onClick={() => void make({ kind: "word", title: `Document ${count + 1}` })}>🗎 New Word document</MenuItem>
+          <MenuItem onClick={() => void make({ kind: "markdown", title: `Notes ${count + 1}` })}>📝 New Markdown document</MenuItem>
           <div className="mx-2 mb-1 mt-2 text-[11px] font-medium uppercase tracking-wider text-ink-3">Open from Files</div>
           {files === null ? (
             <div className="px-2 py-1 text-xs text-ink-3">Loading…</div>
           ) : fileList.length === 0 ? (
-            <div className="px-2 py-1 text-xs leading-relaxed text-ink-3">No PDFs, spreadsheets (.xlsx, .csv), notebooks (.ipynb) or Markdown (.md) in Files yet. Upload them on the Files tab.</div>
+            <div className="px-2 py-1 text-xs leading-relaxed text-ink-3">No PDFs, spreadsheets (.xlsx, .csv), notebooks (.ipynb), Markdown (.md) or Word documents (.docx, .doc) in Files yet. Upload them on the Files tab.</div>
           ) : (
             <div className="max-h-60 overflow-y-auto">
               {fileList.map((f) => (

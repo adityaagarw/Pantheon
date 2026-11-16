@@ -159,6 +159,18 @@ async def resolve_tools(org: Org, agent: Agent) -> ResolvedTools:
             if spec is not None and name not in tools and name not in denied:
                 tools[name] = EffectiveTool(name, spec.description, spec.parameters,
                                             tools["whiteboard_draw"].approval, spec=spec)
+    # Word documents on the Stage come with Markdown ones (agents made before they existed too).
+    for md, word in (("md_new", "word_new"), ("md_read", "word_read"), ("md_write", "word_write")):
+        spec = base.builtin(word)
+        if md in tools and spec is not None and word not in tools and word not in denied:
+            tools[word] = EffectiveTool(word, spec.description, spec.parameters,
+                                        tools[md].approval, spec=spec)
+    # Whoever reads a document can also ask which passage the user has highlighted in it.
+    reader = tools.get("word_read") or tools.get("md_read")
+    spec = base.builtin("word_selection")
+    if reader and spec and "word_selection" not in tools and "word_selection" not in denied:
+        tools["word_selection"] = EffectiveTool("word_selection", spec.description,
+                                                spec.parameters, reader.approval, spec=spec)
     # Everyone can keep a calendar (reminders, cron) and read the files they were given.
     for name in (*scheduling.AMBIENT, *file_tools.AMBIENT):
         spec = base.builtin(name)

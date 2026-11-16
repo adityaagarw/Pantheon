@@ -5,6 +5,7 @@
 import { motion } from "motion/react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router";
+import { QuoteButton } from "@/components/QuoteButton";
 import { api } from "@/lib/api";
 import type { Org } from "@/lib/types";
 import { CommandBar } from "./CommandBar";
@@ -131,6 +132,7 @@ export function StudioShell({ children }: { children: ReactNode }) {
       </nav>
       <main className="relative z-10 min-h-0 min-w-0 flex-1 overflow-hidden max-md:pt-14">{children}</main>
       <CommandBar />
+      <QuoteButton />
     </div>
   );
 }

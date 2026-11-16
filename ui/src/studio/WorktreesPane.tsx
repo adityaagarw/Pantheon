@@ -226,7 +226,13 @@ function FileView({ orgId, path }: { orgId: string; path: string }) {
         {IMAGE.test(path) ? (
           <img src={url} alt={path} className="max-w-full p-4" />
         ) : (
-          <pre className="st-mono whitespace-pre p-4 text-[12px] leading-[1.55] text-[var(--st-ink-2)]">{text ?? "…"}</pre>
+          <pre className="st-mono whitespace-pre p-4 text-[12px] leading-[1.55] text-[var(--st-ink-2)]" data-quote={path} data-quote-code>
+            {text === null ? "…" : text.split("\n").map((l, i) => (
+              <div key={i} data-line={i + 1}>
+                <span data-text>{l || "\u200b"}</span>
+              </div>
+            ))}
+          </pre>
         )}
       </div>
     </div>

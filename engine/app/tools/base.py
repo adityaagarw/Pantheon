@@ -212,7 +212,8 @@ WORKER_TOOLSET: list[dict[str, str]] = DEFAULT_TOOLSET + [
         "whiteboard_draw", "whiteboard_view", "whiteboard_diagram", "whiteboard_erase", "whiteboard_new",
         "doc_list", "sheet_new", "sheet_read", "sheet_write", "pdf_open", "pdf_read",
         "pdf_show", "notebook_new", "notebook_read", "notebook_add_cell", "notebook_edit_cell",
-        "notebook_run", "md_new", "md_read", "md_write")),
+        "notebook_run", "md_new", "md_read", "md_write", "word_new", "word_read", "word_write",
+        "word_selection")),
 ]
 
 

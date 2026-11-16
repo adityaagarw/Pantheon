@@ -232,12 +232,14 @@ def attention_prompt(agent_id: str) -> str:
         text = (f"# The user is with you on the Stage\nThey're looking at the whiteboard "
                 f"'{a.get('title') or 'the board'}' with you; you can add to it with the "
                 "whiteboard tools.")
-    elif kind in ("sheet", "pdf", "notebook", "markdown"):
+    elif kind in ("sheet", "pdf", "notebook", "markdown", "word"):
         what = {"sheet": "spreadsheet", "pdf": "PDF", "notebook": "notebook",
-                "markdown": "Markdown document"}[kind]
+                "markdown": "Markdown document", "word": "Word document"}[kind]
         tools = {"sheet": "sheet_read and sheet_write", "pdf": "pdf_read and pdf_show",
                  "notebook": "notebook_read, notebook_add_cell and notebook_run",
-                 "markdown": "md_read and md_write"}[kind]
+                 "markdown": "md_read (selection: true reads their highlight) and md_write",
+                 "word": ("word_read (it shows their comments; selection: true reads their "
+                          "highlight), word_selection and word_write")}[kind]
         text = (f"# The user is with you on the Stage\nThey have the {what} "
                 f"'{a.get('title')}' ({a.get('docId')}) open")
         text += f": {a['text']}." if a.get("text") else "."

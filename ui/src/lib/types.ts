@@ -176,7 +176,7 @@ export interface PackListing {
   libraries: LibraryInfo[];
 }
 
-export type StageDocKind = "sheet" | "pdf" | "notebook" | "markdown";
+export type StageDocKind = "sheet" | "pdf" | "notebook" | "markdown" | "word";
 
 /** A spreadsheet, PDF, notebook or Markdown document on the Stage (list form). */
 export interface StageDocInfo {
@@ -601,7 +601,7 @@ export interface Task {
 export interface TaskEvent {
   id: number;
   actorId: string;
-  kind: "created" | "status" | "assignee" | "comment" | "edit";
+  kind: "created" | "status" | "assignee" | "comment" | "edit" | "acceptance";
   data: Record<string, unknown>;
   createdAt: string | null;
 }

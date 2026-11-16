@@ -9,7 +9,7 @@ import re
 from app import packs
 from app.browser.manager import BrowserError, manager
 from app.core.config import settings
-from app.services import preview, sitepack, stage
+from app.services import preview, sitepack, stage, stagedocs
 from app.tools.base import (
     B,
     I,
@@ -198,12 +198,22 @@ async def stage_docs(args: dict, ctx: ToolContext) -> str:
     return docs_for(await stage.libraries_for(ctx.org.id, ctx.agent.id))
 
 
-@stool("stage_list", "Pages on this organization's Stage.", obj({}))
+@stool("stage_list", "Pages on this organization's Stage. Its documents (spreadsheets, PDFs, "
+       "notebooks, Markdown and Word files) are listed by doc_list.", obj({}))
 async def stage_list(args: dict, ctx: ToolContext) -> str:
     rows = await stage.for_org(ctx.org.id)
     live = [p for p in rows if p.folder != stage.ARCHIVE]
-    out = "\n".join(f"- {p.id} '{p.title}' ({p.kind}, v{p.version})" for p in live) or \
-        "The Stage is empty."
+    out = "\n".join(f"- {p.id} '{p.title}' ({p.kind}, v{p.version})" for p in live)
+    if not out:
+        # Pages are only half the Stage. Saying "empty" while the user's documents sit on it
+        # sends an agent looking for a page that was never there.
+        library = await stagedocs.for_org(ctx.org.id)
+        if library:
+            named = ", ".join(f"'{d.title}' ({d.kind})" for d in library[:6])
+            out = (f"No pages, but the Stage has {len(library)} documents: {named}. "
+                   "Read them with doc_list.")
+        else:
+            out = "The Stage is empty."
     if archived := len(rows) - len(live):
         out += (f"\n({archived} older pages are in the archive; re-showing a title makes "
                 "a new page rather than touching them.)")

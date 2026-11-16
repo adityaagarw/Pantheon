@@ -105,15 +105,15 @@ export default function FilesPage() {
             ) : content === null ? (
               <Spinner />
             ) : isMd ? (
-              <div className="max-w-3xl rounded-lg border border-line bg-panel p-5">
+              <div className="max-w-3xl rounded-lg border border-line bg-panel p-5" data-quote={file}>
                 <Markdown>{content}</Markdown>
               </div>
             ) : (
-              <pre className="overflow-auto rounded-lg border border-line bg-panel p-4 font-mono text-xs leading-relaxed text-ink-2">
+              <pre className="overflow-auto rounded-lg border border-line bg-panel p-4 font-mono text-xs leading-relaxed text-ink-2" data-quote={file} data-quote-code>
                 {content.split("\n").map((l, i) => (
-                  <div key={i} className="flex">
+                  <div key={i} className="flex" data-line={i + 1}>
                     <span className="mr-4 w-10 shrink-0 select-none text-right text-ink-3">{i + 1}</span>
-                    <span className="whitespace-pre-wrap break-all">{l}</span>
+                    <span className="whitespace-pre-wrap break-all" data-text>{l}</span>
                   </div>
                 ))}
               </pre>

@@ -266,7 +266,7 @@ function FilePreview({ file, onClose }: { file: AttachmentInfo; onClose: () => v
           ) : file.kind === "document" ? (
             text ? (
               <>
-                <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-ink-2">{text.text || "(no readable text)"}</pre>
+                <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-ink-2" data-quote={file.name}>{text.text || "(no readable text)"}</pre>
                 {text.total > text.text.length && <div className="mt-2 text-xs text-ink-3">Showing the first {text.text.length.toLocaleString()} of {text.total.toLocaleString()} characters — the agent can read all of it.</div>}
               </>
             ) : file.status === "ready" ? (

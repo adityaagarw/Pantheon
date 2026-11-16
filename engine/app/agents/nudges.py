@@ -39,7 +39,7 @@ NO_OUTPUT_AFTER = 30  # steps into a turn on assigned work without writing anyth
 REPEATS = 3  # the same tool failing with the same error this many times in a row
 # Calls that make or change the work, or hand it out (a command may too, but it can't be
 # told apart).
-WRITES = frozenset({"write_file", "edit_file", "sheet_write", "md_write", "stage_show",
+WRITES = frozenset({"write_file", "edit_file", "sheet_write", "md_write", "word_write", "stage_show",
                     "notebook_edit", "git_commit", "finish_step", "update_task", "create_task",
                     "plan_flow", "steer", "merge_work"})
 

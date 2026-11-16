@@ -852,7 +852,7 @@ class StageDoc(Base):
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: new_id("doc"))
     org_id: Mapped[str] = mapped_column(ForeignKey("orgs.id", ondelete="CASCADE"), index=True)
-    kind: Mapped[str] = mapped_column(String)  # sheet | pdf | notebook | markdown
+    kind: Mapped[str] = mapped_column(String)  # sheet | pdf | notebook | markdown | word
     title: Mapped[str] = mapped_column(String)
     data: Mapped[JsonDict] = mapped_column(JSON, default=dict)
     version: Mapped[int] = mapped_column(Integer, default=1)

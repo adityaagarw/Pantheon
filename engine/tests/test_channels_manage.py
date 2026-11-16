@@ -3,7 +3,7 @@ deleted and recreated gets its memberships back (issue #5)."""
 
 from __future__ import annotations
 
-from app.models import Channel
+from app.models import Channel, Delivery
 from app.services import comms, orgs
 from tests.conftest import wait_for
 from tests.helpers import call, dm, make_agent, make_org, rows, say, script
@@ -85,6 +85,25 @@ async def test_recreated_agent_gets_its_channels_back(app_client):
     # A brand-new name gets nothing extra.
     other = await orgs.create_agent(org["id"], {"name": "Nova", "role": "SRE"})
     assert other.restored_channels == []
+
+
+async def test_user_always_reaches_a_mentions_channel(app_client):
+    org = await make_org(app_client)
+    ada = await make_agent(app_client, org["id"], "Ada")
+    bob = await make_agent(app_client, org["id"], "Bob")
+    ch = await comms.create_channel(org["id"], "build", ["Ada", "Bob", "user"], notify="mentions")
+
+    async def heard(msg) -> set[str]:
+        return {d.agent_id for d in await rows(Delivery, Delivery.message_id == msg.id)}
+
+    # The user's plain message goes to everyone; a mention narrows it.
+    assert await heard(await comms.post(org["id"], comms.Sender.user(), "stop the rig work",
+                                        channel=ch)) == {ada["id"], bob["id"]}
+    assert await heard(await comms.post(org["id"], comms.Sender.user(), "@Ada take Studio",
+                                        channel=ch)) == {ada["id"]}
+    # A colleague's chatter still waits for a mention.
+    assert await heard(await comms.post(org["id"], comms.Sender("agent", ada["id"]), "noted",
+                                        channel=ch)) == set()
 
 
 def _today() -> str:

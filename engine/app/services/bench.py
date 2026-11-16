@@ -490,8 +490,11 @@ async def run_attempt(att: Attempt, prompt: str, workspace: str, *, lead: str | 
             quiet, why = await _quiet(clone.id)
             att.metrics = await usage(clone.id)
             done = FINISHED if not acceptance.enabled(clone) else ("done", "cancelled")
-            if finished_at is None and goal and await _goal_status(goal.id) in done:
-                finished_at = time.monotonic()
+            if finished_at is None and goal and (
+                    await _goal_status(goal.id) in done
+                    or (acceptance.enabled(clone) and not acceptance.checking(clone.id)
+                        and await acceptance.handed_back(goal.id))):
+                finished_at = time.monotonic()  # closed, or left for the user after its checks
             if finished_at is not None:
                 if quiet or time.monotonic() - finished_at >= FINISH_GRACE:
                     att.status, att.detail = "done", f"{leader.name} finished the goal"

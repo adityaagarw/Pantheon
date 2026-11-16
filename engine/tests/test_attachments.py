@@ -6,6 +6,7 @@ import asyncio
 import io
 import struct
 import zlib
+from pathlib import Path
 
 import pytest
 from langchain_core.messages import HumanMessage, ToolMessage
@@ -126,6 +127,34 @@ async def test_documents_are_extracted_by_content_not_by_name(app_client):
     listing = (await app_client.get(f"/api/v1/orgs/{org['id']}/attachments",
                                     params={"agent_id": ada["id"]})).json()
     assert len(listing) == 5
+
+
+FIXTURES = Path(__file__).parent / "fixtures"
+
+
+async def test_word_97_documents_are_read(app_client):
+    """sample.doc, saved by Word as 97-2003: a table, non-Latin text (UTF-16 pieces) and a
+    hyperlink field. locked.doc has a password; emptycell.doc's second row ends empty."""
+    org = await make_org(app_client)
+    sample = await _upload(app_client, org["id"], "sample.doc",
+                           (FIXTURES / "sample.doc").read_bytes())
+    a = await wait_for(lambda: _ready(sample["id"]), msg="processed sample.doc")
+    assert a.status == "ready" and a.mime == "application/msword", a.error
+    text = (await app_client.get(f"/api/v1/attachments/{sample['id']}/text")).json()["text"]
+    assert "The warranty period is 24 months. Café naïve résumé — Zürich ✓ 東京" in text
+    assert "Region | Units\nNorth | 1200" in text
+    assert "the full terms" in text and "HYPERLINK" not in text  # a field keeps its result
+    assert text.endswith("Signed in Pune.")
+
+    locked = await _upload(app_client, org["id"], "locked.doc",
+                           (FIXTURES / "locked.doc").read_bytes())
+    a = await wait_for(lambda: _ready(locked["id"]), msg="processed locked.doc")
+    assert a.status == "failed" and "password-protected" in a.error
+
+    from app.services import worddoc
+
+    table, _ = worddoc.text((FIXTURES / "emptycell.doc").read_bytes())
+    assert table == "a | b |\nc | d | e"
 
 
 async def test_bad_uploads_are_rejected_or_marked_failed(app_client):

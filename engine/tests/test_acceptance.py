@@ -58,7 +58,7 @@ async def test_a_goal_comes_back_with_every_problem_then_closes_when_fixed(app_c
     assert [e.data["passed"] for e in events] == [False, True]
 
 
-async def test_the_last_round_closes_the_goal_with_known_issues(app_client):
+async def test_a_fail_in_the_last_round_waits_for_the_user_instead_of_closing(app_client):
     org = await make_org(app_client)
     ann = await make_agent(app_client, org["id"], "Ann")
     checks: list[str] = []
@@ -69,13 +69,76 @@ async def test_the_last_round_closes_the_goal_with_known_issues(app_client):
     await app_client.post(f"/api/v1/orgs/{org['id']}/tasks", json={
         "title": "Fix it", "assigneeId": ann["id"]})
 
-    async def closed() -> bool:
-        return (await _goal(org["id"])).status == "done"
+    async def handed_back() -> bool:
+        return len(await rows(TaskEvent, TaskEvent.kind == "acceptance")) >= 2
 
-    await wait_for(closed, timeout=30, msg="closed after the last round")
+    await wait_for(handed_back, timeout=30, msg="the last round")
+    await wait_for(lambda: len(checks) >= 2, timeout=5, msg="two checks")
     goal = await _goal(org["id"])
-    assert "Known issues (acceptance check 2 of 2):\n1. Still broken." in goal.result
+    assert goal.status == "review"  # a failed result is never marked done for the user
+    assert "Failed acceptance check 2 of 2. It waits for you" in goal.result
+    assert "1. Still broken." in goal.result
+    events = await rows(TaskEvent, TaskEvent.kind == "acceptance")
+    assert [(e.data["verdict"], e.data["final"]) for e in events] == [("fail", False),
+                                                                      ("fail", True)]
     assert len(checks) == 2  # no third round
+
+
+async def test_a_check_without_a_verdict_fails_closed(app_client):
+    org = await make_org(app_client)
+    ann = await make_agent(app_client, org["id"], "Ann")
+    checks: list[str] = []
+    # The checker twice ends without a verdict, then a third answer would pass: it must not
+    # be asked a third time, and nothing counts as a pass.
+    script(ann["id"], then=_brain(
+        [call("update_task", task="T-1", status="done", result="done"), say("in")],
+        checks, ["I looked around.", "**\nVERDICT: FAIL", "VERDICT: PASS"]))
+    await app_client.post(f"/api/v1/orgs/{org['id']}/tasks", json={
+        "title": "Fix it", "assigneeId": ann["id"]})
+
+    async def recorded() -> bool:
+        return bool(await rows(TaskEvent, TaskEvent.kind == "acceptance"))
+
+    await wait_for(recorded, timeout=30, msg="the check recorded")
+    event = (await rows(TaskEvent, TaskEvent.kind == "acceptance"))[0]
+    assert event.data["verdict"] == "unverified" and event.data["final"] is True
+    assert event.data["passed"] is False
+    assert len(checks) == 2  # one retry, then it stops
+    goal = await _goal(org["id"])
+    assert goal.status == "review"
+    assert "could not verify this" in goal.result
+
+
+async def test_a_fail_that_lists_nothing_is_asked_again(app_client):
+    org = await make_org(app_client)
+    ann = await make_agent(app_client, org["id"], "Ann")
+    checks: list[str] = []
+    script(ann["id"], then=_brain(
+        [call("update_task", task="T-1", status="done", result="done"), say("in")],
+        checks, ["**\nVERDICT: FAIL", "1. The total is wrong (12, not 13).\nVERDICT: FAIL"]))
+    await app_client.post(f"/api/v1/orgs/{org['id']}/tasks", json={
+        "title": "Fix it", "assigneeId": ann["id"]})
+
+    async def recorded() -> bool:
+        return bool(await rows(TaskEvent, TaskEvent.kind == "acceptance"))
+
+    await wait_for(recorded, timeout=30, msg="the check recorded")
+    event = (await rows(TaskEvent, TaskEvent.kind == "acceptance"))[0]
+    assert event.data["verdict"] == "fail" and not event.data["final"]
+    assert "The total is wrong" in event.data["problems"]
+
+
+def test_verdicts_and_merged_parts():
+    from app.services.acceptance import _merged, _usable, outcome
+
+    assert outcome("1. x\n**VERDICT: PASS**") == "pass"
+    assert outcome("nothing here") == "unverified"
+    assert not _usable("**\nVERDICT: FAIL")
+    assert _usable("1. The header row is missing.\nVERDICT: FAIL")
+    assert outcome(_merged(["VERDICT: PASS", "VERDICT: UNVERIFIED"])) == "unverified"
+    assert outcome(_merged(["1. Broken thing here\nVERDICT: FAIL",
+                            "VERDICT: UNVERIFIED"])) == "fail"
+    assert outcome(_merged(["VERDICT: PASS", "VERDICT: PASS"])) == "pass"
 
 
 async def test_a_brief_sent_by_message_becomes_the_goal_and_is_checked(app_client):

@@ -2,7 +2,8 @@
 
 Delivery rules (the only way work reaches an agent):
 - A message posted to a channel is delivered to members other than the sender
-  (``notify='mentions'`` channels deliver only to @mentioned members).
+  (``notify='mentions'`` channels deliver only to @mentioned members; a user message
+  with no mention goes to every member).
 - A message whose causal ``depth`` exceeds the org's ``max_chain_depth`` is
   stored but not delivered (recorded as ``dropped``), so agents can never
   ping-pong forever.
@@ -384,7 +385,9 @@ async def post(
             members = [m for m in channel.members if m != sender.id]
             if channel.notify == "mentions" and channel.kind == "channel":
                 mentioned = _mentions(content, agents)
-                members = [m for m in members if m in mentioned]
+                # The user always reaches the channel: mentions narrow who hears, never mute.
+                if sender.type != "user" or mentioned:
+                    members = [m for m in members if m in mentioned]
         else:
             members = [m for m in (to_agents or []) if m != sender.id]
         if not deliver:

@@ -10,9 +10,10 @@ A goal is a top-level task the user gave (reporter "user"). When its assignee mo
 review or done, the engine checks it: a helper with a fresh context (subagents.py) that
 sees only the request and the work, may not change the work, and reports every problem
 that breaks the request, worst first, with a verdict. Pass: the goal is done. Fail: it goes
-back to its assignee with the list, to fix in one pass and hand in again. After the last
-round it is done with the remaining problems listed as known issues. Organizations can
-turn it off (settings.acceptance = "off").
+back to its assignee with the list, to fix in one pass and hand in again. A fail after the
+last round, or a check that could not reach a verdict, never closes the goal: it stays in
+review for the user to decide, with the problems in its result (fail closed: a check that
+didn't run is not a pass). Organizations can turn it off (settings.acceptance = "off").
 """
 
 from __future__ import annotations
@@ -35,6 +36,8 @@ from app.models import Agent, Org, Task, TaskEvent
 log = logging.getLogger(__name__)
 
 ROUNDS = 2  # a full check, then one re-check of what it found
+MAX_CHECKS = ROUNDS + 2  # hand-ins after the last round are re-checked this far, then left
+ATTEMPTS = 2  # a checker that ends with no verdict, or a fail with no problems, runs again
 STEPS = 80
 SCRATCH = ".acceptance"  # the only folder the checker may write in
 # What the checker may use: look, run and try, and write its own tests under SCRATCH; any
@@ -42,7 +45,7 @@ SCRATCH = ".acceptance"  # the only folder the checker may write in
 LOOK = ("read_file", "list_dir", "search_files", "run_command", "write_file", "edit_file",
         "stage_check", "stage_list", "check_files",
         "browser_open", "browser_read", "browser_click", "browser_type", "browser_press",
-        "browser_scroll", "browser_back", "fetch_url", "doc_list", "md_read", "sheet_read",
+        "browser_scroll", "browser_back", "fetch_url", "doc_list", "md_read", "word_read", "sheet_read",
         "pdf_read",
         "notebook_read", "git_status", "attachment_read", "attachment_view")
 _running: set[str] = set()  # goal task ids being checked
@@ -90,9 +93,9 @@ within reach. What the team says it did is a claim; the files are what count. Re
 only to say where a problem you saw
 comes from. For pages, don't write scripts or start servers: stage_check serves them.
 For documents, workbooks and data files: open each with check_files (what its reader sees)
-and read the parts the request is about. Spreadsheets, Markdown documents and PDFs on the
-Stage are documents, not files or pages: doc_list lists them, and sheet_read, md_read and
-pdf_read read them.{files}
+and read the parts the request is about. Spreadsheets, Markdown and Word documents and PDFs
+on the Stage are documents, not files or pages: doc_list lists them, and sheet_read, md_read,
+word_read and pdf_read read them.{files}
 
 Judge in this order; an earlier one outweighs a later one:
 1. Delivery: everything the request asks for is there, in the form it asks for (the file
@@ -183,9 +186,23 @@ def start(org_id: str, task_id: str) -> None:
     asyncio.create_task(_check(org_id, task_id, key), name=f"acceptance:{task_id}")
 
 
+def outcome(report: str) -> str:
+    """"pass", "fail" or "unverified": the report's last verdict; no verdict is unverified."""
+    found = re.findall(r"VERDICT:\s*\**\s*(PASS|FAIL|UNVERIFIED)", report, flags=re.I)
+    return found[-1].lower() if found else "unverified"
+
+
 def verdict(report: str) -> bool:
-    found = re.findall(r"VERDICT:\s*\**\s*(PASS|FAIL)", report, flags=re.I)
-    return bool(found) and found[-1].upper() == "PASS"
+    return outcome(report) == "pass"
+
+
+def _usable(report: str) -> bool:
+    """A report worth acting on: a pass, or a fail that lists something to fix (a checker
+    once failed a goal with just "**", which leaves the team nothing to work from)."""
+    result = outcome(report)
+    if result == "pass":
+        return True
+    return result == "fail" and bool(re.search(r"[^\W\d_]{3,}", _problems(report)))
 
 
 def _problems(report: str) -> str:
@@ -396,16 +413,26 @@ def _merged(reports: list[str]) -> str:
         return reports[0]
     parts = [f"Part {i} of the check:\n{_problems(r) or 'Nothing found.'}"
              for i, r in enumerate(reports, 1)]
-    return "\n\n".join(parts) + "\n\nVERDICT: " + (
-        "PASS" if all(verdict(r) for r in reports) else "FAIL")
+    results = {outcome(r) for r in reports}
+    final = "FAIL" if "fail" in results else "UNVERIFIED" if "unverified" in results else "PASS"
+    return "\n\n".join(parts) + "\n\nVERDICT: " + final
 
 
-async def _rounds(task_id: str) -> list[str]:
+async def handed_back(task_id: str) -> bool:
+    """Whether the checks of this goal are over without a pass: it waits for the user."""
+    async with SessionLocal() as session:
+        row = (await session.execute(select(TaskEvent.data).where(
+            TaskEvent.task_id == task_id, TaskEvent.kind == "acceptance").order_by(
+            TaskEvent.id.desc()).limit(1))).scalar_one_or_none()
+    return bool((row or {}).get("final"))
+
+
+async def _rounds(task_id: str) -> list[dict[str, Any]]:
     async with SessionLocal() as session:
         rows = (await session.execute(select(TaskEvent.data).where(
             TaskEvent.task_id == task_id, TaskEvent.kind == "acceptance").order_by(
             TaskEvent.id))).scalars().all()
-    return [str((d or {}).get("problems") or "") for d in rows]
+    return [d or {} for d in rows]
 
 
 async def _check(org_id: str, task_id: str, key: str) -> None:
@@ -424,12 +451,17 @@ async def _check(org_id: str, task_id: str, key: str) -> None:
             return
         ref = tasks.task_ref(task)
         before = await _rounds(task_id)
+        if len(before) >= MAX_CHECKS:
+            return  # handed in again and again: it stays in review for the user
         request = "\n\n".join(p for p in (task.title, task.description,
                                           f"Acceptance criteria: {task.acceptance}"
                                           if task.acceptance else "") if p.strip())
         result = f", with this result: {task.result}" if task.result.strip() else ""
-        usable = {n for n, t in (await resolve_tools(org, agent)).tools.items()
-                  if t.approval == "auto" and n not in LEFT_OUT}
+        resolved = (await resolve_tools(org, agent)).tools
+        usable = {n for n, t in resolved.items() if t.approval == "auto" and n not in LEFT_OUT}
+        # Tools from the builder's MCP servers run the product (Roblox Studio, a device, a
+        # database): the checker needs them to use the result, not only to read its files.
+        product = [n for n in sorted(usable) if resolved[n].mcp is not None]
         # A checker unlike the builders sees what they don't (two different agents beat many
         # alike), so an organization can give it another model (settings.checker_model).
         binding = (org.settings or {}).get("checker_model") or None
@@ -449,8 +481,11 @@ async def _check(org_id: str, task_id: str, key: str) -> None:
             except Exception:  # noqa: BLE001 - the file check informs the checker, no more
                 log.debug("file check before acceptance failed", exc_info=True)
                 files_said = ""
-            if before:
-                briefs = [AGAIN.format(request=request, result=result, problems=before[-1],
+            # A re-check looks at what the last check found; after one that reached no
+            # verdict there is nothing to re-check, so the whole check runs again.
+            if before and before[-1].get("verdict") != "unverified":
+                briefs = [AGAIN.format(request=request, result=result,
+                                       problems=str(before[-1].get("problems") or ""),
                                        tests=tests_said, files=files_said)]
             elif split := _spec_parts(root, request):
                 doc, groups = split
@@ -466,12 +501,20 @@ async def _check(org_id: str, task_id: str, key: str) -> None:
                                        files=files_said, scratch=f"{SCRATCH}/", scope="")]
 
             async def one(brief: str) -> str:
-                try:
-                    return await spawn_subagent({"task": brief, "max_steps": STEPS,
-                                                 "tools": [n for n in LOOK if n in usable]},
-                                                context())
-                except ToolError as e:
-                    return f"The check could not run: {e}\nVERDICT: PASS"
+                report = ""
+                for _ in range(ATTEMPTS):
+                    try:
+                        report = await spawn_subagent(
+                            {"task": brief, "max_steps": STEPS,
+                             "tools": [n for n in LOOK if n in usable] + product}, context())
+                    except ToolError as e:
+                        report = f"The check could not run: {e}"
+                    if _usable(report):
+                        return report
+                # Fail closed: a check that reached no verdict, or failed the work without
+                # saying why, has verified nothing.
+                return (f"{_problems(report) or 'The checker reported nothing.'}\n\n"
+                        "The check reached no usable verdict.\nVERDICT: UNVERIFIED")
 
             report = _merged(list(await asyncio.gather(*(one(b) for b in briefs))))
             if tests_problem:  # failing tests fail the check, whatever the checkers said
@@ -480,21 +523,30 @@ async def _check(org_id: str, task_id: str, key: str) -> None:
             if put_back := await asyncio.to_thread(_restore, root, before_files, began):
                 log.info("acceptance check of %s: put back %d changed files: %s", task_id,
                          len(put_back), ", ".join(put_back[:10]))
-        passed, problems = verdict(report), _problems(report)
+        result_of, problems = outcome(report), _problems(report)
+        passed = result_of == "pass"
         n = len(before) + 1
+        final = not passed and (result_of == "unverified" or n >= ROUNDS)
         async with SessionLocal() as session:
             session.add(TaskEvent(task_id=task_id, actor_id="system", kind="acceptance",
-                                  data={"round": n, "passed": passed, "problems": problems}))
+                                  data={"round": n, "rounds": ROUNDS, "passed": passed,
+                                        "verdict": result_of, "final": final,
+                                        "problems": problems}))
             await session.commit()
         system = Sender.system()
-        # Closing tells the user, not the team: nobody is woken to acknowledge it.
+        # Closing, or handing back to the user, tells the user, not the team: nobody is
+        # woken to acknowledge it.
         if passed:
             await tasks.update_task(org_id, system, ref, status="done")
-        elif n >= ROUNDS:
+        elif final:
+            heading = (f"The acceptance check could not verify this (check {n})"
+                       if result_of == "unverified" else
+                       f"Failed acceptance check {n} of {ROUNDS}")
             await tasks.update_task(
-                org_id, system, ref, status="done",
+                org_id, system, ref, status="review",
                 result=(task.result + "\n\n" if task.result else "")
-                + f"Known issues (acceptance check {n} of {ROUNDS}):\n{problems}")
+                + f"{heading}. It waits for you: accept it as done, or send it back.\n"
+                + problems)
         else:
             await tasks.update_task(
                 org_id, system, ref, status="in_progress",

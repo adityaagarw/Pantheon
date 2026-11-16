@@ -158,10 +158,13 @@ export function TaskDrawer({ taskId, onClose }: { taskId: string | null; onClose
 
 function TimelineRow({ ev }: { ev: TaskEvent }) {
   const agent = useOrg((s) => s.agents[ev.actorId]);
-  const who = ev.actorId === "user" ? "You" : (agent?.name ?? ev.actorId);
+  const who =
+    ev.actorId === "user" ? "You" : ev.actorId === "system" ? "Pantheon" : (agent?.name ?? ev.actorId);
   const d = ev.data as Record<string, string>;
-  const text =
-    ev.kind === "created"
+  const check = ev.kind === "acceptance" ? acceptanceLine(ev.data as Record<string, unknown>) : null;
+  const text = check
+    ? check
+    : ev.kind === "created"
       ? "created the task"
       : ev.kind === "status"
         ? `moved it ${d.from?.replace("_", " ")} → ${d.to?.replace("_", " ")}`
@@ -183,9 +186,26 @@ function TimelineRow({ ev }: { ev: TaskEvent }) {
             <Markdown>{d.text ?? ""}</Markdown>
           </div>
         )}
+        {ev.kind === "acceptance" && d.problems && (
+          <details className="mt-1 rounded-md bg-panel-2 px-3 py-2" open={!d.passed}>
+            <summary className="cursor-pointer text-xs text-ink-3">The checker's report</summary>
+            <div className="mt-1">
+              <Markdown>{d.problems}</Markdown>
+            </div>
+          </details>
+        )}
       </div>
     </div>
   );
+}
+
+/** One line for an acceptance check (engine/app/services/acceptance.py). */
+function acceptanceLine(d: Record<string, unknown>): string {
+  const round = d.rounds ? `${d.round} of ${d.rounds}` : String(d.round ?? "");
+  const verdict = d.verdict ?? (d.passed ? "pass" : "fail");
+  const said =
+    verdict === "pass" ? "passed" : verdict === "unverified" ? "could not verify the work" : "found problems";
+  return `ran acceptance check ${round}: it ${said}${d.final ? ", so it now waits for you" : ""}`;
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {

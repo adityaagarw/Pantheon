@@ -13,6 +13,7 @@
     "prebuild": "node scripts/excalidraw-assets.mjs"
   },
   "dependencies": {
+    "@eigenpal/docx-editor-react": "^1.9.0",
     "@excalidraw/excalidraw": "^0.18.1",
     "@fontsource-variable/geist": "^5.3.0",
     "@fontsource-variable/geist-mono": "^5.3.0",
@@ -27,6 +28,15 @@
     "cmdk": "^1.1.1",
     "dockview-react": "^8.5.1",
     "motion": "^14.1.0",
+    "prosemirror-commands": "^1.7.2",
+    "prosemirror-dropcursor": "^1.8.4",
+    "prosemirror-history": "^1.5.1",
+    "prosemirror-keymap": "^1.2.3",
+    "prosemirror-model": "^1.25.12",
+    "prosemirror-state": "^1.4.4",
+    "prosemirror-tables": "^1.8.5",
+    "prosemirror-transform": "^1.12.4",
+    "prosemirror-view": "^1.42.8",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-markdown": "^10.1.0",

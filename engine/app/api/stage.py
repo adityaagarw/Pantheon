@@ -111,11 +111,12 @@ async def agent_attention(agent_id: str, body: dict[str, Any] = Body(...)) -> No
     elif kind == "whiteboard":
         stage.set_attention(agent_id, {"kind": "whiteboard",
                                        "title": str(body.get("title") or "")[:200]})
-    elif kind in ("sheet", "pdf", "notebook", "markdown"):
+    elif kind in ("sheet", "pdf", "notebook", "markdown", "word"):
         stage.set_attention(agent_id, {"kind": kind,
                                        "title": str(body.get("title") or "")[:200],
                                        "docId": str(body.get("docId") or "")[:60],
-                                       "text": str(body.get("text") or "")[:300]})
+                                       # Room for a passage the user selected to point at.
+                                       "text": str(body.get("text") or "")[:2000]})
     else:
         raise HTTPException(400, f"unknown attention kind '{kind}'")
 

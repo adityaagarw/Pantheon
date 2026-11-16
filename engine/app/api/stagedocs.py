@@ -1,15 +1,15 @@
-"""Stage documents: spreadsheets, PDFs, notebooks and Markdown shared by the user and agents."""
+"""Stage documents: spreadsheets, PDFs, notebooks, Markdown and Word shared by the user and agents."""
 
 from __future__ import annotations
 
 import asyncio
 from typing import Any
 
-from fastapi import APIRouter, Body, HTTPException
+from fastapi import APIRouter, Body, HTTPException, Request
 from fastapi.responses import FileResponse, Response
 
 from app.services import attachments as att
-from app.services import notebook_kernel
+from app.services import notebook_kernel, worddocs
 from app.services import stagedocs as docs
 from app.services.stagedocs import DocError
 
@@ -39,7 +39,8 @@ async def list_docs(org_id: str) -> list[dict[str, Any]]:
 @router.post("/orgs/{org_id}/docs", status_code=201)
 async def create_doc(org_id: str, body: dict[str, Any] = Body(...)) -> dict[str, Any]:
     """{kind, title?, attachmentId?}: a new sheet, notebook or Markdown document, or one made
-    from a file (.xlsx/.csv -> sheet, .ipynb -> notebook, .md -> markdown, .pdf -> pdf)."""
+    from a file (.xlsx/.csv -> sheet, .ipynb -> notebook, .md -> markdown, .pdf -> pdf,
+    .docx/.doc -> word)."""
     kind, title = str(body.get("kind", "")), str(body.get("title") or "")
     att_id = body.get("attachmentId")
     try:
@@ -47,7 +48,10 @@ async def create_doc(org_id: str, body: dict[str, Any] = Body(...)) -> dict[str,
             a = await att.get(str(att_id))
             if a is None or a.org_id != org_id:
                 raise DocError("file not found")
-            if kind == "pdf":
+            if kind == "word":
+                d = await worddocs.create(org_id, title or a.name.rsplit(".", 1)[0],
+                                          att.file_path(a).read_bytes(), name=a.name)
+            elif kind == "pdf":
                 d = await docs.open_pdf(org_id, a, title or None, created_by="user",
                                         by_name="user")
             else:
@@ -58,6 +62,8 @@ async def create_doc(org_id: str, body: dict[str, Any] = Body(...)) -> dict[str,
                 d = await docs.create(org_id, kind, title or a.name.rsplit(".", 1)[0], data)
         elif kind == "pdf":
             raise DocError("open a PDF from Files")
+        elif kind == "word":
+            d = await worddocs.create(org_id, title)
         else:
             d = await docs.create(org_id, kind, title)
     except DocError as e:
@@ -99,12 +105,45 @@ async def export_doc(doc_id: str) -> Response:
         return Response(((d.data or {}).get("text") or "").encode(),
                         media_type="text/markdown; charset=utf-8",
                         headers={"Content-Disposition": f'attachment; filename="{safe}.md"'})
+    if d.kind == "word":
+        return Response(worddocs.read_bytes(d), media_type=worddocs.DOCX_MIME,
+                        headers={"Content-Disposition": f'attachment; filename="{safe}.docx"'})
     a = await att.get((d.data or {}).get("attachmentId", ""))
     if a is None or not att.file_path(a).is_file():
         raise HTTPException(404, "the PDF file is gone")
     return FileResponse(att.file_path(a), media_type="application/pdf", filename=a.name,
                         headers={"X-Content-Type-Options": "nosniff",
                                  "Content-Security-Policy": "sandbox"})
+
+
+# --- Word -----------------------------------------------------------------------------------
+
+
+@router.get("/docs/{doc_id}/word")
+async def word_file(doc_id: str) -> Response:
+    """The .docx for the editor, with the version it is (X-Doc-Version)."""
+    d = await _doc(doc_id, "word")
+    try:
+        raw = worddocs.read_bytes(d)
+    except DocError as e:
+        raise _bad(e) from None
+    return Response(raw, media_type=worddocs.DOCX_MIME,
+                    headers={"X-Doc-Version": str(d.version), "Cache-Control": "no-store"})
+
+
+@router.put("/docs/{doc_id}/word")
+async def save_word(doc_id: str, request: Request, base: int | None = None) -> dict[str, Any]:
+    """The open editor saves the whole .docx (the body); ?base= is the version it started
+    from. 409 (with the current document) when someone else changed it meanwhile."""
+    await _doc(doc_id, "word")
+    try:
+        d = await worddocs.save(doc_id, await request.body(), "user", base)
+    except docs.Conflict as e:
+        current = await docs.get(doc_id)
+        raise HTTPException(409, {"message": str(e), "doc": docs.to_dict(current)}) from None
+    except DocError as e:
+        raise _bad(e) from None
+    return {"version": d.version}
 
 
 # --- spreadsheets ---------------------------------------------------------------------------
